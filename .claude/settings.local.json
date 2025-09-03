@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(composer install:*)",
+      "Bash(composer config:*)",
+      "Bash(composer analyze:*)",
+      "Bash(composer rector:*)",
+      "Bash(composer style:*)",
+      "Bash(php:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
