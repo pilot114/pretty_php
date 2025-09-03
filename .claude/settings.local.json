@@ -1,15 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(composer install:*)",
-      "Bash(composer config:*)",
-      "Bash(composer analyze:*)",
-      "Bash(composer rector:*)",
-      "Bash(composer style:*)",
       "Bash(php:*)",
-      "Bash(composer update:*)",
-      "Bash(composer quality:*)",
-      "Bash(vendor/bin/phpstan analyse:*)"
+      "Bash(composer:*)"
     ],
     "deny": [],
     "ask": []

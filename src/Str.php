@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace PrettyPhp;
 
-class Str implements \Stringable
+readonly class Str implements \Stringable
 {
     public function __construct(
-        private readonly string $value
+        private string $value
     ) {
     }
 
@@ -131,10 +131,6 @@ class Str implements \Stringable
             ? mb_substr($this->value, $start)
             : mb_substr($this->value, $start, $length);
 
-        if ($result === false) {
-            return new self('');
-        }
-
         return new self($result);
     }
 
@@ -191,11 +187,12 @@ class Str implements \Stringable
     }
 
     /**
-     * @return Arr<string>
+     * @return Arr<non-empty-string>
      */
     public function toArray(): Arr
     {
-        return new Arr(mb_str_split($this->value));
+        $parts = mb_str_split($this->value);
+        return new Arr(array_map('strval', $parts));
     }
 
     /**

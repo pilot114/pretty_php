@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace PrettyPhp;
 
+use FilesystemIterator;
 use RuntimeException;
+use SplFileInfo;
 
 readonly class Path implements \Stringable
 {
@@ -203,11 +205,11 @@ readonly class Path implements \Stringable
 
         $size = 0;
         $iterator = new \RecursiveIteratorIterator(
-            new \RecursiveDirectoryIterator($this->path, \RecursiveDirectoryIterator::SKIP_DOTS)
+            new \RecursiveDirectoryIterator($this->path, FilesystemIterator::SKIP_DOTS)
         );
 
         foreach ($iterator as $file) {
-            /** @var \SplFileInfo $file */
+            /** @var SplFileInfo $file */
             $fileSize = $file->getSize();
             if ($fileSize !== false) {
                 $size += $fileSize;

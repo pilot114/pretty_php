@@ -6,10 +6,10 @@ namespace PrettyPhp;
 
 use RuntimeException;
 
-class File
+readonly class File
 {
     public function __construct(
-        private readonly string $path
+        private string $path
     ) {
     }
 

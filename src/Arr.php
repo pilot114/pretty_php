@@ -115,9 +115,6 @@ class Arr
 
     /**
      * @param array<int|string, T> $replacement
-     */
-    /**
-     * @param array<int|string, T> $replacement
      * @return Arr<T>
      */
     public function splice(int $offset, ?int $length = null, array $replacement = []): self
@@ -127,9 +124,6 @@ class Arr
         return new self($newArray);
     }
 
-    /**
-     * @param array<int|string, T> $array
-     */
     /**
      * @param array<int|string, T> $array
      * @return Arr<T>
@@ -157,9 +151,6 @@ class Arr
 
     /**
      * @param (Closure(T, T): int)|null $callback
-     */
-    /**
-     * @param (Closure(T, T): int)|null $callback
      * @return Arr<T>
      */
     public function sort(?Closure $callback = null): self
@@ -176,9 +167,6 @@ class Arr
 
     /**
      * @param (Closure(T, int|string): bool)|null $callback
-     */
-    /**
-     * @param (Closure(T): bool)|null $callback
      * @return Arr<T>
      */
     public function filter(?Closure $callback = null): self
@@ -192,7 +180,14 @@ class Arr
             ));
         }
 
-        return new self(array_filter($this->value, $callback(...)));
+        $result = [];
+        foreach ($this->value as $key => $value) {
+            if ($callback($value, $key)) {
+                $result[$key] = $value;
+            }
+        }
+
+        return new self($result);
     }
 
     /**
@@ -221,9 +216,6 @@ class Arr
         return array_reduce($this->value, $callback, $initial);
     }
 
-    /**
-     * @param Closure(T, int|string): void $callback
-     */
     /**
      * @param Closure(T, int|string): void $callback
      * @return Arr<T>
@@ -309,12 +301,7 @@ class Arr
      */
     public function flip(): self
     {
-        $flippable = [];
-        foreach ($this->value as $key => $value) {
-            if (is_int($value) || is_string($value)) {
-                $flippable[$key] = $value;
-            }
-        }
+        $flippable = array_filter($this->value, fn($value): bool => is_int($value) || is_string($value));
 
         return new self(array_flip($flippable));
     }
@@ -339,9 +326,8 @@ class Arr
     }
 
     /**
-     * @param Closure(T, int|string): int|string $callback
+     * @param Closure(T, int|string): (int|string) $callback
      * @return Arr<array<int, T>>
-     * @phpstan-param Closure(T, int|string): int|string $callback
      */
     public function groupBy(Closure $callback): self
     {
