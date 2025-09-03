@@ -6,7 +6,10 @@
       "Bash(composer analyze:*)",
       "Bash(composer rector:*)",
       "Bash(composer style:*)",
-      "Bash(php:*)"
+      "Bash(php:*)",
+      "Bash(composer update:*)",
+      "Bash(composer quality:*)",
+      "Bash(vendor/bin/phpstan analyse:*)"
     ],
     "deny": [],
     "ask": []

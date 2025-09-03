@@ -184,7 +184,12 @@ class Arr
     public function filter(?Closure $callback = null): self
     {
         if (!$callback instanceof \Closure) {
-            return new self(array_filter($this->value));
+            return new self(array_filter(
+                $this->value,
+                fn($value): bool => $value !== null && $value !== false && $value !== '' &&
+                    $value !== 0 && $value !== [],
+                ARRAY_FILTER_USE_BOTH
+            ));
         }
 
         return new self(array_filter($this->value, $callback(...)));
@@ -266,13 +271,7 @@ class Arr
      */
     public function some(Closure $callback): bool
     {
-        foreach ($this->value as $key => $value) {
-            if ($callback($value, $key)) {
-                return true;
-            }
-        }
-
-        return false;
+        return array_any($this->value, fn($value, $key) => $callback($value, $key));
     }
 
     /**
@@ -310,8 +309,13 @@ class Arr
      */
     public function flip(): self
     {
-        /** @var array<int|string, int|string> $flippable */
-        $flippable = array_filter($this->value, static fn(mixed $value): bool => is_int($value) || is_string($value));
+        $flippable = [];
+        foreach ($this->value as $key => $value) {
+            if (is_int($value) || is_string($value)) {
+                $flippable[$key] = $value;
+            }
+        }
+
         return new self(array_flip($flippable));
     }
 
@@ -376,7 +380,6 @@ class Arr
             if (is_array($item) && $depth > 0) {
                 $this->flattenRecursive($item, $result, $depth - 1);
             } else {
-                /** @phpstan-ignore-next-line Cannot access offset on mixed - this is validated by foreach */
                 $result[] = $item;
             }
         }
@@ -384,12 +387,24 @@ class Arr
 
     public function min(): mixed
     {
-        return min($this->value);
+        if ($this->isEmpty()) {
+            throw new \InvalidArgumentException('Cannot get minimum of empty array');
+        }
+
+        /** @var non-empty-array<int|string, T> $nonEmptyValue */
+        $nonEmptyValue = $this->value;
+        return min($nonEmptyValue);
     }
 
     public function max(): mixed
     {
-        return max($this->value);
+        if ($this->isEmpty()) {
+            throw new \InvalidArgumentException('Cannot get maximum of empty array');
+        }
+
+        /** @var non-empty-array<int|string, T> $nonEmptyValue */
+        $nonEmptyValue = $this->value;
+        return max($nonEmptyValue);
     }
 
     public function sum(): int|float

@@ -82,7 +82,7 @@ readonly class Path implements \Stringable
     public function relative(string $to): self
     {
         $from = $this->resolve()->get();
-        $to = (new self($to))->resolve()->get();
+        $to = new self($to)->resolve()->get();
 
         $fromParts = explode(DIRECTORY_SEPARATOR, trim($from, DIRECTORY_SEPARATOR));
         $toParts = explode(DIRECTORY_SEPARATOR, trim($to, DIRECTORY_SEPARATOR));
@@ -92,7 +92,8 @@ readonly class Path implements \Stringable
             array_shift($toParts);
         }
 
-        $relativePath = str_repeat('..' . DIRECTORY_SEPARATOR, count($fromParts)) . implode(DIRECTORY_SEPARATOR, $toParts);
+        $relativePath = str_repeat('..' . DIRECTORY_SEPARATOR, count($fromParts)) .
+            implode(DIRECTORY_SEPARATOR, $toParts);
 
         return new self($relativePath !== '' ? $relativePath : '.');
     }
@@ -115,7 +116,9 @@ readonly class Path implements \Stringable
     public function withoutExtension(): self
     {
         $pathinfo = pathinfo($this->path);
-        $dir = isset($pathinfo['dirname']) && $pathinfo['dirname'] !== '.' ? $pathinfo['dirname'] . DIRECTORY_SEPARATOR : '';
+        $dir = isset($pathinfo['dirname']) && $pathinfo['dirname'] !== '.'
+            ? $pathinfo['dirname'] . DIRECTORY_SEPARATOR
+            : '';
         return new self($dir . $pathinfo['filename']);
     }
 
@@ -161,7 +164,7 @@ readonly class Path implements \Stringable
             throw new RuntimeException('Unable to list directory: ' . $this->path);
         }
 
-        $result = array_filter($files, fn($file): bool => $file !== '.' && $file !== '..');
+        $result = array_filter($files, fn(string $file): bool => $file !== '.' && $file !== '..');
         return new Arr(array_values($result));
     }
 
@@ -191,7 +194,7 @@ readonly class Path implements \Stringable
     public function size(): int
     {
         if ($this->isFile()) {
-            return (new File($this->path))->size();
+            return new File($this->path)->size();
         }
 
         if (!$this->isDirectory()) {
@@ -205,7 +208,10 @@ readonly class Path implements \Stringable
 
         foreach ($iterator as $file) {
             /** @var \SplFileInfo $file */
-            $size += $file->getSize();
+            $fileSize = $file->getSize();
+            if ($fileSize !== false) {
+                $size += $fileSize;
+            }
         }
 
         return $size;

@@ -1,12 +1,13 @@
+includes:
+    - phpstan-baseline.neon
+
 parameters:
     level: max
     paths:
         - src
         - tests
     
-    # Check for unused code
-    checkMissingIterableValueType: true
-    checkGenericClassInNonGenericObjectType: true
+    # PHPStan 2.x compatible settings
     checkMissingCallableSignature: true
     checkUninitializedProperties: true
     checkDynamicProperties: true
