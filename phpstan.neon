@@ -38,7 +38,6 @@ parameters:
     
     # Ignore some paths if needed
     excludePaths:
-        - tests/bootstrap.php
         - vendor/*
     
     # Type aliases for better documentation
