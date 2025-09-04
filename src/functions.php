@@ -17,10 +17,10 @@ if (!function_exists('str')) {
 if (!function_exists('arr')) {
     /**
      * @template T
-     * @param array<int|string, T> $value
+     * @param iterable<int|string, T> $value
      * @return Arr<T>
      */
-    function arr(array $value = []): Arr
+    function arr(iterable $value = []): Arr
     {
         return new Arr($value);
     }

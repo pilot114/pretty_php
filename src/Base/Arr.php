@@ -12,11 +12,46 @@ use Closure;
 class Arr
 {
     /**
-     * @param array<int|string, T> $value
+     * @var array<int|string, T>
+     */
+    private array $value;
+
+    /**
+     * @param iterable<int|string, T> $value
      */
     public function __construct(
-        private array $value
+        iterable $value
     ) {
+        if (is_array($value)) {
+            $this->value = $value;
+        } else {
+            $array = [];
+            foreach ($value as $key => $item) {
+                $array[$key] = $item;
+            }
+
+            $this->value = $array;
+        }
+    }
+
+    /**
+     * Create Arr instance from any iterable
+     * @template U
+     * @param iterable<int|string, U> $iterable
+     * @return self<U>
+     */
+    public static function from(iterable $iterable): self
+    {
+        if (is_array($iterable)) {
+            return new self($iterable);
+        }
+
+        $array = [];
+        foreach ($iterable as $key => $value) {
+            $array[$key] = $value;
+        }
+
+        return new self($array);
     }
 
     /**
@@ -125,12 +160,25 @@ class Arr
     }
 
     /**
-     * @param array<int|string, T> $array
+     * @param iterable<int|string, T> $iterable
      * @return Arr<T>
      */
-    public function merge(array $array): self
+    public function merge(iterable $iterable): self
     {
-        return new self(array_merge($this->value, $array));
+        if (is_array($iterable)) {
+            return new self(array_merge($this->value, $iterable));
+        }
+
+        $merged = $this->value;
+        foreach ($iterable as $key => $value) {
+            if (is_int($key)) {
+                $merged[] = $value;
+            } else {
+                $merged[$key] = $value;
+            }
+        }
+
+        return new self($merged);
     }
 
     /**
