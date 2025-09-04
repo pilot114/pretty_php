@@ -11,7 +11,6 @@ return RectorConfig::configure()
     ->withPaths([
         __DIR__ . '/src',
         __DIR__ . '/tests',
-        __DIR__ . '/examples',
     ])
     ->withSets([
         // PHP version sets - use the latest

@@ -1,7 +1,5 @@
 <?php
 
-//pest()->extend(PrettyPhp\Tests\TestCase::class)->in('Feature', 'Unit');
-
 function removeDirectory(string $dir): void
 {
     if (!is_dir($dir)) {
@@ -17,5 +15,6 @@ function removeDirectory(string $dir): void
             unlink($path);
         }
     }
+
     rmdir($dir);
 }

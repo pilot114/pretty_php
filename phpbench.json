@@ -1,0 +1,15 @@
+{
+    "runner.bootstrap": "vendor/autoload.php",
+    "runner.path": "tests/benchmarks",
+    "runner.file_pattern": "*Bench.php",
+    "report.generators": {
+        "performance": {
+            "generator": "table",
+            "cols": ["benchmark", "subject", "mode", "mean", "diff"],
+            "sort": {
+                "benchmark": "asc",
+                "subject": "asc"
+            }
+        }
+    }
+}

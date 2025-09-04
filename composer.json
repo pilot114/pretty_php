@@ -17,6 +17,7 @@
     },
     "require-dev": {
         "pestphp/pest": "^4.0",
+        "phpbench/phpbench": "^1.4",
         "phpstan/extension-installer": "^1.4",
         "phpstan/phpstan": "^2.1",
         "phpstan/phpstan-deprecation-rules": "^2.0",
@@ -61,6 +62,7 @@
         "quality-fix": [
             "@rector-fix",
             "@style-fix"
-        ]
+        ],
+        "bench": "phpbench run --report=aggregate"
     }
 }

@@ -3,194 +3,194 @@
 use PrettyPhp\Str;
 use PrettyPhp\Arr;
 
-describe('Str', function () {
-    it('can be constructed and get value', function () {
+describe('Str', function (): void {
+    it('can be constructed and get value', function (): void {
         $str = new Str('hello');
         expect($str->get())->toBe('hello');
     });
 
-    it('implements Stringable', function () {
+    it('implements Stringable', function (): void {
         $str = new Str('hello');
         expect((string) $str)->toBe('hello');
     });
 
-    it('can get length', function () {
-        expect((new Str('hello'))->length())->toBe(5);
-        expect((new Str(''))->length())->toBe(0);
-        expect((new Str('тест'))->length())->toBe(4); // multibyte
+    it('can get length', function (): void {
+        expect(new Str('hello')->length())->toBe(5);
+        expect(new Str('')->length())->toBe(0);
+        expect(new Str('тест')->length())->toBe(4); // multibyte
     });
 
-    it('can check if empty', function () {
-        expect((new Str(''))->isEmpty())->toBeTrue();
-        expect((new Str('hello'))->isEmpty())->toBeFalse();
+    it('can check if empty', function (): void {
+        expect(new Str('')->isEmpty())->toBeTrue();
+        expect(new Str('hello')->isEmpty())->toBeFalse();
     });
 
-    it('can check if not empty', function () {
-        expect((new Str(''))->isNotEmpty())->toBeFalse();
-        expect((new Str('hello'))->isNotEmpty())->toBeTrue();
+    it('can check if not empty', function (): void {
+        expect(new Str('')->isNotEmpty())->toBeFalse();
+        expect(new Str('hello')->isNotEmpty())->toBeTrue();
     });
 
-    it('can trim whitespace', function () {
-        expect((new Str('  hello  '))->trim()->get())->toBe('hello');
-        expect((new Str('xxhelloxx'))->trim('x')->get())->toBe('hello');
+    it('can trim whitespace', function (): void {
+        expect(new Str('  hello  ')->trim()->get())->toBe('hello');
+        expect(new Str('xxhelloxx')->trim('x')->get())->toBe('hello');
     });
 
-    it('can trim left', function () {
-        expect((new Str('  hello  '))->ltrim()->get())->toBe('hello  ');
-        expect((new Str('xxhelloxx'))->ltrim('x')->get())->toBe('helloxx');
+    it('can trim left', function (): void {
+        expect(new Str('  hello  ')->ltrim()->get())->toBe('hello  ');
+        expect(new Str('xxhelloxx')->ltrim('x')->get())->toBe('helloxx');
     });
 
-    it('can trim right', function () {
-        expect((new Str('  hello  '))->rtrim()->get())->toBe('  hello');
-        expect((new Str('xxhelloxx'))->rtrim('x')->get())->toBe('xxhello');
+    it('can trim right', function (): void {
+        expect(new Str('  hello  ')->rtrim()->get())->toBe('  hello');
+        expect(new Str('xxhelloxx')->rtrim('x')->get())->toBe('xxhello');
     });
 
-    it('can convert to uppercase', function () {
-        expect((new Str('hello'))->upper()->get())->toBe('HELLO');
-        expect((new Str('тест'))->upper()->get())->toBe('ТЕСТ');
+    it('can convert to uppercase', function (): void {
+        expect(new Str('hello')->upper()->get())->toBe('HELLO');
+        expect(new Str('тест')->upper()->get())->toBe('ТЕСТ');
     });
 
-    it('can convert to lowercase', function () {
-        expect((new Str('HELLO'))->lower()->get())->toBe('hello');
-        expect((new Str('ТЕСТ'))->lower()->get())->toBe('тест');
+    it('can convert to lowercase', function (): void {
+        expect(new Str('HELLO')->lower()->get())->toBe('hello');
+        expect(new Str('ТЕСТ')->lower()->get())->toBe('тест');
     });
 
-    it('can capitalize', function () {
-        expect((new Str('hello world'))->capitalize()->get())->toBe('Hello World');
+    it('can capitalize', function (): void {
+        expect(new Str('hello world')->capitalize()->get())->toBe('Hello World');
     });
 
-    it('can check if contains substring', function () {
-        expect((new Str('hello world'))->contains('world'))->toBeTrue();
-        expect((new Str('hello world'))->contains('foo'))->toBeFalse();
+    it('can check if contains substring', function (): void {
+        expect(new Str('hello world')->contains('world'))->toBeTrue();
+        expect(new Str('hello world')->contains('foo'))->toBeFalse();
     });
 
-    it('can check if starts with', function () {
-        expect((new Str('hello world'))->startsWith('hello'))->toBeTrue();
-        expect((new Str('hello world'))->startsWith('world'))->toBeFalse();
+    it('can check if starts with', function (): void {
+        expect(new Str('hello world')->startsWith('hello'))->toBeTrue();
+        expect(new Str('hello world')->startsWith('world'))->toBeFalse();
     });
 
-    it('can check if ends with', function () {
-        expect((new Str('hello world'))->endsWith('world'))->toBeTrue();
-        expect((new Str('hello world'))->endsWith('hello'))->toBeFalse();
+    it('can check if ends with', function (): void {
+        expect(new Str('hello world')->endsWith('world'))->toBeTrue();
+        expect(new Str('hello world')->endsWith('hello'))->toBeFalse();
     });
 
-    it('can replace text', function () {
-        expect((new Str('hello world'))->replace('world', 'universe')->get())
+    it('can replace text', function (): void {
+        expect(new Str('hello world')->replace('world', 'universe')->get())
             ->toBe('hello universe');
     });
 
-    it('can replace all text from array', function () {
+    it('can replace all text from array', function (): void {
         $str = new Str('hello world');
         $result = $str->replaceAll(['hello' => 'hi', 'world' => 'universe']);
         expect($result->get())->toBe('hi universe');
     });
 
-    it('can split string', function () {
-        $result = (new Str('a,b,c'))->split(',');
-        expect($result)->toBeInstanceOf(Arr::class);
-        expect($result->toArray())->toBe(['a', 'b', 'c']);
+    it('can split string', function (): void {
+        $arr = new Str('a,b,c')->split(',');
+        expect($arr)->toBeInstanceOf(Arr::class);
+        expect($arr->toArray())->toBe(['a', 'b', 'c']);
     });
 
-    it('can split string with limit', function () {
-        $result = (new Str('a,b,c,d'))->split(',', 2);
-        expect($result->toArray())->toBe(['a', 'b,c,d']);
+    it('can split string with limit', function (): void {
+        $arr = new Str('a,b,c,d')->split(',', 2);
+        expect($arr->toArray())->toBe(['a', 'b,c,d']);
     });
 
-    it('throws exception for empty delimiter', function () {
-        expect(fn() => (new Str('test'))->split(''))
+    it('throws exception for empty delimiter', function (): void {
+        expect(fn(): \PrettyPhp\Arr => new Str('test')->split(''))
             ->toThrow(InvalidArgumentException::class, 'Delimiter cannot be empty');
     });
 
-    it('can get substring', function () {
-        expect((new Str('hello'))->substring(1)->get())->toBe('ello');
-        expect((new Str('hello'))->substring(1, 3)->get())->toBe('ell');
-        expect((new Str('hello'))->substring(10)->get())->toBe('');
+    it('can get substring', function (): void {
+        expect(new Str('hello')->substring(1)->get())->toBe('ello');
+        expect(new Str('hello')->substring(1, 3)->get())->toBe('ell');
+        expect(new Str('hello')->substring(10)->get())->toBe('');
     });
 
-    it('can find index of substring', function () {
-        expect((new Str('hello world'))->indexOf('world'))->toBe(6);
-        expect((new Str('hello world'))->indexOf('foo'))->toBe(-1);
-        expect((new Str('hello world'))->indexOf('o', 5))->toBe(7);
+    it('can find index of substring', function (): void {
+        expect(new Str('hello world')->indexOf('world'))->toBe(6);
+        expect(new Str('hello world')->indexOf('foo'))->toBe(-1);
+        expect(new Str('hello world')->indexOf('o', 5))->toBe(7);
     });
 
-    it('can find last index of substring', function () {
-        expect((new Str('hello world'))->lastIndexOf('o'))->toBe(7);
-        expect((new Str('hello world'))->lastIndexOf('foo'))->toBe(-1);
+    it('can find last index of substring', function (): void {
+        expect(new Str('hello world')->lastIndexOf('o'))->toBe(7);
+        expect(new Str('hello world')->lastIndexOf('foo'))->toBe(-1);
     });
 
-    it('can repeat string', function () {
-        expect((new Str('ab'))->repeat(3)->get())->toBe('ababab');
-        expect((new Str('test'))->repeat(0)->get())->toBe('');
+    it('can repeat string', function (): void {
+        expect(new Str('ab')->repeat(3)->get())->toBe('ababab');
+        expect(new Str('test')->repeat(0)->get())->toBe('');
     });
 
-    it('can reverse string', function () {
-        expect((new Str('hello'))->reverse()->get())->toBe('olleh');
+    it('can reverse string', function (): void {
+        expect(new Str('hello')->reverse()->get())->toBe('olleh');
     });
 
-    it('can pad left', function () {
-        expect((new Str('5'))->padLeft(3, '0')->get())->toBe('005');
-        expect((new Str('hello'))->padLeft(8)->get())->toBe('   hello');
+    it('can pad left', function (): void {
+        expect(new Str('5')->padLeft(3, '0')->get())->toBe('005');
+        expect(new Str('hello')->padLeft(8)->get())->toBe('   hello');
     });
 
-    it('can pad right', function () {
-        expect((new Str('5'))->padRight(3, '0')->get())->toBe('500');
-        expect((new Str('hello'))->padRight(8)->get())->toBe('hello   ');
+    it('can pad right', function (): void {
+        expect(new Str('5')->padRight(3, '0')->get())->toBe('500');
+        expect(new Str('hello')->padRight(8)->get())->toBe('hello   ');
     });
 
-    it('can pad both sides', function () {
-        expect((new Str('hi'))->padBoth(6)->get())->toBe('  hi  ');
-        expect((new Str('test'))->padBoth(8, '-')->get())->toBe('--test--');
+    it('can pad both sides', function (): void {
+        expect(new Str('hi')->padBoth(6)->get())->toBe('  hi  ');
+        expect(new Str('test')->padBoth(8, '-')->get())->toBe('--test--');
     });
 
-    it('can check if alphabetic', function () {
-        expect((new Str('hello'))->isAlpha())->toBeTrue();
-        expect((new Str('hello123'))->isAlpha())->toBeFalse();
-        expect((new Str(''))->isAlpha())->toBeFalse();
+    it('can check if alphabetic', function (): void {
+        expect(new Str('hello')->isAlpha())->toBeTrue();
+        expect(new Str('hello123')->isAlpha())->toBeFalse();
+        expect(new Str('')->isAlpha())->toBeFalse();
     });
 
-    it('can check if numeric', function () {
-        expect((new Str('123'))->isNumeric())->toBeTrue();
-        expect((new Str('12.34'))->isNumeric())->toBeTrue();
-        expect((new Str('hello'))->isNumeric())->toBeFalse();
-        expect((new Str(''))->isNumeric())->toBeFalse();
+    it('can check if numeric', function (): void {
+        expect(new Str('123')->isNumeric())->toBeTrue();
+        expect(new Str('12.34')->isNumeric())->toBeTrue();
+        expect(new Str('hello')->isNumeric())->toBeFalse();
+        expect(new Str('')->isNumeric())->toBeFalse();
     });
 
-    it('can check if alphanumeric', function () {
-        expect((new Str('hello123'))->isAlphaNumeric())->toBeTrue();
-        expect((new Str('hello-123'))->isAlphaNumeric())->toBeFalse();
-        expect((new Str(''))->isAlphaNumeric())->toBeFalse();
+    it('can check if alphanumeric', function (): void {
+        expect(new Str('hello123')->isAlphaNumeric())->toBeTrue();
+        expect(new Str('hello-123')->isAlphaNumeric())->toBeFalse();
+        expect(new Str('')->isAlphaNumeric())->toBeFalse();
     });
 
-    it('can convert to array', function () {
-        $result = (new Str('abc'))->toArray();
-        expect($result)->toBeInstanceOf(Arr::class);
-        expect($result->toArray())->toBe(['a', 'b', 'c']);
+    it('can convert to array', function (): void {
+        $arr = new Str('abc')->toArray();
+        expect($arr)->toBeInstanceOf(Arr::class);
+        expect($arr->toArray())->toBe(['a', 'b', 'c']);
     });
 
-    it('can convert empty string to array', function () {
-        $result = (new Str(''))->toArray();
-        expect($result->toArray())->toBe([]);
+    it('can convert empty string to array', function (): void {
+        $arr = new Str('')->toArray();
+        expect($arr->toArray())->toBe([]);
     });
 
-    it('can match regex pattern', function () {
-        $result = (new Str('hello123'))->match('/\d+/');
+    it('can match regex pattern', function (): void {
+        $result = new Str('hello123')->match('/\d+/');
         expect($result)->toBeInstanceOf(Arr::class);
         expect($result->toArray())->toBe(['123']);
     });
 
-    it('returns null for non-matching pattern', function () {
-        $result = (new Str('hello'))->match('/\d+/');
+    it('returns null for non-matching pattern', function (): void {
+        $result = new Str('hello')->match('/\d+/');
         expect($result)->toBeNull();
     });
 
-    it('can match all regex patterns', function () {
-        $result = (new Str('hello123world456'))->matchAll('/\d+/');
-        expect($result)->toBeInstanceOf(Arr::class);
-        expect($result->toArray())->toBe([['123'], ['456']]);
+    it('can match all regex patterns', function (): void {
+        $arr = new Str('hello123world456')->matchAll('/\d+/');
+        expect($arr)->toBeInstanceOf(Arr::class);
+        expect($arr->toArray())->toBe([['123'], ['456']]);
     });
 
-    it('returns empty array for no matches in matchAll', function () {
-        $result = (new Str('hello'))->matchAll('/\d+/');
-        expect($result->toArray())->toBe([]);
+    it('returns empty array for no matches in matchAll', function (): void {
+        $arr = new Str('hello')->matchAll('/\d+/');
+        expect($arr->toArray())->toBe([]);
     });
 });
