@@ -2,8 +2,7 @@
   "permissions": {
     "allow": [
       "Bash(php:*)",
-      "Bash(composer:*)",
-      "Bash(XDEBUG_MODE=coverage composer test -- --coverage)"
+      "Bash(composer:*)"
     ],
     "deny": [],
     "ask": []

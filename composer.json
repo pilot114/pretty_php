@@ -47,6 +47,7 @@
     "prefer-stable": true,
     "scripts": {
         "test": "pest --compact",
+        "coverage": "XDEBUG_MODE=coverage pest --compact --coverage",
         "analyze": "phpstan analyse --memory-limit=1G",
         "rector": "rector process --dry-run",
         "rector-fix": "rector process",

@@ -109,6 +109,11 @@ readonly class File
      */
     public function write(string $content): self
     {
+        $dir = dirname($this->path);
+        if (!is_dir($dir)) {
+            throw new RuntimeException('Directory does not exist: ' . $dir);
+        }
+        
         $result = file_put_contents($this->path, $content);
         if ($result === false) {
             throw new RuntimeException('Unable to write file: ' . $this->path);
@@ -122,6 +127,11 @@ readonly class File
      */
     public function append(string $content): self
     {
+        $dir = dirname($this->path);
+        if (!is_dir($dir)) {
+            throw new RuntimeException('Directory does not exist: ' . $dir);
+        }
+        
         $result = file_put_contents($this->path, $content, FILE_APPEND);
         if ($result === false) {
             throw new RuntimeException('Unable to append to file: ' . $this->path);
@@ -151,6 +161,11 @@ readonly class File
         if (!$this->exists()) {
             throw new RuntimeException('Source file does not exist: ' . $this->path);
         }
+        
+        $destinationDir = dirname($destination);
+        if (!is_dir($destinationDir)) {
+            throw new RuntimeException('Destination directory does not exist: ' . $destinationDir);
+        }
 
         $result = copy($this->path, $destination);
         if (!$result) {
@@ -167,6 +182,11 @@ readonly class File
     {
         if (!$this->exists()) {
             throw new RuntimeException('Source file does not exist: ' . $this->path);
+        }
+        
+        $destinationDir = dirname($destination);
+        if (!is_dir($destinationDir)) {
+            throw new RuntimeException('Destination directory does not exist: ' . $destinationDir);
         }
 
         $result = rename($this->path, $destination);

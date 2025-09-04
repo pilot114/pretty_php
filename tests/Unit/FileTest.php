@@ -271,31 +271,29 @@ describe('File', function () {
     });
 
     it('throws exception when writing fails', function () {
-        // Try to write to a directory path (should fail)
-        expect(fn() => (new File($this->testDir))->write('content'))
-            ->toThrow(RuntimeException::class, 'Unable to write file');
+        $invalidFile = '/nonexistent/directory/file.txt';
+        expect(fn() => (new File($invalidFile))->write('content'))
+            ->toThrow(RuntimeException::class, 'Directory does not exist');
     });
 
     it('throws exception when appending fails', function () {
-        // Try to append to a directory path (should fail) 
-        expect(fn() => (new File($this->testDir))->append('content'))
-            ->toThrow(RuntimeException::class, 'Unable to append to file');
+        $invalidFile = '/nonexistent/directory/file.txt';
+        expect(fn() => (new File($invalidFile))->append('content'))
+            ->toThrow(RuntimeException::class, 'Directory does not exist');
     });
 
     it('throws exception when copy fails', function () {
         file_put_contents($this->testFile, 'test');
-        
-        // Try to copy to invalid destination
-        expect(fn() => (new File($this->testFile))->copy('/invalid/destination/path'))
-            ->toThrow(RuntimeException::class, 'Unable to copy file');
+        $invalidDestination = '/nonexistent/directory/copy.txt';
+        expect(fn() => (new File($this->testFile))->copy($invalidDestination))
+            ->toThrow(RuntimeException::class, 'Destination directory does not exist');
     });
 
     it('throws exception when move fails', function () {
         file_put_contents($this->testFile, 'test');
-        
-        // Try to move to invalid destination  
-        expect(fn() => (new File($this->testFile))->move('/invalid/destination/path'))
-            ->toThrow(RuntimeException::class, 'Unable to move file');
+        $invalidDestination = '/nonexistent/directory/moved.txt';
+        expect(fn() => (new File($this->testFile))->move($invalidDestination))
+            ->toThrow(RuntimeException::class, 'Destination directory does not exist');
     });
 
     it('throws exception when mime type detection fails', function () {
