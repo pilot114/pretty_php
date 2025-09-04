@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace PrettyPhp;
+namespace PrettyPhp\Base;
 
 use Closure;
 

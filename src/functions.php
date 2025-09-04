@@ -2,16 +2,15 @@
 
 declare(strict_types=1);
 
-use PrettyPhp\PrettyPhp;
-use PrettyPhp\Str;
-use PrettyPhp\Arr;
-use PrettyPhp\File;
-use PrettyPhp\Path;
+use PrettyPhp\Base\Arr;
+use PrettyPhp\Base\File;
+use PrettyPhp\Base\Path;
+use PrettyPhp\Base\Str;
 
 if (!function_exists('str')) {
     function str(string $value): Str
     {
-        return PrettyPhp::str($value);
+        return new Str($value);
     }
 }
 
@@ -23,20 +22,20 @@ if (!function_exists('arr')) {
      */
     function arr(array $value = []): Arr
     {
-        return PrettyPhp::arr($value);
+        return new Arr($value);
     }
 }
 
 if (!function_exists('file')) {
     function file(string $path): File
     {
-        return PrettyPhp::file($path);
+        return new File($path);
     }
 }
 
 if (!function_exists('path')) {
     function path(string $path): Path
     {
-        return PrettyPhp::path($path);
+        return new Path($path);
     }
 }

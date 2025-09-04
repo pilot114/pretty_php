@@ -8,7 +8,7 @@ use PhpBench\Attributes\AfterMethods;
 use PhpBench\Attributes\BeforeMethods;
 use PhpBench\Attributes\Iterations;
 use PhpBench\Attributes\Revs;
-use PrettyPhp\File;
+use PrettyPhp\Base\File;
 
 #[BeforeMethods('setUp')]
 #[AfterMethods('tearDown')]

@@ -7,7 +7,7 @@ namespace PrettyPhp\Tests\benchmarks;
 use PhpBench\Attributes\BeforeMethods;
 use PhpBench\Attributes\Iterations;
 use PhpBench\Attributes\Revs;
-use PrettyPhp\Path;
+use PrettyPhp\Base\Path;
 
 #[BeforeMethods('setUp')]
 class PathBench
@@ -27,7 +27,7 @@ class PathBench
             'C:\Windows\System32\notepad.exe', // Windows path
         ];
 
-        $this->pathObjects = array_map(fn(string $path): \PrettyPhp\Path => new Path($path), $this->paths);
+        $this->pathObjects = array_map(fn(string $path): \PrettyPhp\Base\Path => new Path($path), $this->paths);
     }
 
     #[Revs(10000)]

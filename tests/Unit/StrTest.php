@@ -1,7 +1,7 @@
 <?php
 
-use PrettyPhp\Str;
-use PrettyPhp\Arr;
+use PrettyPhp\Base\Arr;
+use PrettyPhp\Base\Str;
 
 describe('Str', function (): void {
     it('can be constructed and get value', function (): void {
@@ -97,7 +97,7 @@ describe('Str', function (): void {
     });
 
     it('throws exception for empty delimiter', function (): void {
-        expect(fn(): \PrettyPhp\Arr => new Str('test')->split(''))
+        expect(fn(): \PrettyPhp\Base\Arr => new Str('test')->split(''))
             ->toThrow(InvalidArgumentException::class, 'Delimiter cannot be empty');
     });
 

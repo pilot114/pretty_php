@@ -1,9 +1,9 @@
 <?php
 
-use PrettyPhp\File;
-use PrettyPhp\Str;
-use PrettyPhp\Arr;
-use PrettyPhp\Path;
+use PrettyPhp\Base\Arr;
+use PrettyPhp\Base\File;
+use PrettyPhp\Base\Path;
+use PrettyPhp\Base\Str;
 
 describe('File', function (): void {
     beforeEach(function (): void {
@@ -107,7 +107,7 @@ describe('File', function (): void {
     });
 
     it('throws exception when reading non-existent file', function (): void {
-        expect(fn(): \PrettyPhp\Str => new File($this->nonExistentFile)->read())
+        expect(fn(): \PrettyPhp\Base\Str => new File($this->nonExistentFile)->read())
             ->toThrow(RuntimeException::class, 'File does not exist');
     });
 
@@ -169,7 +169,7 @@ describe('File', function (): void {
     });
 
     it('throws exception when copying non-existent file', function (): void {
-        expect(fn(): \PrettyPhp\File => new File($this->nonExistentFile)->copy($this->testDir . '/copy.txt'))
+        expect(fn(): \PrettyPhp\Base\File => new File($this->nonExistentFile)->copy($this->testDir . '/copy.txt'))
             ->toThrow(RuntimeException::class, 'Source file does not exist');
     });
 
@@ -186,7 +186,7 @@ describe('File', function (): void {
     });
 
     it('throws exception when moving non-existent file', function (): void {
-        expect(fn(): \PrettyPhp\File => new File($this->nonExistentFile)->move($this->testDir . '/moved.txt'))
+        expect(fn(): \PrettyPhp\Base\File => new File($this->nonExistentFile)->move($this->testDir . '/moved.txt'))
             ->toThrow(RuntimeException::class, 'Source file does not exist');
     });
 
@@ -219,7 +219,7 @@ describe('File', function (): void {
     });
 
     it('throws exception for mime type of non-existent file', function (): void {
-        expect(fn(): \PrettyPhp\Str => new File($this->nonExistentFile)->mimeType())
+        expect(fn(): \PrettyPhp\Base\Str => new File($this->nonExistentFile)->mimeType())
             ->toThrow(RuntimeException::class, 'File does not exist');
     });
 
@@ -247,7 +247,7 @@ describe('File', function (): void {
     });
 
     it('throws exception for chmod on non-existent file', function (): void {
-        expect(fn(): \PrettyPhp\File => new File($this->nonExistentFile)->chmod(0644))
+        expect(fn(): \PrettyPhp\Base\File => new File($this->nonExistentFile)->chmod(0644))
             ->toThrow(RuntimeException::class, 'File does not exist');
     });
 
@@ -274,27 +274,27 @@ describe('File', function (): void {
 
     it('throws exception when writing fails', function (): void {
         $invalidFile = '/nonexistent/directory/file.txt';
-        expect(fn(): \PrettyPhp\File => new File($invalidFile)->write('content'))
+        expect(fn(): \PrettyPhp\Base\File => new File($invalidFile)->write('content'))
             ->toThrow(RuntimeException::class, 'Directory does not exist');
     });
 
     it('throws exception when appending fails', function (): void {
         $invalidFile = '/nonexistent/directory/file.txt';
-        expect(fn(): \PrettyPhp\File => new File($invalidFile)->append('content'))
+        expect(fn(): \PrettyPhp\Base\File => new File($invalidFile)->append('content'))
             ->toThrow(RuntimeException::class, 'Directory does not exist');
     });
 
     it('throws exception when copy fails', function (): void {
         file_put_contents($this->testFile, 'test');
         $invalidDestination = '/nonexistent/directory/copy.txt';
-        expect(fn(): \PrettyPhp\File => new File($this->testFile)->copy($invalidDestination))
+        expect(fn(): \PrettyPhp\Base\File => new File($this->testFile)->copy($invalidDestination))
             ->toThrow(RuntimeException::class, 'Destination directory does not exist');
     });
 
     it('throws exception when move fails', function (): void {
         file_put_contents($this->testFile, 'test');
         $invalidDestination = '/nonexistent/directory/moved.txt';
-        expect(fn(): \PrettyPhp\File => new File($this->testFile)->move($invalidDestination))
+        expect(fn(): \PrettyPhp\Base\File => new File($this->testFile)->move($invalidDestination))
             ->toThrow(RuntimeException::class, 'Destination directory does not exist');
     });
 

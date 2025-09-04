@@ -7,7 +7,7 @@ namespace PrettyPhp\Tests\benchmarks;
 use PhpBench\Attributes\BeforeMethods;
 use PhpBench\Attributes\Iterations;
 use PhpBench\Attributes\Revs;
-use PrettyPhp\Arr;
+use PrettyPhp\Base\Arr;
 
 #[BeforeMethods('setUp')]
 class ArrBench

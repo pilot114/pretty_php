@@ -1,9 +1,9 @@
 <?php
 
-use PrettyPhp\Path;
-use PrettyPhp\File;
-use PrettyPhp\Str;
-use PrettyPhp\Arr;
+use PrettyPhp\Base\Arr;
+use PrettyPhp\Base\File;
+use PrettyPhp\Base\Path;
+use PrettyPhp\Base\Str;
 
 describe('Path', function (): void {
     beforeEach(function (): void {
@@ -174,7 +174,7 @@ describe('Path', function (): void {
         $filePath = $this->testDir . '/file.txt';
         touch($filePath);
 
-        expect(fn(): \PrettyPhp\Arr => new Path($filePath)->listFiles())
+        expect(fn(): \PrettyPhp\Base\Arr => new Path($filePath)->listFiles())
             ->toThrow(RuntimeException::class, 'Path is not a directory');
     });
 

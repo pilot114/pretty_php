@@ -7,7 +7,7 @@ namespace PrettyPhp\Tests\benchmarks;
 use PhpBench\Attributes\BeforeMethods;
 use PhpBench\Attributes\Iterations;
 use PhpBench\Attributes\Revs;
-use PrettyPhp\Str;
+use PrettyPhp\Base\Str;
 
 #[BeforeMethods('setUp')]
 class StrBench

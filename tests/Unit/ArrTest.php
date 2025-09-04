@@ -1,7 +1,7 @@
 <?php
 
-use PrettyPhp\Arr;
-use PrettyPhp\Str;
+use PrettyPhp\Base\Arr;
+use PrettyPhp\Base\Str;
 
 describe('Arr', function (): void {
     it('can be constructed and get value', function (): void {
@@ -192,7 +192,7 @@ describe('Arr', function (): void {
     });
 
     it('throws exception for invalid chunk size', function (): void {
-        expect(fn(): \PrettyPhp\Arr => new Arr([1, 2, 3])->chunk(0))
+        expect(fn(): \PrettyPhp\Base\Arr => new Arr([1, 2, 3])->chunk(0))
             ->toThrow(InvalidArgumentException::class, 'Chunk size must be at least 1');
     });
 
