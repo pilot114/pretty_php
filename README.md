@@ -36,10 +36,9 @@ echo $result; // "HELLO"
 ### String Manipulation
 
 ```php
-use PrettyPhp\PrettyPhp;
 
 // Create a string wrapper
-$text = PrettyPhp::str('  Hello World  ');
+$text = str('  Hello World  ');
 
 // Chain operations
 $result = $text
@@ -51,13 +50,13 @@ $result = $text
 echo $result; // "HELLO PHP"
 
 // String analysis
-$email = PrettyPhp::str('user@example.com');
+$email = str('user@example.com');
 if ($email->contains('@') && $email->endsWith('.com')) {
     echo "Valid email format";
 }
 
 // String splitting and manipulation
-$csv = PrettyPhp::str('apple,banana,cherry');
+$csv = str('apple,banana,cherry');
 $fruits = $csv->split(',');
 echo $fruits->join(' | '); // "apple | banana | cherry"
 ```
@@ -65,10 +64,9 @@ echo $fruits->join(' | '); // "apple | banana | cherry"
 ### Array Manipulation
 
 ```php
-use PrettyPhp\PrettyPhp;
 
 // Create array wrapper
-$numbers = PrettyPhp::arr([1, 2, 3, 4, 5]);
+$numbers = arr([1, 2, 3, 4, 5]);
 
 // Functional programming style
 $result = $numbers
@@ -79,12 +77,12 @@ $result = $numbers
 echo $result; // "4, 8"
 
 // Array utilities
-$data = PrettyPhp::arr(['apple', 'banana', 'apple', 'cherry']);
+$data = arr(['apple', 'banana', 'apple', 'cherry']);
 $unique = $data->unique()->sort();
 echo $unique->join(', '); // "apple, banana, cherry"
 
 // Statistical functions
-$scores = PrettyPhp::arr([85, 92, 78, 96, 88]);
+$scores = arr([85, 92, 78, 96, 88]);
 echo $scores->average(); // 87.8
 echo $scores->max();     // 96
 ```
@@ -92,10 +90,9 @@ echo $scores->max();     // 96
 ### File Operations
 
 ```php
-use PrettyPhp\PrettyPhp;
 
 // File reading and writing
-$file = PrettyPhp::file('/path/to/file.txt');
+$file = file('/path/to/file.txt');
 
 if ($file->exists()) {
     $content = $file->read();
@@ -118,10 +115,9 @@ $file->move('/path/to/new/location.txt');
 ### Path Manipulation
 
 ```php
-use PrettyPhp\PrettyPhp;
 
 // Path operations
-$path = PrettyPhp::path('/home/user/documents');
+$path = path('/home/user/documents');
 
 // Build paths
 $filePath = $path->join('projects', 'myapp', 'config.php');
@@ -136,7 +132,7 @@ if ($path->exists() && $path->isDirectory()) {
 }
 
 // Path transformations
-$configPath = PrettyPhp::path('config.json');
+$configPath = path('config.json');
 $backupPath = $configPath->withExtension('backup.json');
 echo $backupPath; // "config.backup.json"
 ```
@@ -144,10 +140,9 @@ echo $backupPath; // "config.backup.json"
 ### Method Chaining Examples
 
 ```php
-use PrettyPhp\PrettyPhp;
 
 // Complex string processing
-$result = PrettyPhp::str('  HELLO,WORLD,HOW,ARE,YOU  ')
+$result = str('  HELLO,WORLD,HOW,ARE,YOU  ')
     ->trim()
     ->lower()
     ->split(',')
@@ -158,7 +153,7 @@ $result = PrettyPhp::str('  HELLO,WORLD,HOW,ARE,YOU  ')
 echo $result; // "Hi World How Are You"
 
 // Data processing pipeline
-$data = PrettyPhp::arr([
+$data = arr([
     ['name' => 'John', 'age' => 25],
     ['name' => 'Jane', 'age' => 30],
     ['name' => 'Bob', 'age' => 20]
@@ -177,10 +172,10 @@ echo $names; // "Jane, John"
 
 ```php
 // Pretty PHP objects can be easily converted back to native PHP types
-$prettyArray = PrettyPhp::arr([1, 2, 3, 4]);
+$prettyArray = arr([1, 2, 3, 4]);
 $nativeArray = $prettyArray->toArray(); // Returns native PHP array
 
-$prettyString = PrettyPhp::str('Hello');
+$prettyString = str('Hello');
 $nativeString = $prettyString->get(); // Returns native PHP string
 $nativeString = (string) $prettyString; // Also works with type casting
 ```

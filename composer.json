@@ -13,7 +13,9 @@
     "require": {
         "php": ">=8.4",
         "ext-ctype": "*",
-        "ext-fileinfo": "*"
+        "ext-fileinfo": "*",
+        "ext-sockets": "*",
+        "ext-posix": "*"
     },
     "require-dev": {
         "pestphp/pest": "^4.0",
@@ -57,12 +59,12 @@
         "rector-fix": "rector process",
         "style": "phpcs --standard=PSR12 src/ tests/",
         "style-fix": "phpcbf --standard=PSR12 src/ tests/",
-        "quality": [
+        "check": [
             "@analyze",
             "@rector",
             "@style"
         ],
-        "quality-fix": [
+        "fix": [
             "@rector-fix",
             "@style-fix"
         ],
