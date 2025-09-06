@@ -4,6 +4,8 @@ namespace PrettyPhp\Binary;
 
 class ICMPPacket
 {
+    use Checksum;
+
     public function __construct(
         #[Binary('C')] // 1 байт для типа сообщения ICMP
         public int $type,
@@ -19,32 +21,7 @@ class ICMPPacket
         public string $data = '',
     ) {
         if ($checksum === 0) {
-            $this->checksum = $this->calculateChecksum();
+            $this->checksum = $this->calculate(clone $this);
         }
-    }
-
-    /**
-     * Рассчитывает контрольную сумму ICMP-пакета
-     */
-    private function calculateChecksum(): int
-    {
-        // Create a copy with checksum set to 0 to avoid circular dependency
-        $temp = clone $this;
-        $temp->checksum = 0;
-
-        $packetWithoutChecksum = BinarySerializer::pack($temp);
-
-        $bitLength = strlen($packetWithoutChecksum);
-        $checksum = 0;
-
-        for ($i = 0; $i < $bitLength; $i += 2) {
-            $word = ord($packetWithoutChecksum[$i]) << 8 | ord($packetWithoutChecksum[$i + 1]);
-            $checksum += $word;
-        }
-
-        $checksum = ($checksum >> 16) + ($checksum & 0xFFFF);
-        $checksum += ($checksum >> 16);
-
-        return ~$checksum & 0xFFFF;
     }
 }

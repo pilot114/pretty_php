@@ -4,7 +4,7 @@ require_once __DIR__ . '/../vendor/autoload.php';
 
 use PrettyPhp\Binary\ICMPPacket;
 use PrettyPhp\Binary\IPPacket;
-use PrettyPhp\Binary\BinarySerializer;
+use PrettyPhp\Binary\Binary;
 
 function sendICMPRequest(string $host, ICMPPacket $packet): array
 {
@@ -19,7 +19,7 @@ function sendICMPRequest(string $host, ICMPPacket $packet): array
     }
 
     try {
-        $packetData = BinarySerializer::pack($packet);
+        $packetData = Binary::pack($packet);
     } catch (Exception $e) {
         socket_close($socket);
         die('Failed to serialize packet: ' . $e->getMessage() . "\n");
@@ -78,7 +78,7 @@ function sendIPPacket(string $host, IPPacket $packet): void
     }
 
     try {
-        $binaryData = BinarySerializer::pack($packet);
+        $binaryData = Binary::pack($packet);
     } catch (Exception $e) {
         socket_close($socket);
         die('Failed to serialize packet: ' . $e->getMessage() . "\n");
@@ -133,7 +133,7 @@ $request = new ICMPPacket(
 
 $result = sendICMPRequest('142.251.39.78', $request);
 
-$response = BinarySerializer::unpack($result['icmp_header'], ICMPPacket::class);
+$response = Binary::unpack($result['icmp_header'], ICMPPacket::class);
 var_dump($request);
 var_dump($response);
 
@@ -151,7 +151,7 @@ $ipPacket = new IPPacket(
     flagsAndFragmentOffset: ($flags << 13) | $fragmentOffset,
     ttl: 256,  // Стандартное время жизни
     protocol: 1,  // Протокол ICMP
-    headerChecksum: 0,
+    checksum: 0,
     sourceIp: (int) ip2long('192.168.1.100'),  // IP-адрес источника (например, локальная сеть)
     destinationIp: (int) ip2long('8.8.8.8'),   // IP-адрес назначения (например, Google DNS)
     data: str_repeat("\x00", 20),
