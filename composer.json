@@ -4,12 +4,6 @@
     "type": "library",
     "keywords": ["php", "standard-library", "oop", "wrapper", "utility"],
     "license": "MIT",
-    "authors": [
-        {
-            "name": "Pretty PHP Contributors",
-            "email": "contributors@prettyph.dev"
-        }
-    ],
     "require": {
         "php": ">=8.4",
         "ext-ctype": "*",
@@ -38,7 +32,8 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "PrettyPhp\\Tests\\": "tests/"
+            "PrettyPhp\\Tests\\": "tests/",
+            "Tests\\Support\\": "tests/Support/"
         }
     },
     "config": {
@@ -54,19 +49,14 @@
     "scripts": {
         "test": "pest --compact",
         "coverage": "XDEBUG_MODE=coverage pest --compact --coverage",
-        "analyze": "phpstan analyse --memory-limit=1G",
-        "rector": "rector process --dry-run",
-        "rector-fix": "rector process",
-        "style": "phpcs --standard=PSR12 src/ tests/",
-        "style-fix": "phpcbf --standard=PSR12 src/ tests/",
         "check": [
-            "@analyze",
-            "@rector",
-            "@style"
+            "phpstan analyse --memory-limit=1G",
+            "rector process --dry-run",
+            "phpcs --standard=PSR12 src/ tests/"
         ],
         "fix": [
-            "@rector-fix",
-            "@style-fix"
+            "rector process",
+            "phpcbf --standard=PSR12 src/ tests/"
         ],
         "bench": "phpbench run --report=aggregate"
     }

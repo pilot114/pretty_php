@@ -7,7 +7,7 @@ describe('Arr', function (): void {
     it('can be constructed and get value', function (): void {
         $arr = new Arr([1, 2, 3]);
         expect($arr->get())->toBe([1, 2, 3]);
-        expect($arr->toArray())->toBe([1, 2, 3]);
+        expect($arr->get())->toBe([1, 2, 3]);
     });
 
     it('can count elements', function (): void {
@@ -37,7 +37,7 @@ describe('Arr', function (): void {
 
     it('can push element', function (): void {
         $arr = new Arr([1, 2])->push(3);
-        expect($arr->toArray())->toBe([1, 2, 3]);
+        expect($arr->get())->toBe([1, 2, 3]);
         expect($arr)->not->toBe(new Arr([1, 2])); // immutable
     });
 
@@ -53,7 +53,7 @@ describe('Arr', function (): void {
 
     it('can unshift element', function (): void {
         $arr = new Arr([2, 3])->unshift(1);
-        expect($arr->toArray())->toBe([1, 2, 3]);
+        expect($arr->get())->toBe([1, 2, 3]);
     });
 
     it('can check if contains element', function (): void {
@@ -69,62 +69,62 @@ describe('Arr', function (): void {
 
     it('can slice array', function (): void {
         $arr = new Arr([1, 2, 3, 4, 5])->slice(1, 3);
-        expect($arr->toArray())->toBe([2, 3, 4]);
+        expect($arr->get())->toBe([2, 3, 4]);
     });
 
     it('can slice array without length', function (): void {
         $arr = new Arr([1, 2, 3, 4, 5])->slice(2);
-        expect($arr->toArray())->toBe([3, 4, 5]);
+        expect($arr->get())->toBe([3, 4, 5]);
     });
 
     it('can splice array', function (): void {
         $arr = new Arr([1, 2, 3, 4])->splice(1, 2, [10, 20]);
-        expect($arr->toArray())->toBe([1, 10, 20, 4]);
+        expect($arr->get())->toBe([1, 10, 20, 4]);
     });
 
     it('can merge arrays', function (): void {
         $arr = new Arr([1, 2])->merge([3, 4]);
-        expect($arr->toArray())->toBe([1, 2, 3, 4]);
+        expect($arr->get())->toBe([1, 2, 3, 4]);
     });
 
     it('can get unique values', function (): void {
         $arr = new Arr([1, 2, 2, 3, 3])->unique();
-        expect($arr->toArray())->toBe([0 => 1, 1 => 2, 3 => 3]);
+        expect($arr->get())->toBe([0 => 1, 1 => 2, 3 => 3]);
     });
 
     it('can reverse array', function (): void {
         $arr = new Arr([1, 2, 3])->reverse();
-        expect($arr->toArray())->toBe([3, 2, 1]);
+        expect($arr->get())->toBe([3, 2, 1]);
     });
 
     it('can sort array', function (): void {
         $arr = new Arr([3, 1, 2])->sort();
-        expect($arr->toArray())->toBe([1, 2, 3]);
+        expect($arr->get())->toBe([1, 2, 3]);
     });
 
     it('can sort array with callback', function (): void {
         $arr = new Arr([3, 1, 2])->sort(fn($a, $b): int => $b <=> $a);
-        expect($arr->toArray())->toBe([3, 2, 1]);
+        expect($arr->get())->toBe([3, 2, 1]);
     });
 
     it('can filter array', function (): void {
         $arr = new Arr([1, 2, 3, 4])->filter(fn($x): bool => $x > 2);
-        expect($arr->toArray())->toBe([2 => 3, 3 => 4]);
+        expect($arr->get())->toBe([2 => 3, 3 => 4]);
     });
 
     it('can filter array with default filter', function (): void {
         $arr = new Arr([0, 1, '', 'hello', false, null, []])->filter();
-        expect($arr->toArray())->toBe([1 => 1, 3 => 'hello']);
+        expect($arr->get())->toBe([1 => 1, 3 => 'hello']);
     });
 
     it('can map array', function (): void {
         $arr = new Arr([1, 2, 3])->map(fn($x): int => $x * 2);
-        expect($arr->toArray())->toBe([2, 4, 6]);
+        expect($arr->get())->toBe([2, 4, 6]);
     });
 
     it('can map with key', function (): void {
         $arr = new Arr(['a' => 1, 'b' => 2])->map(fn($value, $key): string => $key . $value);
-        expect($arr->toArray())->toBe(['a' => 'a1', 'b' => 'b2']);
+        expect($arr->get())->toBe(['a' => 'a1', 'b' => 'b2']);
     });
 
     it('can reduce array', function (): void {
@@ -168,27 +168,27 @@ describe('Arr', function (): void {
 
     it('can get keys', function (): void {
         $arr = new Arr(['a' => 1, 'b' => 2])->keys();
-        expect($arr->toArray())->toBe(['a', 'b']);
+        expect($arr->get())->toBe(['a', 'b']);
     });
 
     it('can get values', function (): void {
         $arr = new Arr(['a' => 1, 'b' => 2])->values();
-        expect($arr->toArray())->toBe([1, 2]);
+        expect($arr->get())->toBe([1, 2]);
     });
 
     it('can flip array', function (): void {
         $arr = new Arr(['a' => 1, 'b' => 2])->flip();
-        expect($arr->toArray())->toBe([1 => 'a', 2 => 'b']);
+        expect($arr->get())->toBe([1 => 'a', 2 => 'b']);
     });
 
     it('can flip array with mixed values', function (): void {
         $arr = new Arr(['a', 'b', 1.5, new stdClass()])->flip();
-        expect($arr->toArray())->toBe(['a' => 0, 'b' => 1]); // only strings and ints
+        expect($arr->get())->toBe(['a' => 0, 'b' => 1]); // only strings and ints
     });
 
     it('can chunk array', function (): void {
         $arr = new Arr([1, 2, 3, 4, 5])->chunk(2);
-        expect($arr->toArray())->toBe([[1, 2], [3, 4], [5]]);
+        expect($arr->get())->toBe([[1, 2], [3, 4], [5]]);
     });
 
     it('throws exception for invalid chunk size', function (): void {
@@ -215,7 +215,7 @@ describe('Arr', function (): void {
         ]);
 
         $result = $arr->groupBy(fn($item): string => $item['type']);
-        $grouped = $result->toArray();
+        $grouped = $result->get();
 
         expect($grouped['fruit'])->toHaveCount(2);
         expect($grouped['veggie'])->toHaveCount(1);
@@ -223,12 +223,12 @@ describe('Arr', function (): void {
 
     it('can flatten array', function (): void {
         $arr = new Arr([1, [2, 3], [4, [5]]])->flatten();
-        expect($arr->toArray())->toBe([1, 2, 3, 4, [5]]);
+        expect($arr->get())->toBe([1, 2, 3, 4, [5]]);
     });
 
     it('can flatten array with depth', function (): void {
         $arr = new Arr([1, [2, [3, [4]]]])->flatten(2);
-        expect($arr->toArray())->toBe([1, 2, 3, [4]]);
+        expect($arr->get())->toBe([1, 2, 3, [4]]);
     });
 
     it('can get minimum value', function (): void {

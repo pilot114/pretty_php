@@ -105,6 +105,32 @@ readonly class File
     }
 
     /**
+     * Read file line by line using a generator for memory efficiency
+     *
+     * @throws RuntimeException
+     * @return \Generator<int, string>
+     */
+    public function readLinesGenerator(): \Generator
+    {
+        if (!$this->exists()) {
+            throw new RuntimeException('File does not exist: ' . $this->path);
+        }
+
+        $handle = fopen($this->path, 'r');
+        if ($handle === false) {
+            throw new RuntimeException('Unable to open file: ' . $this->path);
+        }
+
+        try {
+            while (($line = fgets($handle)) !== false) {
+                yield rtrim($line, "\r\n");
+            }
+        } finally {
+            fclose($handle);
+        }
+    }
+
+    /**
      * @throws RuntimeException
      */
     public function write(string $content): self

@@ -173,12 +173,68 @@ echo $names; // "Jane, John"
 ```php
 // Pretty PHP objects can be easily converted back to native PHP types
 $prettyArray = arr([1, 2, 3, 4]);
-$nativeArray = $prettyArray->toArray(); // Returns native PHP array
+$nativeArray = $prettyArray->get(); // Returns native PHP array
 
 $prettyString = str('Hello');
 $nativeString = $prettyString->get(); // Returns native PHP string
 $nativeString = (string) $prettyString; // Also works with type casting
 ```
+
+### Binary Data Operations
+
+The Binary system provides tools for working with binary data structures, particularly useful for network protocols and packet manipulation.
+
+```php
+use PrettyPhp\Binary\Binary;
+use PrettyPhp\Binary\IPPacket;
+use PrettyPhp\Binary\ICMPPacket;
+
+// Create an ICMP packet structure
+$icmpPacket = new ICMPPacket(
+    type: 8,                          // Echo Request
+    code: 0,                          // Standard code
+    identifier: random_int(0, 65535), // Random ID
+    sequenceNumber: 1,                // Sequence number
+    data: str_repeat("\x00", 32)      // 32 bytes of data
+);
+
+// Pack to binary format
+$binaryData = Binary::pack($icmpPacket);
+echo bin2hex($binaryData); // Raw binary data as hex
+
+// Unpack from binary format
+$parsedPacket = Binary::unpack($binaryData, ICMPPacket::class);
+
+// Create IP packet with nested ICMP data
+$version = 4;         // IPv4
+$ihl = 5;             // Header length (20 bytes)
+$flags = 2;           // Don't Fragment flag
+
+$ipPacket = new IPPacket(
+    versionAndHeaderLength: ($version << 4) | $ihl,
+    typeOfService: 0,
+    totalLength: 60,                       // Total packet length
+    identification: random_int(0, 65535),
+    flagsAndFragmentOffset: ($flags << 13),
+    ttl: 64,                              // Time to live
+    protocol: 1,                          // ICMP protocol
+    sourceIp: (int) ip2long('192.168.1.1'),
+    destinationIp: (int) ip2long('8.8.8.8'),
+    data: Binary::pack($icmpPacket)       // Nested ICMP packet
+);
+
+$ipBinaryData = Binary::pack($ipPacket);
+```
+
+**Binary Format Attributes:**
+- Use `#[Binary('8')]` for 8-bit unsigned integers (1 byte)
+- Use `#[Binary('16')]` or `#[Binary('n')]` for 16-bit big-endian (2 bytes)  
+- Use `#[Binary('32')]` or `#[Binary('N')]` for 32-bit big-endian (4 bytes)
+- Use `#[Binary('A*')]` for variable-length strings
+- Use `#[Binary(ClassName::class)]` for nested structures
+
+**Checksum Calculation:**
+Both IP and ICMP packets automatically calculate checksums using the `Checksum` trait when checksum is set to 0 in the constructor.
 
 ## API Reference
 
@@ -218,7 +274,7 @@ $nativeString = (string) $prettyString; // Also works with type casting
 - `exists()` / `isFile()` / `isDirectory()`: File checking
 - `isReadable()` / `isWritable()`: Permission checking
 - `size()` / `lastModified()`: File information
-- `read()` / `readLines()`: File reading
+- `read()` / `readLines() / readLinesGenerator()`: File reading
 - `write()` / `append()`: File writing
 - `delete()` / `copy()` / `move()`: File operations
 - `extension()` / `basename()` / `dirname()`: Path components
@@ -240,16 +296,16 @@ $nativeString = (string) $prettyString; // Also works with type casting
 # Install dependencies
 composer install
 
-# Run tests
+# Run tests, check code coverage
 composer test
-
-# Code style check
-composer style
+composer coverage
 
 # Static analysis
-composer analyze
+composer check
+
+# Static analysis with fixes
+composer fix
+
+# run benchmarks
+composer bench
 ```
-
-## License
-
-MIT License

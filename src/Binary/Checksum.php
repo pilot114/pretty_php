@@ -6,14 +6,19 @@ trait Checksum
 {
     public static function calculate(object $object): int
     {
-        $object->checksum = 0;
+        if (property_exists($object, 'checksum')) {
+            $object->checksum = 0;
+        }
+
         $headerWithoutChecksum = Binary::pack($object);
 
         $checksum = 0;
         $bitLength = strlen($headerWithoutChecksum);
 
         for ($i = 0; $i < $bitLength; $i += 2) {
-            $word = ord($headerWithoutChecksum[$i]) << 8 | ord($headerWithoutChecksum[$i + 1]);
+            $byte1 = ord($headerWithoutChecksum[$i]);
+            $byte2 = isset($headerWithoutChecksum[$i + 1]) ? ord($headerWithoutChecksum[$i + 1]) : 0;
+            $word = $byte1 << 8 | $byte2;
             $checksum += $word;
         }
 

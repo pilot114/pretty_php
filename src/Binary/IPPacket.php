@@ -31,7 +31,7 @@ class IPPacket
         public string $data = '',
     ) {
         if ($checksum === 0) {
-            $this->checksum = $this->calculate(clone $this);
+            $this->checksum = static::calculate(clone $this);
         }
     }
 }

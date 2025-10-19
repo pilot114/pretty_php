@@ -21,7 +21,6 @@ return RectorConfig::configure()
         SetList::CODING_STYLE,
         SetList::DEAD_CODE,
         SetList::STRICT_BOOLEANS,
-        SetList::NAMING,
         SetList::PRIVATIZATION,
         SetList::TYPE_DECLARATION,
         SetList::EARLY_RETURN,

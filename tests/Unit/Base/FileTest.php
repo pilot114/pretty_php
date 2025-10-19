@@ -116,7 +116,112 @@ describe('File', function (): void {
 
         $arr = new File($this->testFile)->readLines();
         expect($arr)->toBeInstanceOf(Arr::class);
-        expect($arr->toArray())->toBe(['line1', 'line2', 'line3']);
+        expect($arr->get())->toBe(['line1', 'line2', 'line3']);
+    });
+
+    it('can read file lines using generator', function (): void {
+        file_put_contents($this->testFile, "line1\nline2\nline3");
+
+        $generator = new File($this->testFile)->readLinesGenerator();
+        expect($generator)->toBeInstanceOf(\Generator::class);
+
+        $lines = iterator_to_array($generator);
+        expect($lines)->toBe(['line1', 'line2', 'line3']);
+    });
+
+    it('can read large file using generator without loading all into memory', function (): void {
+        // Create a file with many lines
+        $lines = [];
+        for ($i = 0; $i < 1000; $i++) {
+            $lines[] = 'Line number ' . $i;
+        }
+
+        file_put_contents($this->testFile, implode("\n", $lines));
+
+        $generator = new File($this->testFile)->readLinesGenerator();
+        $count = 0;
+        $firstLine = null;
+        $lastLine = null;
+
+        foreach ($generator as $line) {
+            if ($count === 0) {
+                $firstLine = $line;
+            }
+
+            $lastLine = $line;
+            $count++;
+        }
+
+        expect($count)->toBe(1000);
+        expect($firstLine)->toBe('Line number 0');
+        expect($lastLine)->toBe('Line number 999');
+    });
+
+    it('can handle empty file with generator', function (): void {
+        file_put_contents($this->testFile, '');
+
+        $generator = new File($this->testFile)->readLinesGenerator();
+        $lines = iterator_to_array($generator);
+
+        expect($lines)->toBe([]);
+    });
+
+    it('can handle file with single line and no newline with generator', function (): void {
+        file_put_contents($this->testFile, 'single line');
+
+        $generator = new File($this->testFile)->readLinesGenerator();
+        $lines = iterator_to_array($generator);
+
+        expect($lines)->toBe(['single line']);
+    });
+
+    it('can handle file with Windows line endings with generator', function (): void {
+        file_put_contents($this->testFile, "line1\r\nline2\r\nline3");
+
+        $generator = new File($this->testFile)->readLinesGenerator();
+        $lines = iterator_to_array($generator);
+
+        expect($lines)->toBe(['line1', 'line2', 'line3']);
+    });
+
+    it('can handle file with mixed line endings with generator', function (): void {
+        file_put_contents($this->testFile, "line1\nline2\r\nline3");
+
+        $generator = new File($this->testFile)->readLinesGenerator();
+        $lines = iterator_to_array($generator);
+
+        expect($lines)->toBe(['line1', 'line2', 'line3']);
+    });
+
+    it('throws exception when reading non-existent file with generator', function (): void {
+        expect(function (): void {
+            $generator = new File($this->nonExistentFile)->readLinesGenerator();
+            // Force generator execution
+            iterator_to_array($generator);
+        })->toThrow(RuntimeException::class, 'File does not exist');
+    });
+
+    it('closes file handle even when generator is not fully consumed', function (): void {
+        file_put_contents($this->testFile, "line1\nline2\nline3\nline4\nline5");
+
+        $generator = new File($this->testFile)->readLinesGenerator();
+
+        // Only consume first 2 lines
+        $lines = [];
+        $count = 0;
+        foreach ($generator as $line) {
+            $lines[] = $line;
+            $count++;
+            if ($count === 2) {
+                break;
+            }
+        }
+
+        expect($lines)->toBe(['line1', 'line2']);
+
+        // File should be accessible again (handle was closed)
+        $content = file_get_contents($this->testFile);
+        expect($content)->toBe("line1\nline2\nline3\nline4\nline5");
     });
 
     it('can write file content', function (): void {

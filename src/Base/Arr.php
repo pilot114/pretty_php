@@ -62,14 +62,6 @@ class Arr
         return $this->value;
     }
 
-    /**
-     * @return array<int|string, T>
-     */
-    public function toArray(): array
-    {
-        return $this->value;
-    }
-
     public function count(): int
     {
         return count($this->value);
@@ -319,13 +311,7 @@ class Arr
      */
     public function every(Closure $callback): bool
     {
-        foreach ($this->value as $key => $value) {
-            if (!$callback($value, $key)) {
-                return false;
-            }
-        }
-
-        return true;
+        return array_all($this->value, fn($value, $key) => $callback($value, $key));
     }
 
     /**

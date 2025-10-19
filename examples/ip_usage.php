@@ -5,6 +5,7 @@ require_once __DIR__ . '/../vendor/autoload.php';
 use PrettyPhp\Binary\ICMPPacket;
 use PrettyPhp\Binary\IPPacket;
 use PrettyPhp\Binary\Binary;
+use PrettyPhp\Binary\HexPrint;
 
 function sendICMPRequest(string $host, ICMPPacket $packet): array
 {
@@ -25,7 +26,8 @@ function sendICMPRequest(string $host, ICMPPacket $packet): array
         die('Failed to serialize packet: ' . $e->getMessage() . "\n");
     }
 
-    echo sprintf("%s >>> %s\n", strlen($packetData), bin2hex($packetData));
+    echo sprintf(">>> %d bytes\n", strlen($packetData));
+    echo HexPrint::dump($packetData) . "\n";
 
     // Send ICMP request
     if (socket_sendto($socket, $packetData, strlen($packetData), 0, $host, 0) === false) {
@@ -47,7 +49,9 @@ function sendICMPRequest(string $host, ICMPPacket $packet): array
     }
 
     socket_close($socket);
-    echo sprintf("%s <<< %s\n", strlen($buffer), bin2hex($buffer));
+
+    echo sprintf("<<< %d bytes\n", strlen($buffer));
+    echo HexPrint::dump($buffer) . "\n";
 
     // TODO: response common format
     return [
@@ -84,6 +88,9 @@ function sendIPPacket(string $host, IPPacket $packet): void
         die('Failed to serialize packet: ' . $e->getMessage() . "\n");
     }
 
+    echo sprintf(">>> %d bytes\n", strlen($binaryData));
+    echo HexPrint::dump($binaryData) . "\n";
+
     // Send packet
     if (socket_sendto($socket, $binaryData, strlen($binaryData), 0, $host, 0) === false) {
         socket_close($socket);
@@ -95,17 +102,21 @@ function sendIPPacket(string $host, IPPacket $packet): void
         "usec" => 0,
     ]);
 
-    echo "Packet sent successfully!\n";
+    echo "\nPacket sent successfully!\n";
 
     $buffer = '';
     if (socket_recvfrom($socket, $buffer, 1024, 0, $sourceAddress, $sourcePort) !== false) {
-        echo "Received response from: $sourceAddress\n";
+        echo "\n=== Received IP Response ===\n";
+        echo "From: $sourceAddress\n";
+        echo sprintf("<<< %d bytes\n", strlen($buffer));
+        echo HexPrint::dump($buffer) . "\n";
 
         // Parse IP header
         $ipHeader = substr($buffer, 0, 20);  // First 20 bytes are IP header
         $ipData = unpack('CversionAndIHL/Ctos/nlength/nid/nflagsAndOffset/Cttl/Cprotocol/nchecksum/NsourceIp/NdestinationIp', $ipHeader);
 
         if ($ipData !== false) {
+            echo "\n=== IP Header Details ===\n";
             echo "Version: " . ($ipData['versionAndIHL'] >> 4) . "\n";
             echo "TTL: " . $ipData['ttl'] . "\n";
             echo "Protocol: " . $ipData['protocol'] . "\n";
@@ -113,7 +124,7 @@ function sendIPPacket(string $host, IPPacket $packet): void
             echo "Destination IP: " . long2ip($ipData['destinationIp']) . "\n";
         }
     } else {
-        echo "No response received (timeout)\n";
+        echo "\nNo response received (timeout)\n";
     }
 
     // Close socket
@@ -133,15 +144,35 @@ $request = new ICMPPacket(
 
 $result = sendICMPRequest('142.251.39.78', $request);
 
+echo "\n=== ICMP Response Details ===\n";
+echo sprintf("Response time: %.2f ms\n", $result['response_time_ms']);
+echo sprintf("Source: %s:%d\n", $result['source_ip'], $result['source_port']);
+
 $response = Binary::unpack($result['icmp_header'], ICMPPacket::class);
-var_dump($request);
-var_dump($response);
+
+echo "\n=== Request Packet ===\n";
+echo "Type: {$request->type}\n";
+echo "Code: {$request->code}\n";
+echo "Checksum: 0x" . dechex($request->checksum) . "\n";
+echo "Identifier: {$request->identifier}\n";
+echo "Sequence: {$request->sequenceNumber}\n";
+
+echo "\n=== Response Packet ===\n";
+echo "Type: {$response->type}\n";
+echo "Code: {$response->code}\n";
+echo "Checksum: 0x" . dechex($response->checksum) . "\n";
+echo "Identifier: {$response->identifier}\n";
+echo "Sequence: {$response->sequenceNumber}\n";
 
 
 $version = 4;         // IPv4
 $ihl = 5;             // Длина заголовка в 32-битных словах (5 слов = 20 байт)
 $flags = 2;           // DF (Don't Fragment)
 $fragmentOffset = 0;  // Нет фрагментации
+
+echo "\n" . str_repeat("=", 80) . "\n";
+echo "Testing IP Packet Sending\n";
+echo str_repeat("=", 80) . "\n";
 
 $ipPacket = new IPPacket(
     versionAndHeaderLength: ($version << 4) | $ihl,

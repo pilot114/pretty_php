@@ -88,12 +88,12 @@ describe('Str', function (): void {
     it('can split string', function (): void {
         $arr = new Str('a,b,c')->split(',');
         expect($arr)->toBeInstanceOf(Arr::class);
-        expect($arr->toArray())->toBe(['a', 'b', 'c']);
+        expect($arr->get())->toBe(['a', 'b', 'c']);
     });
 
     it('can split string with limit', function (): void {
         $arr = new Str('a,b,c,d')->split(',', 2);
-        expect($arr->toArray())->toBe(['a', 'b,c,d']);
+        expect($arr->get())->toBe(['a', 'b,c,d']);
     });
 
     it('throws exception for empty delimiter', function (): void {
@@ -164,18 +164,18 @@ describe('Str', function (): void {
     it('can convert to array', function (): void {
         $arr = new Str('abc')->toArray();
         expect($arr)->toBeInstanceOf(Arr::class);
-        expect($arr->toArray())->toBe(['a', 'b', 'c']);
+        expect($arr->get())->toBe(['a', 'b', 'c']);
     });
 
     it('can convert empty string to array', function (): void {
         $arr = new Str('')->toArray();
-        expect($arr->toArray())->toBe([]);
+        expect($arr->get())->toBe([]);
     });
 
     it('can match regex pattern', function (): void {
         $result = new Str('hello123')->match('/\d+/');
         expect($result)->toBeInstanceOf(Arr::class);
-        expect($result->toArray())->toBe(['123']);
+        expect($result->get())->toBe(['123']);
     });
 
     it('returns null for non-matching pattern', function (): void {
@@ -186,11 +186,11 @@ describe('Str', function (): void {
     it('can match all regex patterns', function (): void {
         $arr = new Str('hello123world456')->matchAll('/\d+/');
         expect($arr)->toBeInstanceOf(Arr::class);
-        expect($arr->toArray())->toBe([['123'], ['456']]);
+        expect($arr->get())->toBe([['123'], ['456']]);
     });
 
     it('returns empty array for no matches in matchAll', function (): void {
         $arr = new Str('hello')->matchAll('/\d+/');
-        expect($arr->toArray())->toBe([]);
+        expect($arr->get())->toBe([]);
     });
 });

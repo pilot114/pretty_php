@@ -10,9 +10,9 @@ echo "=== Arr with Iterable Support Examples ===\n\n";
 echo "1. Working with ArrayIterator:\n";
 $iterator = new ArrayIterator([1, 2, 3, 4, 5]);
 $arr = new Arr($iterator);
-echo "Original: " . implode(', ', $arr->toArray()) . "\n";
-echo "Doubled: " . implode(', ', $arr->map(fn($x) => $x * 2)->toArray()) . "\n";
-echo "Filtered (even): " . implode(', ', $arr->filter(fn($x) => $x % 2 === 0)->toArray()) . "\n\n";
+echo "Original: " . implode(', ', $arr->get()) . "\n";
+echo "Doubled: " . implode(', ', $arr->map(fn($x) => $x * 2)->get()) . "\n";
+echo "Filtered (even): " . implode(', ', $arr->filter(fn($x) => $x % 2 === 0)->get()) . "\n\n";
 
 // Example 2: Using with Generator
 echo "2. Working with Generator:\n";
@@ -23,9 +23,9 @@ $generator = function () {
 };
 
 $arr = new Arr($generator());
-echo "From generator: " . json_encode($arr->toArray()) . "\n";
-echo "Keys: " . implode(', ', $arr->keys()->toArray()) . "\n";
-echo "Values: " . implode(', ', $arr->values()->toArray()) . "\n\n";
+echo "From generator: " . json_encode($arr->get()) . "\n";
+echo "Keys: " . implode(', ', $arr->keys()->get()) . "\n";
+echo "Values: " . implode(', ', $arr->values()->get()) . "\n\n";
 
 // Example 3: Using arr() function with different iterables
 echo "3. Using arr() function with different iterables:\n";
@@ -33,11 +33,11 @@ echo "3. Using arr() function with different iterables:\n";
 // With SplFixedArray
 $splArray = SplFixedArray::fromArray([10, 20, 30]);
 $arr1 = arr($splArray);
-echo "From SplFixedArray: " . implode(', ', $arr1->toArray()) . "\n";
+echo "From SplFixedArray: " . implode(', ', $arr1->get()) . "\n";
 
 // With range (returns array but demonstrates the concept)
 $arr2 = arr(range(1, 5));
-echo "From range: " . implode(', ', $arr2->toArray()) . "\n";
+echo "From range: " . implode(', ', $arr2->get()) . "\n";
 
 // With generator
 $fibonacci = function ($n) {
@@ -49,7 +49,7 @@ $fibonacci = function ($n) {
 };
 
 $arr3 = arr($fibonacci(8));
-echo "Fibonacci sequence: " . implode(', ', $arr3->toArray()) . "\n\n";
+echo "Fibonacci sequence: " . implode(', ', $arr3->get()) . "\n\n";
 
 // Example 4: Merging with iterables
 echo "4. Merging with different iterable types:\n";
@@ -65,13 +65,13 @@ $merged = $base
     ->merge($iterator)
     ->merge($generator());
 
-echo "Merged result: " . implode(', ', $merged->toArray()) . "\n\n";
+echo "Merged result: " . implode(', ', $merged->get()) . "\n\n";
 
 // Example 5: Using static from() method
 echo "5. Using static from() method:\n";
 $data = new ArrayObject(['x' => 100, 'y' => 200, 'z' => 300]);
 $arr = Arr::from($data);
-echo "From ArrayObject: " . json_encode($arr->toArray()) . "\n";
+echo "From ArrayObject: " . json_encode($arr->get()) . "\n";
 echo "Sum: " . $arr->sum() . "\n";
 echo "Average: " . $arr->average() . "\n";
 

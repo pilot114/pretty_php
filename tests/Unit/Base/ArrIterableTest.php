@@ -5,13 +5,13 @@ use PrettyPhp\Base\Arr;
 describe('Arr with Iterable', function (): void {
     it('can create Arr from array', function (): void {
         $arr = new Arr([1, 2, 3]);
-        expect($arr->toArray())->toBe([1, 2, 3]);
+        expect($arr->get())->toBe([1, 2, 3]);
     });
 
     it('can create Arr from ArrayIterator', function (): void {
         $iterator = new ArrayIterator([1, 2, 3]);
         $arr = new Arr($iterator);
-        expect($arr->toArray())->toBe([1, 2, 3]);
+        expect($arr->get())->toBe([1, 2, 3]);
     });
 
     it('can create Arr from Generator', function (): void {
@@ -22,7 +22,7 @@ describe('Arr with Iterable', function (): void {
         };
 
         $arr = new Arr($generator());
-        expect($arr->toArray())->toBe([1, 2, 3]);
+        expect($arr->get())->toBe([1, 2, 3]);
     });
 
     it('can create Arr from Generator with keys', function (): void {
@@ -33,20 +33,20 @@ describe('Arr with Iterable', function (): void {
         };
 
         $arr = new Arr($generator());
-        expect($arr->toArray())->toBe(['a' => 1, 'b' => 2, 'c' => 3]);
+        expect($arr->get())->toBe(['a' => 1, 'b' => 2, 'c' => 3]);
     });
 
     it('can create Arr from SplFixedArray', function (): void {
         $splArray = SplFixedArray::fromArray([1, 2, 3]);
         $arr = new Arr($splArray);
-        expect($arr->toArray())->toBe([1, 2, 3]);
+        expect($arr->get())->toBe([1, 2, 3]);
     });
 
     it('can merge with ArrayIterator', function (): void {
         $arr = new Arr([1, 2]);
         $iterator = new ArrayIterator([3, 4]);
         $merged = $arr->merge($iterator);
-        expect($merged->toArray())->toBe([1, 2, 3, 4]);
+        expect($merged->get())->toBe([1, 2, 3, 4]);
     });
 
     it('can merge with Generator', function (): void {
@@ -57,7 +57,7 @@ describe('Arr with Iterable', function (): void {
         };
 
         $merged = $arr->merge($generator());
-        expect($merged->toArray())->toBe([1, 2, 3, 4]);
+        expect($merged->get())->toBe([1, 2, 3, 4]);
     });
 
     it('can merge with associative Generator', function (): void {
@@ -68,13 +68,13 @@ describe('Arr with Iterable', function (): void {
         };
 
         $merged = $arr->merge($generator());
-        expect($merged->toArray())->toBe(['a' => 1, 'b' => 2, 'c' => 3, 'd' => 4]);
+        expect($merged->get())->toBe(['a' => 1, 'b' => 2, 'c' => 3, 'd' => 4]);
     });
 
     it('can use arr() function with ArrayIterator', function (): void {
         $iterator = new ArrayIterator([1, 2, 3]);
         $arr = arr($iterator);
-        expect($arr->toArray())->toBe([1, 2, 3]);
+        expect($arr->get())->toBe([1, 2, 3]);
     });
 
     it('can use arr() function with Generator', function (): void {
@@ -84,13 +84,13 @@ describe('Arr with Iterable', function (): void {
         };
 
         $arr = arr($generator());
-        expect($arr->toArray())->toBe(['x' => 10, 'y' => 20]);
+        expect($arr->get())->toBe(['x' => 10, 'y' => 20]);
     });
 
     it('can use from() static method', function (): void {
         $iterator = new ArrayIterator([1, 2, 3]);
         $arr = Arr::from($iterator);
-        expect($arr->toArray())->toBe([1, 2, 3]);
+        expect($arr->get())->toBe([1, 2, 3]);
     });
 
     it('preserves keys from iterable', function (): void {
@@ -98,13 +98,13 @@ describe('Arr with Iterable', function (): void {
         $iterator = new ArrayIterator($data);
         $arr = new Arr($iterator);
 
-        expect($arr->toArray())->toBe($data);
-        expect($arr->keys()->toArray())->toBe(['first', 'second', 'third']);
+        expect($arr->get())->toBe($data);
+        expect($arr->keys()->get())->toBe(['first', 'second', 'third']);
     });
 
     it('works with range as iterable', function (): void {
         // range() returns an array, but we can test it conceptually
         $arr = new Arr(range(1, 5));
-        expect($arr->toArray())->toBe([1, 2, 3, 4, 5]);
+        expect($arr->get())->toBe([1, 2, 3, 4, 5]);
     });
 });

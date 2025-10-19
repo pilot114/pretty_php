@@ -45,6 +45,7 @@ class Binary
      * Calculate the total size of an object in bytes
      *
      * @param class-string $className
+     * @phpstan-param class-string $className
      */
     private static function calculateObjectSize(object $object, string $className): int
     {
@@ -63,6 +64,7 @@ class Binary
             $value = $property->getValue($object);
 
             if (self::isNestedStructure($originalFormat)) {
+                /** @var class-string $originalFormat */
                 $totalSize += self::calculateObjectSize($value, $originalFormat);
             } else {
                 $totalSize += self::getFormatSize($originalFormat, is_string($value) ? $value : null);
@@ -86,6 +88,7 @@ class Binary
 
             if (self::isNestedStructure($originalFormat)) {
                 // Handle nested structure
+                assert(is_object($value));
                 $binaryData .= self::pack($value);
             } else {
                 // Handle regular format
@@ -118,6 +121,7 @@ class Binary
 
             if (self::isNestedStructure($originalFormat)) {
                 // Handle nested structure
+                /** @var class-string $originalFormat */
                 $nestedObject = self::unpack(substr($binaryData, $offset), $originalFormat);
                 $nestedSize = self::calculateObjectSize($nestedObject, $originalFormat);
                 $offset += $nestedSize;
@@ -128,7 +132,8 @@ class Binary
 
                 $unpacked = unpack($format, substr($binaryData, $offset));
                 if ($unpacked === false) {
-                    throw new Exception(sprintf("Failed to unpack binary data for property '%s'.", $property->getName()));
+                    $message = sprintf("Failed to unpack binary data for property '%s'.", $property->getName());
+                    throw new Exception($message);
                 }
 
                 $values = array_values($unpacked);

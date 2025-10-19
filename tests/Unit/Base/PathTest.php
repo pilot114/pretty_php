@@ -162,7 +162,7 @@ describe('Path', function (): void {
         $arr = new Path($this->testDir)->listFiles();
 
         expect($arr)->toBeInstanceOf(Arr::class);
-        $files = $arr->toArray();
+        $files = $arr->get();
         expect($files)->toContain('file1.txt');
         expect($files)->toContain('file2.txt');
         expect($files)->toContain('subdir');
@@ -187,7 +187,7 @@ describe('Path', function (): void {
         $arr = new Path($this->testDir)->glob('*.txt');
 
         expect($arr)->toBeInstanceOf(Arr::class);
-        $files = $arr->toArray();
+        $files = $arr->get();
         expect($files)->toHaveCount(2);
         expect($files)->toContain($this->testDir . '/test1.txt');
         expect($files)->toContain($this->testDir . '/test2.txt');
@@ -195,7 +195,7 @@ describe('Path', function (): void {
 
     it('returns empty array for no glob matches', function (): void {
         $arr = new Path($this->testDir)->glob('*.nonexistent');
-        expect($arr->toArray())->toBe([]);
+        expect($arr->get())->toBe([]);
     });
 
     it('can check if path is file', function (): void {
