@@ -6,10 +6,6 @@ class HexPrint
 {
     /**
      * Convert binary data to hexadecimal string representation
-     *
-     * @param string $data Binary data to convert
-     * @param string $separator Separator between bytes (default: space)
-     * @return string Hexadecimal representation
      */
     public static function toHex(string $data, string $separator = ' '): string
     {
@@ -24,11 +20,39 @@ class HexPrint
     }
 
     /**
+     * Parse hexadecimal string back to binary data
+     */
+    public static function fromHex(string $hex): string
+    {
+        // Remove common separators
+        $hex = preg_replace('/[\s:.-]/', '', $hex);
+
+        if ($hex === null || $hex === '') {
+            return '';
+        }
+
+        // Validate hex string
+        if (!ctype_xdigit($hex)) {
+            throw new \InvalidArgumentException('Invalid hexadecimal string');
+        }
+
+        // Ensure even length
+        if (strlen($hex) % 2 !== 0) {
+            throw new \InvalidArgumentException('Hexadecimal string must have even length');
+        }
+
+        $binary = '';
+        $length = strlen($hex);
+
+        for ($i = 0; $i < $length; $i += 2) {
+            $binary .= chr((int) hexdec(substr($hex, $i, 2)));
+        }
+
+        return $binary;
+    }
+
+    /**
      * Convert binary data to hexadecimal dump with ASCII representation
-     *
-     * @param string $data Binary data to dump
-     * @param int $bytesPerLine Number of bytes per line (default: 16)
-     * @return string Formatted hex dump
      */
     public static function dump(string $data, int $bytesPerLine = 16): string
     {
@@ -68,18 +92,13 @@ class HexPrint
 
     /**
      * Convert binary data to formatted hex blocks (4 bytes per block)
-     *
-     * @param string $data Binary data to format
-     * @param int $blocksPerLine Number of 4-byte blocks per line (default: 4)
-     * @return string Formatted hex blocks
      */
     public static function toBlocks(string $data, int $blocksPerLine = 4): string
     {
-        $length = strlen($data);
         $output = [];
         $currentLine = [];
 
-        for ($i = 0; $i < $length; $i += 4) {
+        for ($i = 0; $i < strlen($data); $i += 4) {
             $chunk = substr($data, $i, 4);
             $hex = [];
 
@@ -104,46 +123,7 @@ class HexPrint
     }
 
     /**
-     * Parse hexadecimal string back to binary data
-     *
-     * @param string $hex Hexadecimal string (can contain separators)
-     * @return string Binary data
-     */
-    public static function fromHex(string $hex): string
-    {
-        // Remove common separators
-        $hex = preg_replace('/[\s:.-]/', '', $hex);
-
-        if ($hex === null || $hex === '') {
-            return '';
-        }
-
-        // Validate hex string
-        if (!ctype_xdigit($hex)) {
-            throw new \InvalidArgumentException('Invalid hexadecimal string');
-        }
-
-        // Ensure even length
-        if (strlen($hex) % 2 !== 0) {
-            throw new \InvalidArgumentException('Hexadecimal string must have even length');
-        }
-
-        $binary = '';
-        $length = strlen($hex);
-
-        for ($i = 0; $i < $length; $i += 2) {
-            $binary .= chr((int) hexdec(substr($hex, $i, 2)));
-        }
-
-        return $binary;
-    }
-
-    /**
      * Format binary data as colored hex dump (ANSI colors)
-     *
-     * @param string $data Binary data
-     * @param int $bytesPerLine Bytes per line (default: 16)
-     * @return string Colored hex dump
      */
     public static function colorDump(string $data, int $bytesPerLine = 16): string
     {
@@ -186,9 +166,6 @@ class HexPrint
 
     /**
      * Get ANSI color code for byte value
-     *
-     * @param int $byte Byte value
-     * @return string ANSI color code
      */
     private static function getByteColor(int $byte): string
     {

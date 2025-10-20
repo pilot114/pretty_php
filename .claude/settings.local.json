@@ -5,7 +5,8 @@
       "Bash(composer:*)",
       "Bash(vendor/bin/phpbench run:*)",
       "Bash(sudo php:*)",
-      "Bash(pacman:*)"
+      "Bash(pacman:*)",
+      "Bash(vendor/bin/phpstan analyze:*)"
     ],
     "deny": [],
     "ask": []

@@ -5,34 +5,35 @@ require_once __DIR__ . '/../vendor/autoload.php';
 use PrettyPhp\Binary\ICMPPacket;
 use PrettyPhp\Binary\IPPacket;
 use PrettyPhp\Binary\Binary;
-use PrettyPhp\Binary\HexPrint;
+use PrettyPhp\Binary\PacketPrinter;
+use PrettyPhp\Binary\PacketResponse;
 
-function sendICMPRequest(string $host, ICMPPacket $packet): array
+/**
+ * Send ICMP request and return response
+ */
+function sendICMPRequest(string $host, ICMPPacket $packet): PacketResponse
 {
     // Check privileges for raw socket
     if (posix_geteuid() !== 0) {
-        die("This script requires superuser (root) privileges to create raw sockets.\n");
+        throw new RuntimeException("This script requires superuser (root) privileges to create raw sockets.");
     }
 
     $socket = socket_create(AF_INET, SOCK_RAW, 1); // ICMP protocol is 1
     if ($socket === false) {
-        die('Failed to create socket: ' . socket_strerror(socket_last_error()) . "\n");
+        throw new RuntimeException('Failed to create socket: ' . socket_strerror(socket_last_error()));
     }
 
     try {
         $packetData = Binary::pack($packet);
     } catch (Exception $e) {
         socket_close($socket);
-        die('Failed to serialize packet: ' . $e->getMessage() . "\n");
+        throw new RuntimeException('Failed to serialize packet: ' . $e->getMessage());
     }
-
-    echo sprintf(">>> %d bytes\n", strlen($packetData));
-    echo HexPrint::dump($packetData) . "\n";
 
     // Send ICMP request
     if (socket_sendto($socket, $packetData, strlen($packetData), 0, $host, 0) === false) {
         socket_close($socket);
-        die('Error sending data: ' . socket_strerror(socket_last_error()) . "\n");
+        throw new RuntimeException('Error sending data: ' . socket_strerror(socket_last_error()));
     }
 
     // Set timeout for receive
@@ -45,25 +46,26 @@ function sendICMPRequest(string $host, ICMPPacket $packet): array
     $buffer = '';
     if (socket_recvfrom($socket, $buffer, 1024, 0, $sourceAddress, $sourcePort) === false) {
         socket_close($socket);
-        die('Error receiving data: ' . socket_strerror(socket_last_error()) . "\n");
+        throw new RuntimeException('Error receiving data: ' . socket_strerror(socket_last_error()));
     }
 
     socket_close($socket);
 
-    echo sprintf("<<< %d bytes\n", strlen($buffer));
-    echo HexPrint::dump($buffer) . "\n";
-
-    // TODO: response common format
-    return [
-        'source_ip' => $sourceAddress,
-        'source_port' => $sourcePort,
-        'response_time_ms' => (microtime(true) - $startTime) * 1000,
-        'ip_header' => substr($buffer, 0, 20),
-        'icmp_header' => substr($buffer, 20),
-    ];
+    return new PacketResponse(
+        requestData: $packetData,
+        responseData: $buffer,
+        sourceIp: $sourceAddress,
+        sourcePort: $sourcePort,
+        bytesSent: strlen($packetData),
+        bytesReceived: strlen($buffer),
+        responseTimeMs: (microtime(true) - $startTime) * 1000,
+    );
 }
 
-function sendIPPacket(string $host, IPPacket $packet): void
+/**
+ * Send IP packet and return response
+ */
+function sendIPPacket(string $host, IPPacket $packet): PacketResponse
 {
     if (!defined('IP_HDRINCL')) {
         define('IP_HDRINCL', 2);
@@ -72,29 +74,26 @@ function sendIPPacket(string $host, IPPacket $packet): void
     // Create raw socket for sending IP packet
     $socket = socket_create(AF_INET, SOCK_RAW, SOL_SOCKET);
     if ($socket === false) {
-        die('Error creating socket: ' . socket_strerror(socket_last_error()) . "\n");
+        throw new RuntimeException('Error creating socket: ' . socket_strerror(socket_last_error()));
     }
 
     // Set IP_HDRINCL flag so system doesn't add its own IP header
     if (socket_set_option($socket, IPPROTO_IP, IP_HDRINCL, 1) === false) {
         socket_close($socket);
-        die('Error setting IP_HDRINCL: ' . socket_strerror(socket_last_error()) . "\n");
+        throw new RuntimeException('Error setting IP_HDRINCL: ' . socket_strerror(socket_last_error()));
     }
 
     try {
         $binaryData = Binary::pack($packet);
     } catch (Exception $e) {
         socket_close($socket);
-        die('Failed to serialize packet: ' . $e->getMessage() . "\n");
+        throw new RuntimeException('Failed to serialize packet: ' . $e->getMessage());
     }
-
-    echo sprintf(">>> %d bytes\n", strlen($binaryData));
-    echo HexPrint::dump($binaryData) . "\n";
 
     // Send packet
     if (socket_sendto($socket, $binaryData, strlen($binaryData), 0, $host, 0) === false) {
         socket_close($socket);
-        die('Error sending data: ' . socket_strerror(socket_last_error()) . "\n");
+        throw new RuntimeException('Error sending data: ' . socket_strerror(socket_last_error()));
     }
 
     socket_set_option($socket, SOL_SOCKET, SO_RCVTIMEO, [
@@ -102,90 +101,116 @@ function sendIPPacket(string $host, IPPacket $packet): void
         "usec" => 0,
     ]);
 
-    echo "\nPacket sent successfully!\n";
-
     $buffer = '';
+    $sourceAddress = null;
+    $sourcePort = 0;
+
     if (socket_recvfrom($socket, $buffer, 1024, 0, $sourceAddress, $sourcePort) !== false) {
-        echo "\n=== Received IP Response ===\n";
-        echo "From: $sourceAddress\n";
-        echo sprintf("<<< %d bytes\n", strlen($buffer));
-        echo HexPrint::dump($buffer) . "\n";
-
-        // Parse IP header
-        $ipHeader = substr($buffer, 0, 20);  // First 20 bytes are IP header
-        $ipData = unpack('CversionAndIHL/Ctos/nlength/nid/nflagsAndOffset/Cttl/Cprotocol/nchecksum/NsourceIp/NdestinationIp', $ipHeader);
-
-        if ($ipData !== false) {
-            echo "\n=== IP Header Details ===\n";
-            echo "Version: " . ($ipData['versionAndIHL'] >> 4) . "\n";
-            echo "TTL: " . $ipData['ttl'] . "\n";
-            echo "Protocol: " . $ipData['protocol'] . "\n";
-            echo "Source IP: " . long2ip($ipData['sourceIp']) . "\n";
-            echo "Destination IP: " . long2ip($ipData['destinationIp']) . "\n";
-        }
+        $responseData = $buffer;
     } else {
-        echo "\nNo response received (timeout)\n";
+        $responseData = null;
     }
 
-    // Close socket
     socket_close($socket);
+
+    return new PacketResponse(
+        requestData: $binaryData,
+        responseData: $responseData,
+        sourceIp: $sourceAddress,
+        sourcePort: $sourcePort,
+        bytesSent: strlen($binaryData),
+        bytesReceived: $responseData !== null ? strlen($responseData) : 0,
+    );
 }
 
 
-$request = new ICMPPacket(
-    type: 8,
-    code: 0,
-    checksum: 0,
-    // эта часть - для эхо-запрос/ответа
-    identifier: random_int(0, 65535),
-    sequenceNumber: 1,
-    data: str_repeat("\x00", 32)
-);
+// =============================================================================
+// ICMP Ping Example
+// =============================================================================
 
-$result = sendICMPRequest('142.251.39.78', $request);
+PacketPrinter::printSection('ICMP Echo Request Example');
 
-echo "\n=== ICMP Response Details ===\n";
-echo sprintf("Response time: %.2f ms\n", $result['response_time_ms']);
-echo sprintf("Source: %s:%d\n", $result['source_ip'], $result['source_port']);
+try {
+    $request = new ICMPPacket(
+        type: 8,
+        code: 0,
+        checksum: 0,
+        identifier: random_int(0, 65535),
+        sequenceNumber: 1,
+        data: str_repeat("\x00", 32)
+    );
 
-$response = Binary::unpack($result['icmp_header'], ICMPPacket::class);
+    PacketPrinter::printICMPPacket($request, 'Request Packet');
+    PacketPrinter::printTransmission('send', Binary::pack($request), 'ICMP Request');
 
-echo "\n=== Request Packet ===\n";
-echo "Type: {$request->type}\n";
-echo "Code: {$request->code}\n";
-echo "Checksum: 0x" . dechex($request->checksum) . "\n";
-echo "Identifier: {$request->identifier}\n";
-echo "Sequence: {$request->sequenceNumber}\n";
+    $response = sendICMPRequest('142.251.39.78', $request);
 
-echo "\n=== Response Packet ===\n";
-echo "Type: {$response->type}\n";
-echo "Code: {$response->code}\n";
-echo "Checksum: 0x" . dechex($response->checksum) . "\n";
-echo "Identifier: {$response->identifier}\n";
-echo "Sequence: {$response->sequenceNumber}\n";
+    PacketPrinter::printTransmission('receive', $response->responseData, 'ICMP Response');
+    PacketPrinter::printResponseStats($response);
 
+    // Parse ICMP response
+    $ipHeaderSize = 20;
+    $icmpData = substr($response->responseData, $ipHeaderSize);
+    $icmpResponse = Binary::unpack($icmpData, ICMPPacket::class);
 
-$version = 4;         // IPv4
-$ihl = 5;             // Длина заголовка в 32-битных словах (5 слов = 20 байт)
-$flags = 2;           // DF (Don't Fragment)
-$fragmentOffset = 0;  // Нет фрагментации
+    PacketPrinter::printICMPPacket($icmpResponse, 'Response Packet');
 
-echo "\n" . str_repeat("=", 80) . "\n";
-echo "Testing IP Packet Sending\n";
-echo str_repeat("=", 80) . "\n";
+    // Parse and display IP header from response
+    $ipHeader = substr($response->responseData, 0, $ipHeaderSize);
+    $ipPacket = Binary::unpack($ipHeader, IPPacket::class);
+    PacketPrinter::printIPPacket($ipPacket, 'Response IP Header');
 
-$ipPacket = new IPPacket(
-    versionAndHeaderLength: ($version << 4) | $ihl,
-    typeOfService: 0,                      // Стандартный приоритет
-    totalLength: 40,                       // Длина пакета (20 байт заголовка + 20 байт данных)
-    identification: random_int(0, 65535),  // Уникальный идентификатор пакета
-    flagsAndFragmentOffset: ($flags << 13) | $fragmentOffset,
-    ttl: 256,  // Стандартное время жизни
-    protocol: 1,  // Протокол ICMP
-    checksum: 0,
-    sourceIp: (int) ip2long('192.168.1.100'),  // IP-адрес источника (например, локальная сеть)
-    destinationIp: (int) ip2long('8.8.8.8'),   // IP-адрес назначения (например, Google DNS)
-    data: str_repeat("\x00", 20),
-);
+    PacketPrinter::printSuccess('ICMP Echo Request/Reply completed successfully');
+} catch (RuntimeException $e) {
+    PacketPrinter::printError($e->getMessage());
+}
 
-sendIPPacket('8.8.8.8', $ipPacket);
+// =============================================================================
+// Custom IP Packet Example
+// =============================================================================
+
+PacketPrinter::printSection('Custom IP Packet Example');
+
+try {
+    $version = 4;
+    $ihl = 5;
+    $flags = 2;
+    $fragmentOffset = 0;
+
+    $ipPacket = new IPPacket(
+        versionAndHeaderLength: ($version << 4) | $ihl,
+        typeOfService: 0,
+        totalLength: 40,
+        identification: random_int(0, 65535),
+        flagsAndFragmentOffset: ($flags << 13) | $fragmentOffset,
+        ttl: 64,
+        protocol: 1,
+        checksum: 0,
+        sourceIp: (int) ip2long('192.168.1.100'),
+        destinationIp: (int) ip2long('8.8.8.8'),
+        data: str_repeat("\x00", 20),
+    );
+
+    PacketPrinter::printIPPacket($ipPacket, 'Custom IP Packet');
+    PacketPrinter::printTransmission('send', Binary::pack($ipPacket), 'IP Packet');
+
+    $response = sendIPPacket('8.8.8.8', $ipPacket);
+
+    if ($response->hasResponse()) {
+        PacketPrinter::printTransmission('receive', $response->responseData, 'IP Response');
+        PacketPrinter::printResponseStats($response);
+
+        // Parse response IP header using DTO method
+        $responseIpPacket = $response->getResponseIPPacket();
+        if ($responseIpPacket !== null) {
+            PacketPrinter::printIPPacket($responseIpPacket, 'Response IP Header');
+        }
+
+        PacketPrinter::printSuccess('IP packet sent and response received');
+    } else {
+        PacketPrinter::printResponseStats($response);
+        echo "\n⚠ No response received (timeout)\n";
+    }
+} catch (RuntimeException $e) {
+    PacketPrinter::printError($e->getMessage());
+}
