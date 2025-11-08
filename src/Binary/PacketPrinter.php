@@ -13,22 +13,22 @@ class PacketPrinter
         ?string $label = null
     ): void {
         $arrow = $direction === 'send' ? '>>>' : '<<<';
-        $header = $label !== null ? "$label $arrow" : $arrow;
+        $header = $label !== null ? sprintf('%s %s', $label, $arrow) : $arrow;
 
         echo "\n" . str_repeat('─', 80) . "\n";
-        echo "$header " . strlen($data) . " bytes\n";
+        echo $header . ' ' . strlen($data) . " bytes\n";
         echo str_repeat('─', 80) . "\n";
         echo HexPrint::dump($data) . "\n";
     }
 
     public static function printICMPPacket(ICMPPacket $packet, string $label = 'ICMP Packet'): void
     {
-        echo "\n┌─ $label " . str_repeat('─', 80 - strlen($label) - 4) . "┐\n";
-        echo "│ Type:       {$packet->type}\n";
-        echo "│ Code:       {$packet->code}\n";
+        echo "\n┌─ {$label} " . str_repeat('─', 80 - strlen($label) - 4) . "┐\n";
+        echo sprintf('│ Type:       %d%s', $packet->type, PHP_EOL);
+        echo sprintf('│ Code:       %d%s', $packet->code, PHP_EOL);
         echo "│ Checksum:   0x" . sprintf('%04x', $packet->checksum) . "\n";
-        echo "│ Identifier: {$packet->identifier}\n";
-        echo "│ Sequence:   {$packet->sequenceNumber}\n";
+        echo sprintf('│ Identifier: %d%s', $packet->identifier, PHP_EOL);
+        echo sprintf('│ Sequence:   %d%s', $packet->sequenceNumber, PHP_EOL);
         echo "│ Data:       " . strlen($packet->data) . " bytes\n";
         echo "└" . str_repeat('─', 79) . "┘\n";
     }
@@ -39,13 +39,13 @@ class PacketPrinter
         $ihl = $packet->versionAndHeaderLength & 0x0F;
         $headerLength = $ihl * 4;
 
-        echo "\n┌─ $label " . str_repeat('─', 80 - strlen($label) - 4) . "┐\n";
-        echo "│ Version:        IPv$version\n";
-        echo "│ Header Length:  $headerLength bytes\n";
-        echo "│ Type of Service: {$packet->typeOfService}\n";
+        echo "\n┌─ {$label} " . str_repeat('─', 80 - strlen($label) - 4) . "┐\n";
+        echo sprintf('│ Version:        IPv%d%s', $version, PHP_EOL);
+        echo "│ Header Length:  {$headerLength} bytes\n";
+        echo sprintf('│ Type of Service: %d%s', $packet->typeOfService, PHP_EOL);
         echo "│ Total Length:   {$packet->totalLength} bytes\n";
-        echo "│ Identification: {$packet->identification}\n";
-        echo "│ TTL:            {$packet->ttl}\n";
+        echo sprintf('│ Identification: %d%s', $packet->identification, PHP_EOL);
+        echo sprintf('│ TTL:            %d%s', $packet->ttl, PHP_EOL);
         echo "│ Protocol:       " . self::getProtocolName($packet->protocol) . " ({$packet->protocol})\n";
         echo "│ Checksum:       0x" . sprintf('%04x', $packet->checksum) . "\n";
         echo "│ Source IP:      " . self::formatIP($packet->sourceIp) . "\n";
@@ -63,15 +63,16 @@ class PacketPrinter
         }
 
         if ($response->sourceIp !== null) {
-            echo "│ Source:        {$response->sourceIp}";
+            echo '│ Source:        ' . $response->sourceIp;
             if ($response->sourcePort > 0) {
-                echo ":{$response->sourcePort}";
+                echo ':' . $response->sourcePort;
             }
+
             echo "\n";
         }
 
-        echo "│ Bytes Sent:    {$response->bytesSent}\n";
-        echo "│ Bytes Received: {$response->bytesReceived}\n";
+        echo sprintf('│ Bytes Sent:    %d%s', $response->bytesSent, PHP_EOL);
+        echo sprintf('│ Bytes Received: %d%s', $response->bytesReceived, PHP_EOL);
 
         echo "└" . str_repeat('─', 79) . "┘\n";
     }
@@ -79,7 +80,7 @@ class PacketPrinter
     public static function printSection(string $title): void
     {
         echo "\n" . str_repeat('═', 80) . "\n";
-        echo "  $title\n";
+        echo sprintf('  %s%s', $title, PHP_EOL);
         echo str_repeat('═', 80) . "\n";
     }
 
@@ -110,14 +111,14 @@ class PacketPrinter
     public static function printError(string $message): void
     {
         echo "\n┌─ ERROR " . str_repeat('─', 71) . "┐\n";
-        echo "│ $message\n";
+        echo sprintf('│ %s%s', $message, PHP_EOL);
         echo "└" . str_repeat('─', 79) . "┘\n";
     }
 
     public static function printSuccess(string $message): void
     {
         echo "\n┌─ SUCCESS " . str_repeat('─', 68) . "┐\n";
-        echo "│ $message\n";
+        echo sprintf('│ %s%s', $message, PHP_EOL);
         echo "└" . str_repeat('─', 79) . "┘\n";
     }
 }
