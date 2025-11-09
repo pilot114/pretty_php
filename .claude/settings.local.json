@@ -1,12 +1,15 @@
 {
   "permissions": {
     "allow": [
+      "Bash(sudo php:*)",
       "Bash(php:*)",
       "Bash(composer:*)",
       "Bash(vendor/bin/phpbench run:*)",
-      "Bash(sudo php:*)",
+      "Bash(vendor/bin/phpstan analyze:*)",
       "Bash(pacman:*)",
-      "Bash(vendor/bin/phpstan analyze:*)"
+      "Bash(tree:*)",
+      "Bash(git log:*)",
+      "Bash(cloc:*)"
     ],
     "deny": [],
     "ask": []

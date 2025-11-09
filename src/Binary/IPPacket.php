@@ -7,27 +7,27 @@ class IPPacket
     use Checksum;
 
     public function __construct(
-        #[Binary('C')] // 4 бита версии + 4 бита длины заголовка
+        #[Binary('C')] // 4 bits version + 4 bits header length
         public int $versionAndHeaderLength,
-        #[Binary('C')] // 1 байт для типа сервиса
+        #[Binary('C')] // 1 byte for type of service
         public int $typeOfService,
-        #[Binary('n')] // 2 байта для общей длины пакета
+        #[Binary('n')] // 2 bytes for total packet length
         public int $totalLength,
-        #[Binary('n')] // 2 байта для идентификатора пакета
+        #[Binary('n')] // 2 bytes for packet identification
         public int $identification,
-        #[Binary('n')] // 3 бита флагов и 13 бит смещения фрагмента
+        #[Binary('n')] // 3 bits flags and 13 bits fragment offset
         public int $flagsAndFragmentOffset,
-        #[Binary('C')] // 1 байт для времени жизни (TTL)
+        #[Binary('C')] // 1 byte for time to live (TTL)
         public int $ttl,
-        #[Binary('C')] // 1 байт для протокола
+        #[Binary('C')] // 1 byte for protocol
         public int $protocol,
-        #[Binary('n')] // 2 байта для контрольной суммы заголовка
+        #[Binary('n')] // 2 bytes for header checksum
         public int $checksum = 0,
-        #[Binary('N')] // 4 байта для IP-адреса источника
+        #[Binary('N')] // 4 bytes for source IP address
         public int $sourceIp = 0,
-        #[Binary('N')] // 4 байта для IP-адреса назначения
+        #[Binary('N')] // 4 bytes for destination IP address
         public int $destinationIp = 0,
-        #[Binary('A*')] // Данные запроса (переменной длины)
+        #[Binary('A*')] // Request data (variable length)
         public string $data = '',
     ) {
         if ($checksum === 0) {

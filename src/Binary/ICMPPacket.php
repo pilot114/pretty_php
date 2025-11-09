@@ -7,17 +7,17 @@ class ICMPPacket
     use Checksum;
 
     public function __construct(
-        #[Binary('C')] // 1 байт для типа сообщения ICMP
+        #[Binary('C')] // 1 byte for ICMP message type
         public int $type,
-        #[Binary('C')] // 1 байт для кода ICMP
+        #[Binary('C')] // 1 byte for ICMP code
         public int $code,
-        #[Binary('n')] // 2 байта для контрольной суммы
+        #[Binary('n')] // 2 bytes for checksum
         public int $checksum = 0,
-        #[Binary('n')] // 2 байта для идентификатора
+        #[Binary('n')] // 2 bytes for identifier
         public int $identifier = 0,
-        #[Binary('n')] // 2 байта для номера последовательности
+        #[Binary('n')] // 2 bytes for sequence number
         public int $sequenceNumber = 0,
-        #[Binary('A*')] // Данные запроса (переменной длины)
+        #[Binary('A*')] // Request data (variable length)
         public string $data = '',
     ) {
         if ($checksum === 0) {

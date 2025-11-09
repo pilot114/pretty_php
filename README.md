@@ -1,10 +1,18 @@
 # Pretty PHP
 
-A modern, object-oriented wrapper for PHP's standard library with consistent API design. Pretty PHP makes working with strings, arrays, files, and paths more intuitive and chainable.
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![PHP Version](https://img.shields.io/badge/php-%3E%3D8.4-8892BF.svg)](https://www.php.net/)
 
-## Requirements
+A modern, object-oriented wrapper for PHP's standard library with consistent API design and immutable data structures.
 
-- PHP 8.4+
+## Features
+
+- 🔗 **Chainable API** - Fluent interface for all operations
+- 🛡️ **Type-safe** - Full PHP 8.4+ type declarations
+- 🔒 **Immutable** - All operations return new instances
+- 📦 **Zero dependencies** - Pure PHP implementation
+- ⚡ **High performance** - Optimized for speed
+- 🧪 **Well tested** - 84%+ code coverage, extensive test suite
 
 ## Installation
 
@@ -12,300 +20,79 @@ A modern, object-oriented wrapper for PHP's standard library with consistent API
 composer require prettyph/pretty-php
 ```
 
-## Features
-
-- **Consistent API**: All methods follow the same naming conventions
-- **Immutable by design**: Operations return new instances instead of modifying existing ones
-- **Chainable methods**: Fluent interface for clean, readable code
-- **Type-safe**: Full PHP 8.4+ type declarations
-- **Zero dependencies**: Pure PHP implementation
-
-## Usage
-
-### Auto-loading Functions
+## Quick Start
 
 ```php
-// Include helper functions (optional)
-require_once 'vendor/prettyph/pretty-php/src/functions.php';
+use function PrettyPhp\{str, arr, file, path};
 
-// Now you can use global helper functions
-$result = str('Hello World')->upper()->substring(0, 5);
-echo $result; // "HELLO"
-```
-
-### String Manipulation
-
-```php
-
-// Create a string wrapper
-$text = str('  Hello World  ');
-
-// Chain operations
-$result = $text
+// String manipulation
+$result = str('  Hello World  ')
     ->trim()
     ->upper()
-    ->replace('WORLD', 'PHP')
-    ->substring(0, 10);
-
+    ->replace('WORLD', 'PHP');
 echo $result; // "HELLO PHP"
 
-// String analysis
-$email = str('user@example.com');
-if ($email->contains('@') && $email->endsWith('.com')) {
-    echo "Valid email format";
-}
-
-// String splitting and manipulation
-$csv = str('apple,banana,cherry');
-$fruits = $csv->split(',');
-echo $fruits->join(' | '); // "apple | banana | cherry"
-```
-
-### Array Manipulation
-
-```php
-
-// Create array wrapper
-$numbers = arr([1, 2, 3, 4, 5]);
-
-// Functional programming style
-$result = $numbers
+// Array operations
+$numbers = arr([1, 2, 3, 4, 5])
     ->filter(fn($n) => $n % 2 === 0)
     ->map(fn($n) => $n * 2)
-    ->join(', ');
-
-echo $result; // "4, 8"
-
-// Array utilities
-$data = arr(['apple', 'banana', 'apple', 'cherry']);
-$unique = $data->unique()->sort();
-echo $unique->join(', '); // "apple, banana, cherry"
-
-// Statistical functions
-$scores = arr([85, 92, 78, 96, 88]);
-echo $scores->average(); // 87.8
-echo $scores->max();     // 96
-```
-
-### File Operations
-
-```php
-
-// File reading and writing
-$file = file('/path/to/file.txt');
-
-if ($file->exists()) {
-    $content = $file->read();
-    echo $content->upper(); // Content in uppercase
-}
-
-// Write to file
-$file->write('Hello, Pretty PHP!');
-
-// File information
-echo $file->size();        // File size in bytes
-echo $file->extension();   // File extension
-echo $file->basename();    // Filename with extension
+    ->sum();
+echo $numbers; // 12
 
 // File operations
-$backup = $file->copy('/path/to/backup.txt');
-$file->move('/path/to/new/location.txt');
+file('/path/to/file.txt')
+    ->write('Hello, Pretty PHP!')
+    ->copy('/path/to/backup.txt');
+
+// Path manipulation
+$config = path('/home/user')
+    ->join('projects', 'myapp', 'config.php');
 ```
 
-### Path Manipulation
+## Core Components
+
+### Base Wrappers
+- **Str** - String manipulation with 30+ methods
+- **Arr** - Array operations with functional programming support
+- **File** - File I/O operations
+- **Path** - Path manipulation utilities
+
+### Binary System
+Attribute-based binary data packing/unpacking for network protocols:
 
 ```php
+use PrettyPhp\Binary\{Binary, IPPacket, ICMPPacket};
 
-// Path operations
-$path = path('/home/user/documents');
-
-// Build paths
-$filePath = $path->join('projects', 'myapp', 'config.php');
-echo $filePath; // "/home/user/documents/projects/myapp/config.php"
-
-// Path analysis
-if ($path->exists() && $path->isDirectory()) {
-    $files = $path->listFiles();
-    foreach ($files->get() as $file) {
-        echo $file . "\n";
-    }
-}
-
-// Path transformations
-$configPath = path('config.json');
-$backupPath = $configPath->withExtension('backup.json');
-echo $backupPath; // "config.backup.json"
-```
-
-### Method Chaining Examples
-
-```php
-
-// Complex string processing
-$result = str('  HELLO,WORLD,HOW,ARE,YOU  ')
-    ->trim()
-    ->lower()
-    ->split(',')
-    ->map(fn($word) => ucfirst($word))
-    ->join(' ')
-    ->replace('Hello', 'Hi');
-
-echo $result; // "Hi World How Are You"
-
-// Data processing pipeline
-$data = arr([
-    ['name' => 'John', 'age' => 25],
-    ['name' => 'Jane', 'age' => 30],
-    ['name' => 'Bob', 'age' => 20]
-]);
-
-$names = $data
-    ->filter(fn($person) => $person['age'] >= 25)
-    ->map(fn($person) => $person['name'])
-    ->sort()
-    ->join(', ');
-
-echo $names; // "Jane, John"
-```
-
-### Integration with Existing Code
-
-```php
-// Pretty PHP objects can be easily converted back to native PHP types
-$prettyArray = arr([1, 2, 3, 4]);
-$nativeArray = $prettyArray->get(); // Returns native PHP array
-
-$prettyString = str('Hello');
-$nativeString = $prettyString->get(); // Returns native PHP string
-$nativeString = (string) $prettyString; // Also works with type casting
-```
-
-### Binary Data Operations
-
-The Binary system provides tools for working with binary data structures, particularly useful for network protocols and packet manipulation.
-
-```php
-use PrettyPhp\Binary\Binary;
-use PrettyPhp\Binary\IPPacket;
-use PrettyPhp\Binary\ICMPPacket;
-
-// Create an ICMP packet structure
-$icmpPacket = new ICMPPacket(
-    type: 8,                          // Echo Request
-    code: 0,                          // Standard code
-    identifier: random_int(0, 65535), // Random ID
-    sequenceNumber: 1,                // Sequence number
-    data: str_repeat("\x00", 32)      // 32 bytes of data
+$packet = new ICMPPacket(
+    type: 8,
+    code: 0,
+    identifier: 12345,
+    sequenceNumber: 1,
+    data: str_repeat("\x00", 32)
 );
 
-// Pack to binary format
-$binaryData = Binary::pack($icmpPacket);
-echo bin2hex($binaryData); // Raw binary data as hex
-
-// Unpack from binary format
-$parsedPacket = Binary::unpack($binaryData, ICMPPacket::class);
-
-// Create IP packet with nested ICMP data
-$version = 4;         // IPv4
-$ihl = 5;             // Header length (20 bytes)
-$flags = 2;           // Don't Fragment flag
-
-$ipPacket = new IPPacket(
-    versionAndHeaderLength: ($version << 4) | $ihl,
-    typeOfService: 0,
-    totalLength: 60,                       // Total packet length
-    identification: random_int(0, 65535),
-    flagsAndFragmentOffset: ($flags << 13),
-    ttl: 64,                              // Time to live
-    protocol: 1,                          // ICMP protocol
-    sourceIp: (int) ip2long('192.168.1.1'),
-    destinationIp: (int) ip2long('8.8.8.8'),
-    data: Binary::pack($icmpPacket)       // Nested ICMP packet
-);
-
-$ipBinaryData = Binary::pack($ipPacket);
+$binary = Binary::pack($packet);
+$parsed = Binary::unpack($binary, ICMPPacket::class);
 ```
 
-**Binary Format Attributes:**
-- Use `#[Binary('8')]` for 8-bit unsigned integers (1 byte)
-- Use `#[Binary('16')]` or `#[Binary('n')]` for 16-bit big-endian (2 bytes)  
-- Use `#[Binary('32')]` or `#[Binary('N')]` for 32-bit big-endian (4 bytes)
-- Use `#[Binary('A*')]` for variable-length strings
-- Use `#[Binary(ClassName::class)]` for nested structures
+## Documentation
 
-**Checksum Calculation:**
-Both IP and ICMP packets automatically calculate checksums using the `Checksum` trait when checksum is set to 0 in the constructor.
+- 📖 [Full Documentation](AGENTS.md)
+- 🗺️ [Roadmap](ROADMAP.md)
+- 📝 [Changelog](CHANGELOG.md)
+- 🤝 [Contributing](CONTRIBUTING.md)
 
-## API Reference
+## Requirements
 
-### Str Class
-
-- `length()`: Get string length
-- `isEmpty()` / `isNotEmpty()`: Check if string is empty
-- `trim()` / `ltrim()` / `rtrim()`: Remove whitespace
-- `upper()` / `lower()` / `capitalize()`: Change case
-- `contains()` / `startsWith()` / `endsWith()`: String searching
-- `replace()` / `replaceAll()`: String replacement
-- `split()`: Split into array
-- `substring()`: Extract substring
-- `indexOf()` / `lastIndexOf()`: Find position
-- `repeat()` / `reverse()`: String manipulation
-- `padLeft()` / `padRight()` / `padBoth()`: Padding
-- `isAlpha()` / `isNumeric()` / `isAlphaNumeric()`: Type checking
-- `match()` / `matchAll()`: Regular expressions
-
-### Arr Class
-
-- `count()`: Get array length
-- `isEmpty()` / `isNotEmpty()`: Check if array is empty
-- `first()` / `last()`: Get first/last element
-- `push()` / `pop()` / `shift()` / `unshift()`: Stack/queue operations
-- `contains()` / `indexOf()`: Element searching
-- `slice()` / `splice()`: Array slicing
-- `merge()` / `unique()` / `reverse()`: Array manipulation
-- `sort()` / `filter()` / `map()` / `reduce()`: Functional methods
-- `find()` / `findIndex()` / `some()` / `every()`: Search methods
-- `keys()` / `values()` / `flip()`: Key/value operations
-- `chunk()` / `join()` / `groupBy()` / `flatten()`: Utility methods
-- `min()` / `max()` / `sum()` / `average()`: Statistical methods
-
-### File Class
-
-- `exists()` / `isFile()` / `isDirectory()`: File checking
-- `isReadable()` / `isWritable()`: Permission checking
-- `size()` / `lastModified()`: File information
-- `read()` / `readLines() / readLinesGenerator()`: File reading
-- `write()` / `append()`: File writing
-- `delete()` / `copy()` / `move()`: File operations
-- `extension()` / `basename()` / `dirname()`: Path components
-- `mimeType()` / `permissions()` / `chmod()`: File metadata
-
-### Path Class
-
-- `exists()` / `isAbsolute()` / `isRelative()`: Path checking
-- `join()` / `normalize()` / `resolve()`: Path building
-- `relative()` / `parent()`: Path relationships
-- `basename()` / `extension()`: Path components
-- `withoutExtension()` / `withExtension()`: Extension manipulation
-- `mkdir()` / `listFiles()` / `glob()`: Directory operations
-- `isFile()` / `isDirectory()` / `size()`: Path information
+- PHP 8.4+
+- Extensions: `ext-ctype`, `ext-fileinfo`, `ext-sockets`, `ext-posix`
 
 ## Development
 
 ```bash
-# Install dependencies
-composer install
-
-# Run tests, check code coverage
-composer test
-composer coverage
-
-# Static analysis
-composer check
-
-# Static analysis with fixes
-composer fix
-
-# run benchmarks
-composer bench
+composer test      # Run tests
+composer coverage  # Test coverage report
+composer check     # Static analysis
+composer fix       # Auto-fix code style
+composer bench     # Performance benchmarks
 ```
