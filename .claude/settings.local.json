@@ -9,7 +9,8 @@
       "Bash(pacman:*)",
       "Bash(tree:*)",
       "Bash(git log:*)",
-      "Bash(cloc:*)"
+      "Bash(cloc:*)",
+      "Bash(vendor/bin/phpstan analyse:*)"
     ],
     "deny": [],
     "ask": []
