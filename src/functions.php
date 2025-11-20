@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 use PrettyPhp\Base\Arr;
 use PrettyPhp\Base\File;
+use PrettyPhp\Base\Json;
+use PrettyPhp\Base\Num;
 use PrettyPhp\Base\Path;
 use PrettyPhp\Base\Str;
 use PrettyPhp\Functional\Option;
@@ -93,5 +95,28 @@ if (!function_exists('err')) {
     function err(mixed $error): Result
     {
         return Result::err($error);
+    }
+}
+
+if (!function_exists('num')) {
+    function num(int|float $value): Num
+    {
+        return new Num($value);
+    }
+}
+
+if (!function_exists('json')) {
+    /**
+     * Creates a Json instance from a string or data.
+     *
+     * @param string|mixed $value JSON string or data to encode
+     */
+    function json(mixed $value): Json
+    {
+        if (is_string($value)) {
+            return Json::fromString($value);
+        }
+
+        return Json::fromData($value);
     }
 }
