@@ -156,6 +156,11 @@ class Binary
         // Convert bit format to standard format first
         $packFormat = self::convertBitFormatToPackFormat($format);
 
+        // Check for fixed-length string format (e.g., 'A6' for 6 bytes)
+        if (preg_match('/^A(\d+)$/', $packFormat, $matches) === 1) {
+            return (int) $matches[1];
+        }
+
         return match ($packFormat) {
             'C' => 1,
             'n' => 2,
