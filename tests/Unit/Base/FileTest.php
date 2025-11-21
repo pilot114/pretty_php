@@ -416,4 +416,98 @@ describe('File', function (): void {
             expect($runtimeException->getMessage())->toContain('Unable to determine MIME type');
         }
     });
+
+    // Enhanced Methods Tests
+
+    it('can write file atomically', function (): void {
+        $file = new File($this->testFile);
+        $file->writeAtomic('atomic content');
+        expect($file->read()->get())->toBe('atomic content');
+    });
+
+    it('can lock file and execute callback', function (): void {
+        file_put_contents($this->testFile, 'locked content');
+        $file = new File($this->testFile);
+
+        $result = $file->withLock(function ($handle) {
+            $content = fread($handle, 1024);
+            return $content;
+        }, false);
+
+        expect($result)->toBe('locked content');
+    });
+
+    it('can read file as stream', function (): void {
+        file_put_contents($this->testFile, 'chunk1chunk2chunk3');
+        $file = new File($this->testFile);
+
+        $chunks = [];
+        foreach ($file->readStream(6) as $chunk) {
+            $chunks[] = $chunk;
+        }
+
+        expect($chunks)->toBe(['chunk1', 'chunk2', 'chunk3']);
+    });
+
+    it('throws exception for invalid chunk size in readStream', function (): void {
+        file_put_contents($this->testFile, 'test');
+        $file = new File($this->testFile);
+
+        expect(fn() => iterator_to_array($file->readStream(0)))
+            ->toThrow(\InvalidArgumentException::class, 'Chunk size must be at least 1');
+    });
+
+    it('can write file using stream', function (): void {
+        $file = new File($this->testFile);
+        $chunks = ['chunk1', 'chunk2', 'chunk3'];
+        $file->writeStream($chunks);
+
+        expect($file->read()->get())->toBe('chunk1chunk2chunk3');
+    });
+
+    it('can calculate file hash', function (): void {
+        file_put_contents($this->testFile, 'test content');
+        $file = new File($this->testFile);
+
+        $hash = $file->hash('md5');
+        expect($hash)->toBeInstanceOf(Str::class);
+        expect($hash->get())->toBe(md5('test content'));
+
+        $sha256 = $file->hash('sha256');
+        expect($sha256->get())->toBe(hash('sha256', 'test content'));
+    });
+
+    it('can get detailed mime type', function (): void {
+        file_put_contents($this->testFile, 'test content');
+        $file = new File($this->testFile);
+
+        $mimeType = $file->mimeTypeDetailed();
+        expect($mimeType)->toBeInstanceOf(Str::class);
+        expect($mimeType->get())->toContain('text');
+    });
+
+    it('can create temporary file', function (): void {
+        $tempFile = File::createTemp('test_');
+        expect($tempFile->exists())->toBeTrue();
+        expect($tempFile->isTemp())->toBeTrue();
+
+        // Cleanup
+        $tempFile->delete();
+    });
+
+    it('can check if file is temporary', function (): void {
+        $tempFile = File::createTemp();
+        expect($tempFile->isTemp())->toBeTrue();
+
+        // Note: Files in sys_get_temp_dir() are considered temp files
+        // Create a file in current directory instead
+        $currentDirFile = __DIR__ . '/regular_file.txt';
+        file_put_contents($currentDirFile, 'test');
+        $regularFile = new File($currentDirFile);
+        expect($regularFile->isTemp())->toBeFalse();
+
+        // Cleanup
+        $tempFile->delete();
+        unlink($currentDirFile);
+    });
 });

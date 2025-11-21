@@ -301,4 +301,209 @@ readonly class File
 
         return $this;
     }
+
+    /**
+     * Write file atomically (write to temp file, then rename)
+     * @throws RuntimeException
+     */
+    public function writeAtomic(string $content): self
+    {
+        $dir = dirname($this->path);
+        if (!is_dir($dir)) {
+            throw new RuntimeException('Directory does not exist: ' . $dir);
+        }
+
+        $tempFile = tempnam($dir, 'atomic_');
+        if ($tempFile === false) {
+            throw new RuntimeException('Unable to create temporary file in: ' . $dir);
+        }
+
+        try {
+            $result = file_put_contents($tempFile, $content);
+            if ($result === false) {
+                throw new RuntimeException('Unable to write to temporary file: ' . $tempFile);
+            }
+
+            if (!rename($tempFile, $this->path)) {
+                throw new RuntimeException(sprintf('Unable to rename %s to %s', $tempFile, $this->path));
+            }
+        } catch (\Throwable $e) {
+            if (file_exists($tempFile)) {
+                @unlink($tempFile);
+            }
+
+            throw $e;
+        }
+
+        return $this;
+    }
+
+    /**
+     * Lock file for exclusive access and execute callback
+     * @template TReturn
+     * @param \Closure(resource): TReturn $callback
+     * @param bool $exclusive Whether to use exclusive lock (default true)
+     * @return TReturn
+     * @throws RuntimeException
+     */
+    public function withLock(\Closure $callback, bool $exclusive = true): mixed
+    {
+        if (!$this->exists()) {
+            throw new RuntimeException('File does not exist: ' . $this->path);
+        }
+
+        $handle = fopen($this->path, $exclusive ? 'r+' : 'r');
+        if ($handle === false) {
+            throw new RuntimeException('Unable to open file: ' . $this->path);
+        }
+
+        try {
+            $lockType = $exclusive ? LOCK_EX : LOCK_SH;
+            if (!flock($handle, $lockType)) {
+                throw new RuntimeException('Unable to lock file: ' . $this->path);
+            }
+
+            return $callback($handle);
+        } finally {
+            flock($handle, LOCK_UN);
+            fclose($handle);
+        }
+    }
+
+    /**
+     * Read file in chunks using a stream
+     * @param int<1, max> $chunkSize Size of each chunk in bytes
+     * @return \Generator<int, string>
+     * @throws RuntimeException
+     */
+    public function readStream(int $chunkSize = 8192): \Generator
+    {
+        if ($chunkSize < 1) {
+            throw new \InvalidArgumentException('Chunk size must be at least 1');
+        }
+
+        if (!$this->exists()) {
+            throw new RuntimeException('File does not exist: ' . $this->path);
+        }
+
+        $handle = fopen($this->path, 'r');
+        if ($handle === false) {
+            throw new RuntimeException('Unable to open file: ' . $this->path);
+        }
+
+        try {
+            while (!feof($handle)) {
+                $chunk = fread($handle, $chunkSize);
+                if ($chunk === false) {
+                    throw new RuntimeException('Unable to read from file: ' . $this->path);
+                }
+
+                if ($chunk !== '') {
+                    yield $chunk;
+                }
+            }
+        } finally {
+            fclose($handle);
+        }
+    }
+
+    /**
+     * Write to file using a stream
+     * @param iterable<string> $chunks
+     * @throws RuntimeException
+     */
+    public function writeStream(iterable $chunks): self
+    {
+        $dir = dirname($this->path);
+        if (!is_dir($dir)) {
+            throw new RuntimeException('Directory does not exist: ' . $dir);
+        }
+
+        $handle = fopen($this->path, 'w');
+        if ($handle === false) {
+            throw new RuntimeException('Unable to open file for writing: ' . $this->path);
+        }
+
+        try {
+            foreach ($chunks as $chunk) {
+                if (fwrite($handle, $chunk) === false) {
+                    throw new RuntimeException('Unable to write to file: ' . $this->path);
+                }
+            }
+        } finally {
+            fclose($handle);
+        }
+
+        return $this;
+    }
+
+    /**
+     * Calculate hash of file contents
+     * @param string $algorithm Hash algorithm (md5, sha256, etc.)
+     * @throws RuntimeException
+     */
+    public function hash(string $algorithm = 'sha256'): Str
+    {
+        if (!$this->exists()) {
+            throw new RuntimeException('File does not exist: ' . $this->path);
+        }
+
+        $hash = hash_file($algorithm, $this->path);
+        if ($hash === false) {
+            throw new RuntimeException('Unable to calculate hash for file: ' . $this->path);
+        }
+
+        return new Str($hash);
+    }
+
+    /**
+     * Get MIME type with improved detection using finfo
+     * @throws RuntimeException
+     */
+    public function mimeTypeDetailed(): Str
+    {
+        if (!$this->exists()) {
+            throw new RuntimeException('File does not exist: ' . $this->path);
+        }
+
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        if ($finfo === false) {
+            throw new RuntimeException('Unable to open fileinfo');
+        }
+
+        try {
+            $mimeType = finfo_file($finfo, $this->path);
+            if ($mimeType === false) {
+                throw new RuntimeException('Unable to determine MIME type: ' . $this->path);
+            }
+
+            return new Str($mimeType);
+        } finally {
+            finfo_close($finfo);
+        }
+    }
+
+    /**
+     * Create a temporary file in the system temp directory
+     * @param string $prefix Prefix for the temp file name
+     * @throws RuntimeException
+     */
+    public static function createTemp(string $prefix = 'php_'): self
+    {
+        $tempFile = tempnam(sys_get_temp_dir(), $prefix);
+        if ($tempFile === false) {
+            throw new RuntimeException('Unable to create temporary file');
+        }
+
+        return new self($tempFile);
+    }
+
+    /**
+     * Check if this is a temporary file (in system temp directory)
+     */
+    public function isTemp(): bool
+    {
+        $tempDir = sys_get_temp_dir();
+        return str_starts_with($this->path, $tempDir);
+    }
 }

@@ -258,4 +258,117 @@ describe('Arr', function (): void {
         expect(new Arr([1, 2, 3, 4])->average())->toBe(2.5);
         expect(new Arr([])->average())->toBe(0.0);
     });
+
+    // Enhanced Methods Tests
+
+    it('can partition array', function (): void {
+        $arr = new Arr([1, 2, 3, 4, 5, 6]);
+        $partitioned = $arr->partition(fn($n) => $n % 2 === 0);
+        expect($partitioned->get())->toBe([
+            [2, 4, 6],  // pass
+            [1, 3, 5],  // fail
+        ]);
+    });
+
+    it('can zip arrays together', function (): void {
+        $arr = new Arr([1, 2, 3]);
+        $zipped = $arr->zip(['a', 'b', 'c'], ['x', 'y', 'z']);
+        expect($zipped->get())->toBe([
+            [1, 'a', 'x'],
+            [2, 'b', 'y'],
+            [3, 'c', 'z'],
+        ]);
+    });
+
+    it('can zip arrays with different lengths', function (): void {
+        $arr = new Arr([1, 2]);
+        $zipped = $arr->zip(['a', 'b', 'c']);
+        expect($zipped->get())->toBe([
+            [1, 'a'],
+            [2, 'b'],
+            [null, 'c'],
+        ]);
+    });
+
+    it('can unzip array of tuples', function (): void {
+        $arr = new Arr([
+            [1, 'a', 'x'],
+            [2, 'b', 'y'],
+            [3, 'c', 'z'],
+        ]);
+        $unzipped = $arr->unzip();
+        expect($unzipped->get())->toBe([
+            [1, 2, 3],
+            ['a', 'b', 'c'],
+            ['x', 'y', 'z'],
+        ]);
+    });
+
+    it('can get difference between arrays', function (): void {
+        $arr = new Arr([1, 2, 3, 4]);
+        $diff = $arr->difference([2, 3], [4]);
+        expect($diff->get())->toContain(1);
+        expect($diff->count())->toBe(1);
+    });
+
+    it('can get intersection between arrays', function (): void {
+        $arr = new Arr([1, 2, 3, 4]);
+        $intersection = $arr->intersection([2, 3, 5], [3, 4]);
+        expect($intersection->get())->toContain(3);
+    });
+
+    it('can get union of arrays', function (): void {
+        $arr = new Arr([1, 2, 3]);
+        $union = $arr->union([3, 4, 5], [5, 6, 7]);
+        $values = array_values($union->get());
+        expect(count($values))->toBe(7);
+        expect($values)->toContain(1);
+        expect($values)->toContain(7);
+    });
+
+    it('can sort by multiple keys', function (): void {
+        $arr = new Arr([
+            ['name' => 'John', 'age' => 30],
+            ['name' => 'Jane', 'age' => 25],
+            ['name' => 'Bob', 'age' => 30],
+        ]);
+        $sorted = $arr->sortByKeys(['age' => 'asc', 'name' => 'asc']);
+        $values = array_values($sorted->get());
+        expect($values[0]['name'])->toBe('Jane');
+        expect($values[1]['name'])->toBe('Bob');
+        expect($values[2]['name'])->toBe('John');
+    });
+
+    it('can sort by keys in descending order', function (): void {
+        $arr = new Arr([
+            ['value' => 10],
+            ['value' => 30],
+            ['value' => 20],
+        ]);
+        $sorted = $arr->sortByKeys(['value' => 'desc']);
+        $values = array_values($sorted->get());
+        expect($values[0]['value'])->toBe(30);
+        expect($values[2]['value'])->toBe(10);
+    });
+
+    it('can pluck values from array of arrays', function (): void {
+        $arr = new Arr([
+            ['name' => 'John', 'age' => 30],
+            ['name' => 'Jane', 'age' => 25],
+            ['name' => 'Bob', 'age' => 30],
+        ]);
+        $names = $arr->pluck('name');
+        expect($names->get())->toBe(['John', 'Jane', 'Bob']);
+    });
+
+    it('can pluck values from array of objects', function (): void {
+        $obj1 = new \stdClass();
+        $obj1->name = 'John';
+        $obj2 = new \stdClass();
+        $obj2->name = 'Jane';
+
+        $arr = new Arr([$obj1, $obj2]);
+        $names = $arr->pluck('name');
+        expect($names->get())->toBe(['John', 'Jane']);
+    });
 });

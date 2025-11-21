@@ -193,4 +193,75 @@ describe('Str', function (): void {
         $arr = new Str('hello')->matchAll('/\d+/');
         expect($arr->get())->toBe([]);
     });
+
+    // Enhanced Methods Tests
+
+    it('can normalize unicode string', function (): void {
+        $str = new Str('café');
+        $normalized = $str->normalizeUnicode();
+        expect($normalized)->toBeInstanceOf(Str::class);
+        expect($normalized->get())->toBe('café');
+    });
+
+    it('can generate URL slug', function (): void {
+        expect(new Str('Hello World')->slug()->get())->toBe('hello-world');
+        expect(new Str('Hello   World')->slug()->get())->toBe('hello-world');
+        expect(new Str('Hello_World')->slug()->get())->toBe('hello-world');
+        expect(new Str('café résumé')->slug()->get())->toBe('cafe-resume');
+        expect(new Str('Hello World')->slug('_')->get())->toBe('hello_world');
+    });
+
+    it('can truncate string with ellipsis', function (): void {
+        expect(new Str('Hello World')->truncate(5)->get())->toBe('He...');
+        expect(new Str('Hello')->truncate(10)->get())->toBe('Hello');
+        expect(new Str('Hello World')->truncate(8, '...')->get())->toBe('Hello...');
+        expect(new Str('Hello World')->truncate(8, '…')->get())->toBe('Hello W…');
+    });
+
+    it('can convert to snake_case', function (): void {
+        expect(new Str('HelloWorld')->toSnakeCase()->get())->toBe('hello_world');
+        expect(new Str('helloWorld')->toSnakeCase()->get())->toBe('hello_world');
+        expect(new Str('hello-world')->toSnakeCase()->get())->toBe('hello_world');
+        expect(new Str('hello world')->toSnakeCase()->get())->toBe('hello_world');
+        expect(new Str('HTTPResponse')->toSnakeCase()->get())->toBe('h_t_t_p_response');
+    });
+
+    it('can convert to camelCase', function (): void {
+        expect(new Str('hello_world')->toCamelCase()->get())->toBe('helloWorld');
+        expect(new Str('hello-world')->toCamelCase()->get())->toBe('helloWorld');
+        expect(new Str('hello world')->toCamelCase()->get())->toBe('helloWorld');
+        expect(new Str('HelloWorld')->toCamelCase()->get())->toBe('helloworld');
+    });
+
+    it('can convert to PascalCase', function (): void {
+        expect(new Str('hello_world')->toPascalCase()->get())->toBe('HelloWorld');
+        expect(new Str('hello-world')->toPascalCase()->get())->toBe('HelloWorld');
+        expect(new Str('hello world')->toPascalCase()->get())->toBe('HelloWorld');
+        expect(new Str('helloWorld')->toPascalCase()->get())->toBe('Helloworld');
+    });
+
+    it('can convert to kebab-case', function (): void {
+        expect(new Str('HelloWorld')->toKebabCase()->get())->toBe('hello-world');
+        expect(new Str('helloWorld')->toKebabCase()->get())->toBe('hello-world');
+        expect(new Str('hello_world')->toKebabCase()->get())->toBe('hello-world');
+        expect(new Str('hello world')->toKebabCase()->get())->toBe('hello-world');
+        expect(new Str('HTTPResponse')->toKebabCase()->get())->toBe('h-t-t-p-response');
+    });
+
+    it('can calculate levenshtein distance', function (): void {
+        expect(new Str('kitten')->levenshtein('sitting'))->toBe(3);
+        expect(new Str('hello')->levenshtein('hello'))->toBe(0);
+        expect(new Str('hello')->levenshtein('world'))->toBe(4);
+    });
+
+    it('can calculate string similarity', function (): void {
+        $similarity = new Str('hello')->similarity('hello');
+        expect($similarity)->toBe(100.0);
+
+        $similarity = new Str('hello')->similarity('hallo');
+        expect($similarity)->toBeGreaterThan(50.0);
+
+        $similarity = new Str('hello')->similarity('world');
+        expect($similarity)->toBeLessThan(50.0);
+    });
 });

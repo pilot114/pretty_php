@@ -216,4 +216,150 @@ readonly class Str implements \Stringable
         preg_match_all($pattern, $this->value, $matches, PREG_SET_ORDER);
         return new Arr($matches);
     }
+
+    /**
+     * Normalize Unicode string
+     * @param int $form Normalization form (Normalizer::FORM_C, FORM_D, FORM_KC, FORM_KD)
+     */
+    public function normalizeUnicode(int $form = \Normalizer::FORM_C): self
+    {
+        $normalized = \Normalizer::normalize($this->value, $form);
+        if ($normalized === false) {
+            throw new \InvalidArgumentException('Unicode normalization failed');
+        }
+
+        return new self($normalized);
+    }
+
+    /**
+     * Generate URL-friendly slug
+     */
+    public function slug(string $separator = '-'): self
+    {
+        // Convert to lowercase
+        $slug = mb_strtolower($this->value);
+
+        // Normalize unicode characters
+        $normalized = \Normalizer::normalize($slug, \Normalizer::FORM_D);
+        if ($normalized === false) {
+            $normalized = $slug;
+        }
+
+        // Remove diacritics
+        $slug = (string) preg_replace('/\p{Mn}/u', '', $normalized);
+
+        // Replace non-alphanumeric characters with separator
+        $slug = (string) preg_replace('/[^\p{L}\p{N}]+/u', $separator, $slug);
+
+        // Remove leading/trailing separators
+        $slug = trim($slug, $separator);
+
+        return new self($slug);
+    }
+
+    /**
+     * Truncate string with ellipsis
+     */
+    public function truncate(int $length, string $ellipsis = '...'): self
+    {
+        if ($this->length() <= $length) {
+            return $this;
+        }
+
+        $ellipsisLength = mb_strlen($ellipsis);
+        $truncated = mb_substr($this->value, 0, max(0, $length - $ellipsisLength)) . $ellipsis;
+
+        return new self($truncated);
+    }
+
+    /**
+     * Convert to snake_case
+     */
+    public function toSnakeCase(): self
+    {
+        // Insert underscore before uppercase letters and convert to lowercase
+        $snake = (string) preg_replace('/(?<!^)[A-Z]/', '_$0', $this->value);
+        $snake = mb_strtolower($snake);
+
+        // Replace spaces and hyphens with underscores
+        $snake = (string) preg_replace('/[\s-]+/', '_', $snake);
+
+        // Remove multiple underscores
+        $snake = (string) preg_replace('/_+/', '_', $snake);
+
+        return new self(trim($snake, '_'));
+    }
+
+    /**
+     * Convert to camelCase
+     */
+    public function toCamelCase(): self
+    {
+        // Replace non-alphanumeric with spaces
+        $str = (string) preg_replace('/[^a-zA-Z0-9]+/', ' ', $this->value);
+
+        // Capitalize first letter of each word except the first
+        $str = mb_strtolower($str);
+        $words = explode(' ', $str);
+        $result = $words[0] ?? '';
+
+        for ($i = 1; $i < count($words); $i++) {
+            if ($words[$i] !== '') {
+                $result .= mb_convert_case($words[$i], MB_CASE_TITLE);
+            }
+        }
+
+        return new self($result);
+    }
+
+    /**
+     * Convert to PascalCase
+     */
+    public function toPascalCase(): self
+    {
+        $camel = $this->toCamelCase()->get();
+        if ($camel === '') {
+            return new self('');
+        }
+
+        $first = mb_substr($camel, 0, 1);
+        $rest = mb_substr($camel, 1);
+
+        return new self(mb_strtoupper($first) . $rest);
+    }
+
+    /**
+     * Convert to kebab-case
+     */
+    public function toKebabCase(): self
+    {
+        // Insert hyphen before uppercase letters and convert to lowercase
+        $kebab = (string) preg_replace('/(?<!^)[A-Z]/', '-$0', $this->value);
+        $kebab = mb_strtolower($kebab);
+
+        // Replace spaces and underscores with hyphens
+        $kebab = (string) preg_replace('/[\s_]+/', '-', $kebab);
+
+        // Remove multiple hyphens
+        $kebab = (string) preg_replace('/-+/', '-', $kebab);
+
+        return new self(trim($kebab, '-'));
+    }
+
+    /**
+     * Calculate Levenshtein distance between two strings
+     */
+    public function levenshtein(string $other): int
+    {
+        return levenshtein($this->value, $other);
+    }
+
+    /**
+     * Calculate similarity percentage between two strings (0-100)
+     */
+    public function similarity(string $other): float
+    {
+        similar_text($this->value, $other, $percent);
+        return $percent;
+    }
 }
