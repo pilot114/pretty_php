@@ -16,7 +16,7 @@ A modern, object-oriented wrapper for PHP's standard library with consistent API
 - 🔒 **Immutable** - All operations return new instances
 - 📦 **Zero dependencies** - Pure PHP implementation
 - ⚡ **High performance** - Optimized for speed
-- 🧪 **Well tested** - 130%+ code coverage, extensive test suite
+- 🧪 **Well tested** - Comprehensive test coverage with 700+ tests
 - 🌐 **Network protocols** - Built-in support for TCP, UDP, IP, ICMP, ARP, DNS, HTTP
 - 🔐 **Security first** - Buffer overflow protection, rate limiting, security audits
 - 🎯 **Functional types** - Result and Option types for safer error handling
