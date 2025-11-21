@@ -2,10 +2,10 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![PHP Version](https://img.shields.io/badge/php-%3E%3D8.4-8892BF.svg)](https://www.php.net/)
-[![Latest Version](https://img.shields.io/packagist/v/prettyph/pretty-php.svg)](https://packagist.org/packages/prettyph/pretty-php)
-[![Total Downloads](https://img.shields.io/packagist/dt/prettyph/pretty-php.svg)](https://packagist.org/packages/prettyph/pretty-php)
-[![CI Status](https://github.com/prettyph/pretty-php/actions/workflows/ci.yml/badge.svg)](https://github.com/prettyph/pretty-php/actions/workflows/ci.yml)
-[![codecov](https://codecov.io/gh/prettyph/pretty-php/branch/main/graph/badge.svg)](https://codecov.io/gh/prettyph/pretty-php)
+[![Latest Version](https://img.shields.io/packagist/v/pilot114/pretty_php.svg)](https://packagist.org/packages/pilot114/pretty_php)
+[![Total Downloads](https://img.shields.io/packagist/dt/pilot114/pretty_php.svg)](https://packagist.org/packages/pilot114/pretty_php)
+[![CI Status](https://github.com/pilot114/pretty_php/actions/workflows/ci.yml/badge.svg)](https://github.com/pilot114/pretty_php/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/pilot114/pretty_php/branch/main/graph/badge.svg)](https://codecov.io/gh/pilot114/pretty_php)
 
 A modern, object-oriented wrapper for PHP's standard library with consistent API design and immutable data structures.
 
