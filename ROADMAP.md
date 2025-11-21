@@ -4,15 +4,15 @@ This document outlines the planned development roadmap for Pretty PHP.
 
 ## Current Status (v0.2.0)
 
-✅ Core base wrappers (Str, Arr, File, Path, Num, Json, DateTime)
-✅ Extended binary system with multiple network protocols (IP, ICMP, TCP, UDP, ARP, DNS, HTTP)
-✅ Advanced binary features (BitField, Conditional packing, Validation)
-✅ Network utilities (Socket, RawSocket, NetworkInterface, PacketCapture)
-✅ Security system (Buffer overflow protection, Rate limiting, Security audit)
-✅ Functional programming types (Result, Option)
-✅ Comprehensive test coverage (700+ tests)
-✅ Full type safety with PHPStan max level
-✅ Zero dependencies
+✅ Core base wrappers (Str, Arr, File, Path, Num, Json, DateTime)  
+✅ Extended binary system with multiple network protocols (IP, ICMP, TCP, UDP, ARP, DNS, HTTP)  
+✅ Advanced binary features (BitField, Conditional packing, Validation)  
+✅ Network utilities (Socket, RawSocket, NetworkInterface, PacketCapture)  
+✅ Security system (Buffer overflow protection, Rate limiting, Security audit)  
+✅ Functional programming types (Result, Option)  
+✅ Comprehensive test coverage (700+ tests)  
+✅ Full type safety with PHPStan max level  
+✅ Zero dependencies  
 
 ## Phase 1: Foundation & Release (Q1 2025)
 
@@ -37,45 +37,6 @@ This document outlines the planned development roadmap for Pretty PHP.
 
 **Creating Releases**: Push a version tag (e.g., `git tag -a v0.1.0 -m "Release v0.1.0" && git push origin v0.1.0`) to automatically create a GitHub release and trigger Packagist update.
 
-
-
-
-### Enhanced Existing Classes
-
-#### Str Enhancements
-- [ ] Unicode normalization
-- [ ] Slug generation
-- [ ] Truncate with ellipsis
-- [ ] Case conversions (snake_case, camelCase, PascalCase, kebab-case)
-- [ ] Levenshtein distance
-- [ ] String similarity
-
-#### Arr Enhancements
-- [ ] `groupBy()`, `partition()`
-- [ ] `zip()`, `unzip()`
-- [ ] `difference()`, `intersection()`, `union()`
-- [ ] `flatten()` with depth control
-- [ ] Multi-key sorting
-- [ ] `pluck()` for extracting values
-
-#### File Enhancements
-- [ ] Atomic writes (write to temp + rename)
-- [ ] File locking mechanisms
-- [ ] Stream handling for large files
-- [ ] Improved MIME type detection
-- [ ] Hash calculation (md5, sha256, etc.)
-- [ ] Temporary file handling
-
-#### Path Enhancements
-- [ ] Improved Windows path support
-- [ ] Symbolic link handling
-- [ ] Path validation
-- [ ] URL path operations
-- [ ] Recursive glob patterns
-
-## Phase 3: Binary System Expansion (Q3 2025)
-
-- [ ] Auto-generate structure documentation
 
 ## Phase 4: Developer Experience (Q4 2025)
 
