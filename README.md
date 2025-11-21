@@ -163,7 +163,6 @@ For security concerns, please see [SECURITY.md](SECURITY.md).
 - 📖 [Full Documentation](AGENTS.md)
 - 🗺️ [Roadmap](ROADMAP.md)
 - 🔐 [Security Policy](SECURITY.md)
-- 🤝 [Contributing](CONTRIBUTING.md)
 
 ## Requirements
 
