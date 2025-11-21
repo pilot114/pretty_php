@@ -4,6 +4,9 @@ use PrettyPhp\Binary\Binary;
 use PrettyPhp\Binary\BitField;
 use PrettyPhp\Binary\Conditional;
 use PrettyPhp\Binary\Validate;
+use PrettyPhp\Binary\ICMPPacket;
+use PrettyPhp\Binary\TCPPacket;
+use PrettyPhp\Binary\DNSPacket;
 
 describe('Binary Improvements', function (): void {
     describe('Endianness Support', function (): void {
@@ -400,6 +403,95 @@ describe('Binary Improvements', function (): void {
             $doc = Binary::generateDocumentation($className::class);
 
             expect($doc)->toContain('if type == 1');
+        });
+    });
+
+    describe('ASCII Diagram Generation', function (): void {
+        it('can generate ASCII diagram for simple structure', function (): void {
+            $className = new class {
+                #[Binary('8')]
+                public int $type = 0;
+
+                #[Binary('8')]
+                public int $code = 0;
+
+                #[Binary('16')]
+                public int $checksum = 0;
+            };
+
+            $diagram = Binary::generateAsciiDiagram($className::class);
+
+            expect($diagram)->toContain('Binary Structure');
+            expect($diagram)->toContain('0                   1                   2                   3');
+            expect($diagram)->toContain('0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1');
+            expect($diagram)->toContain('+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+');
+            expect($diagram)->toContain('type');
+            expect($diagram)->toContain('code');
+            expect($diagram)->toContain('checksum');
+        });
+
+        it('can generate ASCII diagram for ICMP packet', function (): void {
+            $diagram = Binary::generateAsciiDiagram(ICMPPacket::class);
+
+            expect($diagram)->toContain('ICMPPacket');
+            expect($diagram)->toContain('type');
+            expect($diagram)->toContain('code');
+            expect($diagram)->toContain('checksum');
+            expect($diagram)->toContain('identifier');
+            expect($diagram)->toContain('sequenceNumber');
+        });
+
+        it('can generate ASCII diagram for TCP packet', function (): void {
+            $diagram = Binary::generateAsciiDiagram(TCPPacket::class);
+
+            expect($diagram)->toContain('TCPPacket');
+            expect($diagram)->toContain('sourcePort');
+            expect($diagram)->toContain('destinationPort');
+            expect($diagram)->toContain('sequenceNumber');
+            expect($diagram)->toContain('acknowledgmentNumber');
+        });
+
+        it('can generate ASCII diagram with bit fields', function (): void {
+            $className = new class {
+                #[BitField(bits: 4, offset: 0)]
+                public int $version = 0;
+
+                #[BitField(bits: 4, offset: 4)]
+                public int $headerLength = 0;
+
+                #[Binary('16')]
+                public int $totalLength = 0;
+            };
+
+            $diagram = Binary::generateAsciiDiagram($className::class);
+
+            expect($diagram)->toContain('version');
+            expect($diagram)->toContain('headerL'); // Name is truncated due to 4-bit width
+            expect($diagram)->toContain('totalLength');
+        });
+
+        it('can generate ASCII diagram with variable length field', function (): void {
+            $className = new class {
+                #[Binary('8')]
+                public int $type = 0;
+
+                #[Binary('A*')]
+                public string $data = '';
+            };
+
+            $diagram = Binary::generateAsciiDiagram($className::class);
+
+            expect($diagram)->toContain('variable length');
+            expect($diagram)->toContain('data');
+        });
+
+        it('can generate ASCII diagram for DNS packet', function (): void {
+            $diagram = Binary::generateAsciiDiagram(DNSPacket::class);
+
+            expect($diagram)->toContain('DNSPacket');
+            expect($diagram)->toContain('transactionId');
+            expect($diagram)->toContain('flags');
+            expect($diagram)->toContain('questionCount');
         });
     });
 

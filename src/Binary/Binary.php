@@ -458,4 +458,215 @@ class Binary
 
         return $doc . "\n**Total Size**: ~{$offset} bytes (excluding variable-length fields)\n";
     }
+
+    /**
+     * Generate ASCII diagram for a binary structure in RFC style
+     *
+     * @param class-string $className
+     */
+    public static function generateAsciiDiagram(string $className): string
+    {
+        $reflectionClass = new ReflectionClass($className);
+        $doc = "Binary Structure: {$className}\n\n";
+
+        // Header with bit positions
+        $doc .= " 0                   1                   2                   3\n";
+        $doc .= " 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1\n";
+
+        $fields = [];
+        $bitFieldGroup = [];
+
+        foreach ($reflectionClass->getProperties() as $property) {
+            $propertyName = $property->getName();
+
+            // Check for bit field
+            $bitFieldAttrs = $property->getAttributes(BitField::class);
+            if ($bitFieldAttrs !== []) {
+                $bitField = $bitFieldAttrs[0]->newInstance();
+                $bitFieldGroup[] = [
+                    'name' => $propertyName,
+                    'bits' => $bitField->bits,
+                    'offset' => $bitField->offset,
+                ];
+                continue;
+            }
+
+            // Flush bit field group if any
+            if ($bitFieldGroup !== []) {
+                $totalBits = 0;
+                foreach ($bitFieldGroup as $bf) {
+                    $totalBits = max($totalBits, $bf['offset'] + $bf['bits']);
+                }
+
+                // Create virtual field for bit field group
+                foreach ($bitFieldGroup as $bf) {
+                    $fields[] = [
+                        'name' => $bf['name'],
+                        'bits' => $bf['bits'],
+                        'type' => 'bitfield',
+                    ];
+                }
+                $bitFieldGroup = [];
+            }
+
+            $attributes = $property->getAttributes(Binary::class);
+            if ($attributes === []) {
+                continue;
+            }
+
+            $binaryAttr = $attributes[0]->newInstance();
+            $format = $binaryAttr->format;
+            $endian = $binaryAttr->endian;
+
+            if (self::isNestedStructure($format)) {
+                $fields[] = [
+                    'name' => $propertyName,
+                    'bits' => 'nested',
+                    'type' => 'nested',
+                ];
+            } else {
+                $size = self::getFormatSize($format, $endian);
+                $bits = $size * 8;
+
+                // Handle variable length
+                if ($format === 'A*') {
+                    $fields[] = [
+                        'name' => $propertyName,
+                        'bits' => 'variable',
+                        'type' => 'variable',
+                    ];
+                } else {
+                    $fields[] = [
+                        'name' => $propertyName,
+                        'bits' => $bits,
+                        'type' => 'fixed',
+                    ];
+                }
+            }
+        }
+
+        // Flush any remaining bit field group
+        if ($bitFieldGroup !== []) {
+            foreach ($bitFieldGroup as $bf) {
+                $fields[] = [
+                    'name' => $bf['name'],
+                    'bits' => $bf['bits'],
+                    'type' => 'bitfield',
+                ];
+            }
+        }
+
+        // Generate diagram
+        $currentRow = [];
+        $currentBits = 0;
+        $firstRow = true;
+
+        foreach ($fields as $field) {
+            if ($field['type'] === 'nested') {
+                // Flush current row
+                if ($currentRow !== []) {
+                    $doc .= self::renderAsciiRow($currentRow, $currentBits, $firstRow);
+                    $firstRow = false;
+                    $currentRow = [];
+                    $currentBits = 0;
+                }
+
+                $doc .= "+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+\n";
+                $doc .= "|                    " . str_pad($field['name'] . " (nested structure)", 42, " ", STR_PAD_BOTH) . "|\n";
+                continue;
+            }
+
+            if ($field['type'] === 'variable') {
+                // Flush current row
+                if ($currentRow !== []) {
+                    $doc .= self::renderAsciiRow($currentRow, $currentBits, $firstRow);
+                    $firstRow = false;
+                    $currentRow = [];
+                    $currentBits = 0;
+                }
+
+                $doc .= "+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+\n";
+                $doc .= "|                    " . str_pad($field['name'] . " (variable length)", 42, " ", STR_PAD_BOTH) . "|\n";
+                continue;
+            }
+
+            $fieldBits = (int) $field['bits'];
+
+            // Check if field fits in current row
+            if ($currentBits + $fieldBits > 32) {
+                // Render current row and start new one
+                if ($currentRow !== []) {
+                    $doc .= self::renderAsciiRow($currentRow, $currentBits, $firstRow);
+                    $firstRow = false;
+                }
+                $currentRow = [$field];
+                $currentBits = $fieldBits;
+            } else {
+                $currentRow[] = $field;
+                $currentBits += $fieldBits;
+            }
+
+            // If current row is exactly 32 bits, render it
+            if ($currentBits === 32) {
+                $doc .= self::renderAsciiRow($currentRow, $currentBits, $firstRow);
+                $firstRow = false;
+                $currentRow = [];
+                $currentBits = 0;
+            }
+        }
+
+        // Render any remaining fields
+        if ($currentRow !== []) {
+            $doc .= self::renderAsciiRow($currentRow, $currentBits, $firstRow);
+        }
+
+        $doc .= "+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+\n";
+
+        return $doc;
+    }
+
+    /**
+     * Render a single row of ASCII diagram
+     *
+     * @param array<array{name: string, bits: int, type: string}> $fields
+     */
+    private static function renderAsciiRow(array $fields, int $totalBits, bool $firstRow): string
+    {
+        $row = '';
+
+        if ($firstRow) {
+            $row .= "+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+\n";
+        } else {
+            $row .= "+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+\n";
+        }
+
+        // Calculate padding
+        $padding = 32 - $totalBits;
+
+        $row .= "|";
+        foreach ($fields as $field) {
+            $fieldBits = (int) $field['bits'];
+            $width = (int) ($fieldBits * 2); // Each bit takes 2 characters (+-) in the row
+
+            $name = $field['name'];
+            // Only truncate if name is significantly longer than width
+            if (strlen($name) > $width) {
+                $name = substr($name, 0, max(1, $width - 1));
+            }
+
+            $row .= str_pad($name, $width, " ", STR_PAD_BOTH);
+            $row .= "|";
+        }
+
+        // Add padding if needed
+        if ($padding > 0) {
+            $paddingWidth = (int) ($padding * 2);
+            $row .= str_pad("", $paddingWidth, " ");
+            $row .= "|";
+        }
+
+        $row .= "\n";
+
+        return $row;
+    }
 }
