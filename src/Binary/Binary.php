@@ -5,6 +5,9 @@ namespace PrettyPhp\Binary;
 use Attribute;
 use ReflectionClass;
 use Exception;
+use PrettyPhp\Binary\Security\BufferOverflowException;
+use PrettyPhp\Binary\Security\SecurityConfig;
+use PrettyPhp\Binary\Security\SecurityException;
 
 #[Attribute(Attribute::TARGET_PROPERTY)]
 class Binary
@@ -159,8 +162,27 @@ class Binary
      * @param class-string<T> $className
      * @return T
      */
-    public static function unpack(string $binaryData, string $className): object
+    public static function unpack(string $binaryData, string $className, int $nestingDepth = 0): object
     {
+        // Security: Check buffer size to prevent buffer overflow attacks
+        $dataLength = strlen($binaryData);
+        $maxBufferSize = SecurityConfig::getMaxBufferSize();
+        if ($dataLength > $maxBufferSize) {
+            throw new BufferOverflowException($dataLength, $maxBufferSize);
+        }
+
+        // Security: Check nesting depth to prevent stack overflow attacks
+        $maxNestingDepth = SecurityConfig::getMaxNestingDepth();
+        if ($nestingDepth > $maxNestingDepth) {
+            throw new SecurityException(
+                sprintf(
+                    'Maximum nesting depth exceeded: %d > %d (possible recursive structure attack)',
+                    $nestingDepth,
+                    $maxNestingDepth
+                )
+            );
+        }
+
         $reflectionClass = new ReflectionClass($className);
         $object = $reflectionClass->newInstanceWithoutConstructor();
         $offset = 0;
@@ -219,13 +241,23 @@ class Binary
             if (self::isNestedStructure($originalFormat)) {
                 // Handle nested structure
                 /** @var class-string $originalFormat */
-                $nestedObject = self::unpack(substr($binaryData, $offset), $originalFormat);
+                // Security: Pass incremented nesting depth to prevent infinite recursion
+                $nestedObject = self::unpack(substr($binaryData, $offset), $originalFormat, $nestingDepth + 1);
                 $nestedSize = self::calculateObjectSize($nestedObject, $originalFormat);
                 $offset += $nestedSize;
                 $property->setValue($object, $nestedObject);
             } else {
                 // Handle regular format
                 $format = self::convertBitFormatToPackFormat($originalFormat, $binaryAttr->endian);
+
+                // Security: Validate we have enough data before unpacking
+                $expectedSize = self::getFormatSize($originalFormat, $binaryAttr->endian);
+                if ($offset + $expectedSize > $dataLength) {
+                    throw new BufferOverflowException(
+                        $offset + $expectedSize,
+                        $dataLength
+                    );
+                }
 
                 $unpacked = unpack($format, substr($binaryData, $offset));
                 if ($unpacked === false) {

@@ -6,6 +6,7 @@ namespace PrettyPhp\Binary;
 
 use RuntimeException;
 use Socket as PhpSocket;
+use PrettyPhp\Binary\Security\RateLimiter;
 
 /**
  * Socket - Wrapper for socket operations
@@ -17,6 +18,7 @@ class Socket
 {
     private ?PhpSocket $socket = null;
     private bool $closed = false;
+    private ?RateLimiter $rateLimiter = null;
 
     /**
      * Create a new socket
@@ -143,11 +145,33 @@ class Socket
     }
 
     /**
+     * Set rate limiter for this socket
+     */
+    public function setRateLimiter(?RateLimiter $rateLimiter): self
+    {
+        $this->rateLimiter = $rateLimiter;
+        return $this;
+    }
+
+    /**
+     * Get rate limiter for this socket
+     */
+    public function getRateLimiter(): ?RateLimiter
+    {
+        return $this->rateLimiter;
+    }
+
+    /**
      * Send data through the socket
      */
     public function send(string $data, int $flags = 0): int
     {
         $this->ensureOpen();
+
+        // Apply rate limiting if configured
+        if ($this->rateLimiter !== null) {
+            $this->rateLimiter->checkLimit('socket send');
+        }
 
         $result = socket_send($this->socket, $data, strlen($data), $flags);
         if ($result === false) {
@@ -166,6 +190,11 @@ class Socket
     {
         $this->ensureOpen();
 
+        // Apply rate limiting if configured
+        if ($this->rateLimiter !== null) {
+            $this->rateLimiter->checkLimit('socket sendTo');
+        }
+
         $result = socket_sendto($this->socket, $data, strlen($data), $flags, $address, $port);
         if ($result === false) {
             throw new RuntimeException(
@@ -182,6 +211,11 @@ class Socket
     public function receive(int $length, int $flags = 0): string
     {
         $this->ensureOpen();
+
+        // Apply rate limiting if configured
+        if ($this->rateLimiter !== null) {
+            $this->rateLimiter->checkLimit('socket receive');
+        }
 
         $buffer = '';
         $result = socket_recv($this->socket, $buffer, $length, $flags);
@@ -202,6 +236,11 @@ class Socket
     public function receiveFrom(int $length, int $flags = 0): array
     {
         $this->ensureOpen();
+
+        // Apply rate limiting if configured
+        if ($this->rateLimiter !== null) {
+            $this->rateLimiter->checkLimit('socket receiveFrom');
+        }
 
         $buffer = '';
         $address = '';
