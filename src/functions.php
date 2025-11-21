@@ -3,12 +3,15 @@
 declare(strict_types=1);
 
 use PrettyPhp\Base\Arr;
+use PrettyPhp\Base\Date;
+use PrettyPhp\Base\DateInterval;
 use PrettyPhp\Base\DateTime;
 use PrettyPhp\Base\File;
 use PrettyPhp\Base\Json;
 use PrettyPhp\Base\Num;
 use PrettyPhp\Base\Path;
 use PrettyPhp\Base\Str;
+use PrettyPhp\Base\Timezone;
 use PrettyPhp\Functional\Option;
 use PrettyPhp\Functional\Result;
 
@@ -134,5 +137,40 @@ if (!function_exists('datetime')) {
         \DateTimeZone|string|null $timezone = null
     ): DateTime {
         return new DateTime($value, $timezone);
+    }
+}
+
+if (!function_exists('date')) {
+    /**
+     * Creates a Date utility class for static date operations.
+     * Note: This shadows the global date() function - use Date::format() instead.
+     */
+    function date(): Date
+    {
+        return new Date();
+    }
+}
+
+if (!function_exists('interval')) {
+    /**
+     * Creates a DateInterval instance.
+     *
+     * @param \DateInterval|string $value DateInterval or interval specification (e.g., 'P1D', 'PT1H')
+     */
+    function interval(\DateInterval|string $value): DateInterval
+    {
+        return new DateInterval($value);
+    }
+}
+
+if (!function_exists('timezone')) {
+    /**
+     * Creates a Timezone instance.
+     *
+     * @param \DateTimeZone|string $value DateTimeZone or timezone identifier (e.g., 'UTC', 'Europe/Paris')
+     */
+    function timezone(\DateTimeZone|string $value): Timezone
+    {
+        return new Timezone($value);
     }
 }

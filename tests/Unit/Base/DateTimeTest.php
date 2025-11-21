@@ -1,5 +1,6 @@
 <?php
 
+use PrettyPhp\Base\DateInterval;
 use PrettyPhp\Base\DateTime;
 use PrettyPhp\Base\Str;
 
@@ -469,8 +470,8 @@ describe('DateTime', function (): void {
             $dt1 = new DateTime('2024-01-15 12:30:00');
             $dt2 = new DateTime('2024-01-20 12:30:00');
             $diff = $dt1->diff($dt2);
-            expect($diff)->toBeInstanceOf(\DateInterval::class);
-            expect($diff->d)->toBe(5);
+            expect($diff)->toBeInstanceOf(DateInterval::class);
+            expect($diff->days())->toBe(5);
         });
 
         it('can get diff in years', function (): void {
