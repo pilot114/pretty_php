@@ -1,0 +1,319 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Method PrettyPhp\\Binary\\NetworkInterface\:\:getStats\(\) should return array\{rx_bytes\?\: int, tx_bytes\?\: int, rx_packets\?\: int, tx_packets\?\: int, rx_errors\?\: int, tx_errors\?\: int\}\|null but returns array\<mixed, mixed\>\|null\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Binary/NetworkInterface.php
+
+		-
+			message: '#^Method PrettyPhp\\Binary\\NetworkInterface\:\:getUnicastAddresses\(\) should return array\<array\{address\: string, netmask\?\: string, family\?\: int\}\> but returns array\<mixed\>\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Binary/NetworkInterface.php
+
+		-
+			message: '#^Parameter \#2 \$info of class PrettyPhp\\Binary\\NetworkInterface constructor expects array\<string, mixed\>, array\<mixed, mixed\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Binary/NetworkInterface.php
+
+		-
+			message: '#^Method PrettyPhp\\Binary\\PacketCapture\:\:__construct\(\) throws checked exception RuntimeException but it''s missing from the PHPDoc @throws tag\.$#'
+			identifier: missingType.checkedException
+			count: 1
+			path: src/Binary/PacketCapture.php
+
+		-
+			message: '#^Method PrettyPhp\\Binary\\PacketCapture\:\:capture\(\) throws checked exception RuntimeException but it''s missing from the PHPDoc @throws tag\.$#'
+			identifier: missingType.checkedException
+			count: 1
+			path: src/Binary/PacketCapture.php
+
+		-
+			message: '#^Method PrettyPhp\\Binary\\PacketCapture\:\:captureStream\(\) throws checked exception RuntimeException but it''s missing from the PHPDoc @throws tag\.$#'
+			identifier: missingType.checkedException
+			count: 1
+			path: src/Binary/PacketCapture.php
+
+		-
+			message: '#^Method PrettyPhp\\Binary\\PacketCapture\:\:start\(\) throws checked exception RuntimeException but it''s missing from the PHPDoc @throws tag\.$#'
+			identifier: missingType.checkedException
+			count: 1
+			path: src/Binary/PacketCapture.php
+
+		-
+			message: '#^Property PrettyPhp\\Binary\\PacketCapture\:\:\$handlers type has no signature specified for callable\.$#'
+			identifier: missingType.callable
+			count: 1
+			path: src/Binary/PacketCapture.php
+
+		-
+			message: '#^Constant IP_RECVTOS not found\.$#'
+			identifier: constant.notFound
+			count: 1
+			path: src/Binary/RawSocket.php
+
+		-
+			message: '#^Constant IP_RECVTTL not found\.$#'
+			identifier: constant.notFound
+			count: 1
+			path: src/Binary/RawSocket.php
+
+		-
+			message: '#^Constant IP_TOS not found\.$#'
+			identifier: constant.notFound
+			count: 2
+			path: src/Binary/RawSocket.php
+
+		-
+			message: '#^Constant IP_TTL not found\.$#'
+			identifier: constant.notFound
+			count: 2
+			path: src/Binary/RawSocket.php
+
+		-
+			message: '#^Method PrettyPhp\\Binary\\RawSocket\:\:enablePromiscuousMode\(\) throws checked exception RuntimeException but it''s missing from the PHPDoc @throws tag\.$#'
+			identifier: missingType.checkedException
+			count: 1
+			path: src/Binary/RawSocket.php
+
+		-
+			message: '#^Method PrettyPhp\\Binary\\RawSocket\:\:setIpOptions\(\) throws checked exception RuntimeException but it''s missing from the PHPDoc @throws tag\.$#'
+			identifier: missingType.checkedException
+			count: 1
+			path: src/Binary/RawSocket.php
+
+		-
+			message: '#^Parameter \#2 \$option of method PrettyPhp\\Binary\\Socket\:\:setOption\(\) expects int, mixed given\.$#'
+			identifier: argument.type
+			count: 5
+			path: src/Binary/RawSocket.php
+
+		-
+			message: '#^Method PrettyPhp\\Binary\\Socket\:\:accept\(\) throws checked exception RuntimeException but it''s missing from the PHPDoc @throws tag\.$#'
+			identifier: missingType.checkedException
+			count: 1
+			path: src/Binary/Socket.php
+
+		-
+			message: '#^Method PrettyPhp\\Binary\\Socket\:\:bind\(\) throws checked exception RuntimeException but it''s missing from the PHPDoc @throws tag\.$#'
+			identifier: missingType.checkedException
+			count: 1
+			path: src/Binary/Socket.php
+
+		-
+			message: '#^Method PrettyPhp\\Binary\\Socket\:\:connect\(\) throws checked exception RuntimeException but it''s missing from the PHPDoc @throws tag\.$#'
+			identifier: missingType.checkedException
+			count: 1
+			path: src/Binary/Socket.php
+
+		-
+			message: '#^Method PrettyPhp\\Binary\\Socket\:\:ensureOpen\(\) throws checked exception RuntimeException but it''s missing from the PHPDoc @throws tag\.$#'
+			identifier: missingType.checkedException
+			count: 2
+			path: src/Binary/Socket.php
+
+		-
+			message: '#^Method PrettyPhp\\Binary\\Socket\:\:getName\(\) should return array\{address\: string, port\: int\} but returns array\{address\: mixed, port\: mixed\}\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Binary/Socket.php
+
+		-
+			message: '#^Method PrettyPhp\\Binary\\Socket\:\:getName\(\) throws checked exception RuntimeException but it''s missing from the PHPDoc @throws tag\.$#'
+			identifier: missingType.checkedException
+			count: 1
+			path: src/Binary/Socket.php
+
+		-
+			message: '#^Method PrettyPhp\\Binary\\Socket\:\:getOption\(\) throws checked exception RuntimeException but it''s missing from the PHPDoc @throws tag\.$#'
+			identifier: missingType.checkedException
+			count: 1
+			path: src/Binary/Socket.php
+
+		-
+			message: '#^Method PrettyPhp\\Binary\\Socket\:\:getPeerName\(\) should return array\{address\: string, port\: int\} but returns array\{address\: mixed, port\: mixed\}\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Binary/Socket.php
+
+		-
+			message: '#^Method PrettyPhp\\Binary\\Socket\:\:getPeerName\(\) throws checked exception RuntimeException but it''s missing from the PHPDoc @throws tag\.$#'
+			identifier: missingType.checkedException
+			count: 1
+			path: src/Binary/Socket.php
+
+		-
+			message: '#^Method PrettyPhp\\Binary\\Socket\:\:getResource\(\) should return Socket but returns Socket\|null\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Binary/Socket.php
+
+		-
+			message: '#^Method PrettyPhp\\Binary\\Socket\:\:listen\(\) throws checked exception RuntimeException but it''s missing from the PHPDoc @throws tag\.$#'
+			identifier: missingType.checkedException
+			count: 1
+			path: src/Binary/Socket.php
+
+		-
+			message: '#^Method PrettyPhp\\Binary\\Socket\:\:raw\(\) throws checked exception RuntimeException but it''s missing from the PHPDoc @throws tag\.$#'
+			identifier: missingType.checkedException
+			count: 1
+			path: src/Binary/Socket.php
+
+		-
+			message: '#^Method PrettyPhp\\Binary\\Socket\:\:receive\(\) should return string but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Binary/Socket.php
+
+		-
+			message: '#^Method PrettyPhp\\Binary\\Socket\:\:receive\(\) throws checked exception RuntimeException but it''s missing from the PHPDoc @throws tag\.$#'
+			identifier: missingType.checkedException
+			count: 1
+			path: src/Binary/Socket.php
+
+		-
+			message: '#^Method PrettyPhp\\Binary\\Socket\:\:receiveFrom\(\) should return array\{data\: string, address\: string, port\: int\} but returns array\{data\: mixed, address\: mixed, port\: mixed\}\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Binary/Socket.php
+
+		-
+			message: '#^Method PrettyPhp\\Binary\\Socket\:\:receiveFrom\(\) throws checked exception RuntimeException but it''s missing from the PHPDoc @throws tag\.$#'
+			identifier: missingType.checkedException
+			count: 1
+			path: src/Binary/Socket.php
+
+		-
+			message: '#^Method PrettyPhp\\Binary\\Socket\:\:send\(\) throws checked exception RuntimeException but it''s missing from the PHPDoc @throws tag\.$#'
+			identifier: missingType.checkedException
+			count: 1
+			path: src/Binary/Socket.php
+
+		-
+			message: '#^Method PrettyPhp\\Binary\\Socket\:\:sendTo\(\) throws checked exception RuntimeException but it''s missing from the PHPDoc @throws tag\.$#'
+			identifier: missingType.checkedException
+			count: 1
+			path: src/Binary/Socket.php
+
+		-
+			message: '#^Method PrettyPhp\\Binary\\Socket\:\:setBlocking\(\) throws checked exception RuntimeException but it''s missing from the PHPDoc @throws tag\.$#'
+			identifier: missingType.checkedException
+			count: 1
+			path: src/Binary/Socket.php
+
+		-
+			message: '#^Method PrettyPhp\\Binary\\Socket\:\:setOption\(\) throws checked exception RuntimeException but it''s missing from the PHPDoc @throws tag\.$#'
+			identifier: missingType.checkedException
+			count: 1
+			path: src/Binary/Socket.php
+
+		-
+			message: '#^Parameter \#1 \$socket of function socket_accept expects Socket, Socket\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Binary/Socket.php
+
+		-
+			message: '#^Parameter \#1 \$socket of function socket_bind expects Socket, Socket\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Binary/Socket.php
+
+		-
+			message: '#^Parameter \#1 \$socket of function socket_close expects Socket, Socket\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Binary/Socket.php
+
+		-
+			message: '#^Parameter \#1 \$socket of function socket_connect expects Socket, Socket\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Binary/Socket.php
+
+		-
+			message: '#^Parameter \#1 \$socket of function socket_get_option expects Socket, Socket\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Binary/Socket.php
+
+		-
+			message: '#^Parameter \#1 \$socket of function socket_getpeername expects Socket, Socket\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Binary/Socket.php
+
+		-
+			message: '#^Parameter \#1 \$socket of function socket_getsockname expects Socket, Socket\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Binary/Socket.php
+
+		-
+			message: '#^Parameter \#1 \$socket of function socket_listen expects Socket, Socket\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Binary/Socket.php
+
+		-
+			message: '#^Parameter \#1 \$socket of function socket_recv expects Socket, Socket\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Binary/Socket.php
+
+		-
+			message: '#^Parameter \#1 \$socket of function socket_recvfrom expects Socket, Socket\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Binary/Socket.php
+
+		-
+			message: '#^Parameter \#1 \$socket of function socket_send expects Socket, Socket\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Binary/Socket.php
+
+		-
+			message: '#^Parameter \#1 \$socket of function socket_sendto expects Socket, Socket\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Binary/Socket.php
+
+		-
+			message: '#^Parameter \#1 \$socket of function socket_set_block expects Socket, Socket\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Binary/Socket.php
+
+		-
+			message: '#^Parameter \#1 \$socket of function socket_set_nonblock expects Socket, Socket\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Binary/Socket.php
+
+		-
+			message: '#^Parameter \#1 \$socket of function socket_set_option expects Socket, Socket\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Binary/Socket.php
+
+		-
+			message: '#^Parameter \#4 \$value of function socket_set_option expects array\|int\|string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Binary/Socket.php
+
+		-
+			message: '#^Property PrettyPhp\\Binary\\Socket\:\:\$socket \(Socket\|null\) does not accept Socket\|false\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: src/Binary/Socket.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between Socket and false will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: src/Binary/Socket.php
