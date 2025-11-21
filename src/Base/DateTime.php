@@ -421,17 +421,19 @@ readonly class DateTime implements \Stringable
     /**
      * Add interval
      */
-    public function add(\DateInterval $interval): self
+    public function add(\DateInterval|DateInterval $interval): self
     {
-        return new self($this->value->add($interval));
+        $int = $interval instanceof DateInterval ? $interval->get() : $interval;
+        return new self($this->value->add($int));
     }
 
     /**
      * Subtract interval
      */
-    public function sub(\DateInterval $interval): self
+    public function sub(\DateInterval|DateInterval $interval): self
     {
-        return new self($this->value->sub($interval));
+        $int = $interval instanceof DateInterval ? $interval->get() : $interval;
+        return new self($this->value->sub($int));
     }
 
     /**
@@ -570,6 +572,14 @@ readonly class DateTime implements \Stringable
     }
 
     /**
+     * Get the timezone as Timezone object
+     */
+    public function tz(): Timezone
+    {
+        return new Timezone($this->value->getTimezone());
+    }
+
+    /**
      * Get the timezone name
      */
     public function timezoneName(): Str
@@ -580,9 +590,13 @@ readonly class DateTime implements \Stringable
     /**
      * Convert to timezone
      */
-    public function toTimezone(\DateTimeZone|string $timezone): self
+    public function toTimezone(\DateTimeZone|Timezone|string $timezone): self
     {
-        $tz = is_string($timezone) ? new \DateTimeZone($timezone) : $timezone;
+        $tz = match (true) {
+            $timezone instanceof Timezone => $timezone->get(),
+            is_string($timezone) => new \DateTimeZone($timezone),
+            default => $timezone,
+        };
         return new self($this->value->setTimezone($tz));
     }
 
@@ -594,15 +608,23 @@ readonly class DateTime implements \Stringable
         return $this->toTimezone(new \DateTimeZone('UTC'));
     }
 
+    /**
+     * Get timezone offset in seconds
+     */
+    public function timezoneOffset(): int
+    {
+        return $this->value->getOffset();
+    }
+
     // ==================== Difference ====================
 
     /**
      * Get difference from another datetime
      */
-    public function diff(self|string|\DateTimeInterface $other, bool $absolute = false): \DateInterval
+    public function diff(self|string|\DateTimeInterface $other, bool $absolute = false): DateInterval
     {
         $otherDt = $this->toDateTimeImmutable($other);
-        return $this->value->diff($otherDt, $absolute);
+        return new DateInterval($this->value->diff($otherDt, $absolute));
     }
 
     /**
@@ -610,7 +632,7 @@ readonly class DateTime implements \Stringable
      */
     public function diffInYears(self|string|\DateTimeInterface $other, bool $absolute = true): int
     {
-        return (int) $this->diff($other, $absolute)->format('%y');
+        return $this->diff($other, $absolute)->years();
     }
 
     /**
@@ -619,7 +641,7 @@ readonly class DateTime implements \Stringable
     public function diffInMonths(self|string|\DateTimeInterface $other, bool $absolute = true): int
     {
         $diff = $this->diff($other, $absolute);
-        return ((int) $diff->format('%y') * 12) + (int) $diff->format('%m');
+        return ($diff->years() * 12) + $diff->months();
     }
 
     /**
@@ -876,6 +898,101 @@ readonly class DateTime implements \Stringable
             'timezone' => $this->timezoneName()->get(),
         ];
     }
+
+    // ==================== ISO Date ====================
+
+    /**
+     * Set ISO date (year, week, day of week)
+     */
+    public function setISODate(int $year, int $week, int $dayOfWeek = 1): self
+    {
+        return new self($this->value->setISODate($year, $week, $dayOfWeek));
+    }
+
+    // ==================== Sun Info ====================
+
+    /**
+     * Get sunrise time for this date
+     *
+     * @param float $latitude Latitude in degrees
+     * @param float $longitude Longitude in degrees
+     */
+    public function sunrise(float $latitude, float $longitude): ?self
+    {
+        $timestamp = date_sunrise(
+            $this->value->getTimestamp(),
+            \SUNFUNCS_RET_TIMESTAMP,
+            $latitude,
+            $longitude,
+            90.833333,
+            $this->timezoneOffset() / 3600
+        );
+
+        if ($timestamp === false) {
+            return null;
+        }
+
+        return new self((int) $timestamp, $this->value->getTimezone());
+    }
+
+    /**
+     * Get sunset time for this date
+     *
+     * @param float $latitude Latitude in degrees
+     * @param float $longitude Longitude in degrees
+     */
+    public function sunset(float $latitude, float $longitude): ?self
+    {
+        $timestamp = date_sunset(
+            $this->value->getTimestamp(),
+            \SUNFUNCS_RET_TIMESTAMP,
+            $latitude,
+            $longitude,
+            90.833333,
+            $this->timezoneOffset() / 3600
+        );
+
+        if ($timestamp === false) {
+            return null;
+        }
+
+        return new self((int) $timestamp, $this->value->getTimezone());
+    }
+
+    /**
+     * Get sun information (sunrise, sunset, transit, etc.)
+     *
+     * @param float $latitude Latitude in degrees
+     * @param float $longitude Longitude in degrees
+     * @return array{
+     *     sunrise: int,
+     *     sunset: int,
+     *     transit: int,
+     *     civil_twilight_begin: int,
+     *     civil_twilight_end: int,
+     *     nautical_twilight_begin: int,
+     *     nautical_twilight_end: int,
+     *     astronomical_twilight_begin: int,
+     *     astronomical_twilight_end: int
+     * }
+     */
+    public function sunInfo(float $latitude, float $longitude): array
+    {
+        return date_sun_info($this->value->getTimestamp(), $latitude, $longitude);
+    }
+
+    // ==================== Leap Year ====================
+
+    /**
+     * Check if is a leap year
+     */
+    public function isLeapYear(): bool
+    {
+        $year = $this->year();
+        return ($year % 4 === 0 && $year % 100 !== 0) || ($year % 400 === 0);
+    }
+
+    // ==================== Helper Methods ====================
 
     /**
      * Helper to convert various datetime types to DateTimeImmutable
