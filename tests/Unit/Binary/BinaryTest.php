@@ -176,8 +176,9 @@ describe('Binary', function (): void {
             public int $field2 = 0;  // This will fail - not enough data
         };
 
+        // Now throws BufferOverflowException due to security checks
         expect(fn(): object => Binary::unpack($binaryData, $className::class))
-            ->toThrow(Exception::class, "Failed to unpack binary data for property 'field2'");
+            ->toThrow(\PrettyPhp\Binary\Security\BufferOverflowException::class);
     });
 
     it('can pack and unpack ICMPPacket', function (): void {
