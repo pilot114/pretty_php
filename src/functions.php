@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use PrettyPhp\Base\Arr;
+use PrettyPhp\Base\DateTime;
 use PrettyPhp\Base\File;
 use PrettyPhp\Base\Json;
 use PrettyPhp\Base\Num;
@@ -118,5 +119,20 @@ if (!function_exists('json')) {
         }
 
         return Json::fromData($value);
+    }
+}
+
+if (!function_exists('datetime')) {
+    /**
+     * Creates a DateTime instance.
+     *
+     * @param \DateTimeImmutable|string|int|null $value DateTimeImmutable, string, timestamp, or null for now
+     * @param \DateTimeZone|string|null $timezone Timezone
+     */
+    function datetime(
+        \DateTimeImmutable|string|int|null $value = null,
+        \DateTimeZone|string|null $timezone = null
+    ): DateTime {
+        return new DateTime($value, $timezone);
     }
 }
