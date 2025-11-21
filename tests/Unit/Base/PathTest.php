@@ -259,4 +259,92 @@ describe('Path', function (): void {
         $path = new Path('/path/to/')->withoutExtension();
         expect($path->get())->toBe('/path/to');
     });
+
+    // Enhanced Methods Tests
+
+    it('can normalize path separators', function (): void {
+        $path = new Path('path/to\\file');
+        $normalized = $path->normalizePathSeparators();
+        expect($normalized->get())->toContain(DIRECTORY_SEPARATOR);
+    });
+
+    it('can detect Windows paths', function (): void {
+        expect(new Path('C:\\Windows\\System32')->isWindowsPath())->toBeTrue();
+        expect(new Path('D:/path/to/file')->isWindowsPath())->toBeTrue();
+        expect(new Path('/usr/local/bin')->isWindowsPath())->toBeFalse();
+        expect(new Path('relative/path')->isWindowsPath())->toBeFalse();
+    });
+
+    it('can validate safe paths', function (): void {
+        expect(new Path('/safe/path')->isSafe())->toBeTrue();
+        expect(new Path('../etc/passwd')->isSafe())->toBeFalse();
+        expect(new Path("/path\0null")->isSafe())->toBeFalse();
+    });
+
+    it('can validate path format', function (): void {
+        expect(new Path('/valid/path')->isValid())->toBeTrue();
+        expect(new Path('')->isValid())->toBeFalse();
+        expect(new Path("/null\0byte")->isValid())->toBeFalse();
+    });
+
+    it('can convert to URL path', function (): void {
+        $path = new Path('path\\to\\file');
+        $urlPath = $path->toUrlPath();
+        expect($urlPath->get())->toBe('path/to/file');
+    });
+
+    it('can create from URL path', function (): void {
+        $path = Path::fromUrlPath('path/to/file');
+        expect($path->get())->toContain('path');
+        expect($path->get())->toContain('file');
+    });
+
+    it('can URL encode path', function (): void {
+        $path = new Path('path/to/my file.txt');
+        $encoded = $path->urlEncode();
+        expect($encoded->get())->toBe('path/to/my%20file.txt');
+    });
+
+    it('can check if paths are the same', function (): void {
+        $tempFile = tempnam(sys_get_temp_dir(), 'test_');
+        $path1 = new Path($tempFile);
+        $path2 = new Path($tempFile);
+        expect($path1->isSameAs($path2))->toBeTrue();
+
+        unlink($tempFile);
+    });
+
+    it('can get real path', function (): void {
+        $tempFile = tempnam(sys_get_temp_dir(), 'test_');
+        $path = new Path($tempFile);
+        $realPath = $path->realPath();
+        expect($realPath->exists())->toBeTrue();
+
+        unlink($tempFile);
+    });
+
+    it('throws exception for invalid real path', function (): void {
+        $path = new Path('/nonexistent/path');
+        expect(fn() => $path->realPath())
+            ->toThrow(RuntimeException::class, 'Unable to resolve real path');
+    });
+
+    it('can perform recursive glob', function (): void {
+        $tempDir = sys_get_temp_dir() . '/test_glob_' . uniqid();
+        mkdir($tempDir);
+        mkdir($tempDir . '/subdir');
+        file_put_contents($tempDir . '/file1.txt', 'test');
+        file_put_contents($tempDir . '/subdir/file2.txt', 'test');
+
+        $path = new Path($tempDir);
+        $results = $path->globRecursive('*.txt');
+
+        expect($results->count())->toBeGreaterThan(0);
+
+        // Cleanup
+        unlink($tempDir . '/file1.txt');
+        unlink($tempDir . '/subdir/file2.txt');
+        rmdir($tempDir . '/subdir');
+        rmdir($tempDir);
+    });
 });

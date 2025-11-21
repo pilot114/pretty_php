@@ -223,4 +223,214 @@ readonly class Path implements \Stringable
     {
         return new File($this->path);
     }
+
+    /**
+     * Improved Windows path support - normalize path separators
+     */
+    public function normalizePathSeparators(): self
+    {
+        $normalized = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $this->path);
+        return new self($normalized);
+    }
+
+    /**
+     * Check if path is a Windows path
+     */
+    public function isWindowsPath(): bool
+    {
+        return strlen($this->path) >= 2 && $this->path[1] === ':' && ctype_alpha($this->path[0]);
+    }
+
+    /**
+     * Check if path is a symbolic link
+     */
+    public function isLink(): bool
+    {
+        return is_link($this->path);
+    }
+
+    /**
+     * Get the target of a symbolic link
+     * @throws RuntimeException
+     */
+    public function readLink(): self
+    {
+        if (!$this->isLink()) {
+            throw new RuntimeException('Path is not a symbolic link: ' . $this->path);
+        }
+
+        $target = readlink($this->path);
+        if ($target === false) {
+            throw new RuntimeException('Unable to read symbolic link: ' . $this->path);
+        }
+
+        return new self($target);
+    }
+
+    /**
+     * Create a symbolic link
+     * @throws RuntimeException
+     */
+    public function symlink(string $target): self
+    {
+        if (!symlink($target, $this->path)) {
+            throw new RuntimeException(sprintf('Unable to create symbolic link from %s to %s', $this->path, $target));
+        }
+
+        return $this;
+    }
+
+    /**
+     * Validate if path is safe (doesn't contain directory traversal)
+     */
+    public function isSafe(): bool
+    {
+        // Check for directory traversal patterns
+        if (str_contains($this->path, '..')) {
+            return false;
+        }
+
+        // Check for null bytes
+        if (str_contains($this->path, "\0")) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Validate if path format is valid
+     */
+    public function isValid(): bool
+    {
+        // Check for empty path
+        if ($this->path === '') {
+            return false;
+        }
+
+        // Check for null bytes
+        if (str_contains($this->path, "\0")) {
+            return false;
+        }
+
+        // Check for invalid characters (Windows)
+        if (DIRECTORY_SEPARATOR === '\\') {
+            $invalidChars = ['<', '>', '"', '|', '?', '*'];
+            foreach ($invalidChars as $char) {
+                if (str_contains($this->path, $char)) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Convert to URL path (with forward slashes)
+     */
+    public function toUrlPath(): self
+    {
+        $urlPath = str_replace('\\', '/', $this->path);
+        return new self($urlPath);
+    }
+
+    /**
+     * Convert from URL path (convert forward slashes to system separator)
+     */
+    public static function fromUrlPath(string $urlPath): self
+    {
+        $systemPath = str_replace('/', DIRECTORY_SEPARATOR, $urlPath);
+        return new self($systemPath);
+    }
+
+    /**
+     * Encode path for URL use
+     */
+    public function urlEncode(): Str
+    {
+        $parts = explode('/', $this->toUrlPath()->get());
+        $encoded = array_map('rawurlencode', $parts);
+        return new Str(implode('/', $encoded));
+    }
+
+    /**
+     * Recursive glob pattern matching
+     * @return Arr<string>
+     * @throws \UnexpectedValueException
+     */
+    public function globRecursive(string $pattern): Arr
+    {
+        $results = [];
+
+        // Handle ** in pattern for recursive matching
+        if (str_contains($pattern, '**')) {
+            $parts = explode('**', $pattern, 2);
+            $basePattern = rtrim($parts[0], '/');
+            $remainingPattern = ltrim($parts[1] ?? '', '/');
+
+            // Get all directories recursively
+            if (is_dir($this->path)) {
+                $iterator = new \RecursiveIteratorIterator(
+                    new \RecursiveDirectoryIterator($this->path, \FilesystemIterator::SKIP_DOTS),
+                    \RecursiveIteratorIterator::SELF_FIRST
+                );
+
+                foreach ($iterator as $file) {
+                    /** @var \SplFileInfo $file */
+                    $filePath = $file->getPathname();
+
+                    if ($remainingPattern === '') {
+                        $results[] = $filePath;
+                    } else {
+                        $globPattern = $filePath . DIRECTORY_SEPARATOR . $remainingPattern;
+                        $matches = glob($globPattern);
+                        if ($matches !== false) {
+                            $results = array_merge($results, $matches);
+                        }
+                    }
+                }
+            }
+        } else {
+            // Standard glob
+            $fullPattern = $this->join($pattern)->get();
+            $matches = glob($fullPattern);
+            if ($matches !== false) {
+                $results = $matches;
+            }
+        }
+
+        return new Arr(array_unique($results));
+    }
+
+    /**
+     * Get real path, resolving all symbolic links
+     * @throws RuntimeException
+     */
+    public function realPath(): self
+    {
+        $real = realpath($this->path);
+        if ($real === false) {
+            throw new RuntimeException('Unable to resolve real path: ' . $this->path);
+        }
+
+        return new self($real);
+    }
+
+    /**
+     * Check if two paths point to the same location (considering symlinks)
+     */
+    public function isSameAs(string|self $other): bool
+    {
+        $otherPath = $other instanceof self ? $other->path : $other;
+
+        try {
+            $thisReal = $this->exists() ? $this->realPath()->get() : $this->path;
+            $otherReal = file_exists($otherPath) ? (new self($otherPath))->realPath()->get() : $otherPath;
+
+            return $thisReal === $otherReal;
+        } catch (RuntimeException) {
+            return $this->path === $otherPath;
+        }
+    }
 }

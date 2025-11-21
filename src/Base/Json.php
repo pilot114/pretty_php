@@ -250,9 +250,9 @@ readonly class Json implements \Stringable
         foreach ($keys as $key) {
             if (is_array($current) && array_key_exists($key, $current)) {
                 $current = $current[$key];
-            } elseif (is_object($current) && isset($current->$key)) {
+            } elseif (is_object($current) && property_exists($current, $key)) {
                 /** @phpstan-ignore property.dynamicName */
-                $current = $current->$key;
+                $current = $current->{$key};
             } else {
                 /** @phpstan-ignore return.type */
                 return Result::err("Path not found: {$path}");

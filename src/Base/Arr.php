@@ -436,4 +436,194 @@ class Arr
     {
         return $this->count() > 0 ? $this->sum() / $this->count() : 0.0;
     }
+
+    /**
+     * Partition array into two arrays based on a predicate
+     * @param Closure(T, int|string): bool $callback
+     * @return Arr<array<int, T>>
+     */
+    public function partition(Closure $callback): self
+    {
+        $pass = [];
+        $fail = [];
+
+        foreach ($this->value as $key => $value) {
+            if ($callback($value, $key)) {
+                $pass[] = $value;
+            } else {
+                $fail[] = $value;
+            }
+        }
+
+        /** @var array<int, array<int, T>> $result */
+        $result = [$pass, $fail];
+        return new self($result);
+    }
+
+    /**
+     * Zip multiple arrays together
+     * @param iterable<int|string, mixed> ...$arrays
+     * @return Arr<array<int, mixed>>
+     */
+    public function zip(iterable ...$arrays): self
+    {
+        $allArrays = [$this->value];
+        foreach ($arrays as $array) {
+            $allArrays[] = is_array($array) ? $array : iterator_to_array($array);
+        }
+
+        $maxLength = max(array_map('count', $allArrays));
+        $result = [];
+
+        for ($i = 0; $i < $maxLength; $i++) {
+            $tuple = [];
+            foreach ($allArrays as $array) {
+                $tuple[] = array_values($array)[$i] ?? null;
+            }
+
+            $result[] = $tuple;
+        }
+
+        /** @var array<int, array<int, mixed>> $result */
+        return new self($result);
+    }
+
+    /**
+     * Unzip an array of tuples into separate arrays
+     * @return Arr<array<int, mixed>>
+     */
+    public function unzip(): self
+    {
+        if ($this->isEmpty()) {
+            return new self([]);
+        }
+
+        $result = [];
+        foreach ($this->value as $tuple) {
+            if (!is_array($tuple)) {
+                continue;
+            }
+
+            foreach ($tuple as $index => $value) {
+                if (!isset($result[$index])) {
+                    $result[$index] = [];
+                }
+
+                $result[$index][] = $value;
+            }
+        }
+
+        /** @var array<int, array<int, mixed>> $result */
+        return new self($result);
+    }
+
+    /**
+     * Get the difference between this array and one or more arrays
+     * @param iterable<int|string, T> ...$arrays
+     * @return Arr<T>
+     */
+    public function difference(iterable ...$arrays): self
+    {
+        $phpArrays = [];
+        foreach ($arrays as $array) {
+            $phpArrays[] = is_array($array) ? $array : iterator_to_array($array);
+        }
+
+        return new self(array_diff($this->value, ...$phpArrays));
+    }
+
+    /**
+     * Get the intersection between this array and one or more arrays
+     * @param iterable<int|string, T> ...$arrays
+     * @return Arr<T>
+     */
+    public function intersection(iterable ...$arrays): self
+    {
+        $phpArrays = [];
+        foreach ($arrays as $array) {
+            $phpArrays[] = is_array($array) ? $array : iterator_to_array($array);
+        }
+
+        return new self(array_intersect($this->value, ...$phpArrays));
+    }
+
+    /**
+     * Get the union of this array and one or more arrays (unique values)
+     * @param iterable<int|string, T> ...$arrays
+     * @return Arr<T>
+     */
+    public function union(iterable ...$arrays): self
+    {
+        $result = $this->value;
+
+        foreach ($arrays as $array) {
+            $phpArray = is_array($array) ? $array : iterator_to_array($array);
+            $result = array_merge($result, $phpArray);
+        }
+
+        return new self(array_unique($result));
+    }
+
+    /**
+     * Sort by multiple keys
+     * @param array<string, 'asc'|'desc'> $keys Array of key => direction pairs
+     * @return Arr<T>
+     */
+    public function sortByKeys(array $keys): self
+    {
+        $newArray = $this->value;
+
+        usort($newArray, function ($a, $b) use ($keys): int {
+            foreach ($keys as $key => $direction) {
+                $aVal = null;
+                $bVal = null;
+
+                if (is_array($a)) {
+                    $aVal = $a[$key] ?? null;
+                } elseif (is_object($a) && property_exists($a, (string) $key)) {
+                    /** @phpstan-ignore property.dynamicName */
+                    $aVal = $a->{$key};
+                }
+
+                if (is_array($b)) {
+                    $bVal = $b[$key] ?? null;
+                } elseif (is_object($b) && property_exists($b, (string) $key)) {
+                    /** @phpstan-ignore property.dynamicName */
+                    $bVal = $b->{$key};
+                }
+
+                $cmp = $aVal <=> $bVal;
+                if ($cmp !== 0) {
+                    return $direction === 'desc' ? -$cmp : $cmp;
+                }
+            }
+
+            return 0;
+        });
+
+        return new self($newArray);
+    }
+
+    /**
+     * Pluck values from array of arrays/objects by key
+     * @param string|int $key
+     * @return Arr<mixed>
+     */
+    public function pluck(string|int $key): self
+    {
+        $result = [];
+        $stringKey = (string) $key;
+
+        foreach ($this->value as $item) {
+            if (is_array($item) && array_key_exists($key, $item)) {
+                $result[] = $item[$key];
+            } elseif (is_object($item) && property_exists($item, $stringKey)) {
+                /** @phpstan-ignore property.dynamicName */
+                $result[] = $item->{$stringKey};
+            }
+        }
+
+        /** @var array<int|string, mixed> $result */
+        return new self($result);
+    }
 }
