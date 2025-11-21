@@ -37,7 +37,6 @@ This document outlines the planned development roadmap for Pretty PHP.
 
 **Creating Releases**: Push a version tag (e.g., `git tag -a v0.1.0 -m "Release v0.1.0" && git push origin v0.1.0`) to automatically create a GitHub release and trigger Packagist update.
 
-
 ## Phase 4: Developer Experience (Q4 2025)
 
 **Status**: 🚧 In Progress
