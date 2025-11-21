@@ -8,6 +8,7 @@ use PrettyPhp\Base\File;
 use PrettyPhp\Base\Json;
 use PrettyPhp\Base\Num;
 use PrettyPhp\Base\Path;
+use PrettyPhp\Base\Session;
 use PrettyPhp\Base\Str;
 use PrettyPhp\Functional\Option;
 use PrettyPhp\Functional\Result;
@@ -134,5 +135,34 @@ if (!function_exists('datetime')) {
         \DateTimeZone|string|null $timezone = null
     ): DateTime {
         return new DateTime($value, $timezone);
+    }
+}
+
+if (!function_exists('session')) {
+    /**
+     * Get or set session values.
+     * When called without arguments, returns all session data.
+     * When called with one argument, gets a session value.
+     * When called with two arguments, sets a session value.
+     *
+     * @param string|null $key Session key
+     * @param mixed $value Value to set (optional)
+     * @return mixed Session data or value
+     */
+    function session(?string $key = null, mixed $value = null): mixed
+    {
+        // No arguments: return all session data
+        if ($key === null) {
+            return Session::all();
+        }
+
+        // Two arguments: set value
+        if (func_num_args() === 2) {
+            Session::set($key, $value);
+            return null;
+        }
+
+        // One argument: get value
+        return Session::get($key);
     }
 }
