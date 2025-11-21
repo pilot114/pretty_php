@@ -40,38 +40,40 @@ This document outlines the planned development roadmap for Pretty PHP.
 
 
 
-### Enhanced Existing Classes
+## Phase 2: Enhanced Existing Classes (Q2 2025)
+
+**Status**: ✅ Complete
 
 #### Str Enhancements
-- [ ] Unicode normalization
-- [ ] Slug generation
-- [ ] Truncate with ellipsis
-- [ ] Case conversions (snake_case, camelCase, PascalCase, kebab-case)
-- [ ] Levenshtein distance
-- [ ] String similarity
+- [x] Unicode normalization
+- [x] Slug generation
+- [x] Truncate with ellipsis
+- [x] Case conversions (snake_case, camelCase, PascalCase, kebab-case)
+- [x] Levenshtein distance
+- [x] String similarity
 
 #### Arr Enhancements
-- [ ] `groupBy()`, `partition()`
-- [ ] `zip()`, `unzip()`
-- [ ] `difference()`, `intersection()`, `union()`
-- [ ] `flatten()` with depth control
-- [ ] Multi-key sorting
-- [ ] `pluck()` for extracting values
+- [x] `groupBy()`, `partition()`
+- [x] `zip()`, `unzip()`
+- [x] `difference()`, `intersection()`, `union()`
+- [x] `flatten()` with depth control
+- [x] Multi-key sorting
+- [x] `pluck()` for extracting values
 
 #### File Enhancements
-- [ ] Atomic writes (write to temp + rename)
-- [ ] File locking mechanisms
-- [ ] Stream handling for large files
-- [ ] Improved MIME type detection
-- [ ] Hash calculation (md5, sha256, etc.)
-- [ ] Temporary file handling
+- [x] Atomic writes (write to temp + rename)
+- [x] File locking mechanisms
+- [x] Stream handling for large files
+- [x] Improved MIME type detection
+- [x] Hash calculation (md5, sha256, etc.)
+- [x] Temporary file handling
 
 #### Path Enhancements
-- [ ] Improved Windows path support
-- [ ] Symbolic link handling
-- [ ] Path validation
-- [ ] URL path operations
-- [ ] Recursive glob patterns
+- [x] Improved Windows path support
+- [x] Symbolic link handling
+- [x] Path validation
+- [x] URL path operations
+- [x] Recursive glob patterns
 
 ## Phase 3: Binary System Expansion (Q3 2025)
 
