@@ -263,7 +263,7 @@ describe('Arr', function (): void {
 
     it('can partition array', function (): void {
         $arr = new Arr([1, 2, 3, 4, 5, 6]);
-        $partitioned = $arr->partition(fn($n) => $n % 2 === 0);
+        $partitioned = $arr->partition(fn($n): bool => $n % 2 === 0);
         expect($partitioned->get())->toBe([
             [2, 4, 6],  // pass
             [1, 3, 5],  // fail
@@ -364,6 +364,7 @@ describe('Arr', function (): void {
     it('can pluck values from array of objects', function (): void {
         $obj1 = new \stdClass();
         $obj1->name = 'John';
+
         $obj2 = new \stdClass();
         $obj2->name = 'Jane';
 

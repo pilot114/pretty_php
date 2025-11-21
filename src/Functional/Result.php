@@ -59,8 +59,8 @@ readonly class Result
     {
         try {
             return self::ok($fn());
-        } catch (\Throwable $e) {
-            return self::err($e);
+        } catch (\Throwable $throwable) {
+            return self::err($throwable);
         }
     }
 
@@ -172,7 +172,6 @@ readonly class Result
             throw new \RuntimeException('Called unwrap on an Err value: ' . $errorMsg);
         }
 
-        /** @var T */
         return $this->value;
     }
 
@@ -188,7 +187,6 @@ readonly class Result
             throw new \RuntimeException('Called unwrapErr on an Ok value');
         }
 
-        /** @var E */
         return $this->error;
     }
 
@@ -201,7 +199,6 @@ readonly class Result
     public function unwrapOr(mixed $default): mixed
     {
         if ($this->isOk()) {
-            /** @var T */
             return $this->value;
         }
 
@@ -217,7 +214,6 @@ readonly class Result
     public function unwrapOrElse(callable $fn): mixed
     {
         if ($this->isOk()) {
-            /** @var T */
             return $this->value;
         }
 
@@ -238,7 +234,6 @@ readonly class Result
             throw new \RuntimeException($message);
         }
 
-        /** @var T */
         return $this->value;
     }
 
@@ -254,7 +249,6 @@ readonly class Result
             throw new \RuntimeException($message);
         }
 
-        /** @var E */
         return $this->error;
     }
 

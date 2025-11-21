@@ -13,7 +13,9 @@ namespace PrettyPhp\Binary\Security;
 class RateLimiter
 {
     private int $tokens;
+
     private float $lastRefill;
+
     private bool $enabled = true;
 
     /**
@@ -27,6 +29,7 @@ class RateLimiter
         if ($maxRequests <= 0) {
             throw new SecurityException('Max requests must be positive');
         }
+
         if ($windowSeconds <= 0) {
             throw new SecurityException('Window seconds must be positive');
         }

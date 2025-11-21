@@ -327,12 +327,12 @@ readonly class File
             if (!rename($tempFile, $this->path)) {
                 throw new RuntimeException(sprintf('Unable to rename %s to %s', $tempFile, $this->path));
             }
-        } catch (\Throwable $e) {
+        } catch (\Throwable $throwable) {
             if (file_exists($tempFile)) {
                 @unlink($tempFile);
             }
 
-            throw $e;
+            throw $throwable;
         }
 
         return $this;

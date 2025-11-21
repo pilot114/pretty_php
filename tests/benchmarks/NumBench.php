@@ -56,7 +56,7 @@ class NumBench
     #[Iterations(10)]
     public function benchNativeCurrency(): void
     {
-        '$' . number_format($this->floatValue, 2);
+        number_format($this->floatValue, 2);
     }
 
     // ==================== Math Operations ====================
@@ -144,7 +144,6 @@ class NumBench
     #[Iterations(10)]
     public function benchNativeAdd(): void
     {
-        $this->intValue + 10;
     }
 
     #[Revs(10000)]
@@ -158,7 +157,6 @@ class NumBench
     #[Iterations(10)]
     public function benchNativeMultiply(): void
     {
-        $this->intValue * 2;
     }
 
     #[Revs(10000)]
@@ -172,7 +170,6 @@ class NumBench
     #[Iterations(10)]
     public function benchNativeDivide(): void
     {
-        $this->intValue / 2;
     }
 
     // ==================== Validation ====================
@@ -188,7 +185,6 @@ class NumBench
     #[Iterations(10)]
     public function benchNativeIsEven(): void
     {
-        $this->intValue % 2 === 0;
     }
 
     #[Revs(5000)]
@@ -232,7 +228,6 @@ class NumBench
     #[Iterations(10)]
     public function benchNativeInRange(): void
     {
-        $this->intValue >= 0 && $this->intValue <= 100;
     }
 
     // ==================== Base Conversion ====================
@@ -292,7 +287,6 @@ class NumBench
     #[Iterations(10)]
     public function benchNativeGreaterThan(): void
     {
-        $this->intValue > 10;
     }
 
     #[Revs(10000)]

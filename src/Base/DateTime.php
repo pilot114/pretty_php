@@ -23,8 +23,8 @@ readonly class DateTime implements \Stringable
         };
 
         $this->value = match (true) {
-            $value instanceof \DateTimeImmutable => $tz !== null ? $value->setTimezone($tz) : $value,
-            is_int($value) => (new \DateTimeImmutable('@' . $value))->setTimezone($tz ?? new \DateTimeZone('UTC')),
+            $value instanceof \DateTimeImmutable => $tz instanceof \DateTimeZone ? $value->setTimezone($tz) : $value,
+            is_int($value) => new \DateTimeImmutable('@' . $value)->setTimezone($tz ?? new \DateTimeZone('UTC')),
             is_string($value) => new \DateTimeImmutable($value, $tz),
             default => new \DateTimeImmutable('now', $tz),
         };
@@ -57,8 +57,11 @@ readonly class DateTime implements \Stringable
     /**
      * Create from format
      */
-    public static function fromFormat(string $format, string $datetime, \DateTimeZone|string|null $timezone = null): self
-    {
+    public static function fromFormat(
+        string $format,
+        string $datetime,
+        \DateTimeZone|string|null $timezone = null
+    ): self {
         $tz = match (true) {
             $timezone === null => null,
             is_string($timezone) => new \DateTimeZone($timezone),
@@ -67,7 +70,7 @@ readonly class DateTime implements \Stringable
 
         $dt = \DateTimeImmutable::createFromFormat($format, $datetime, $tz);
         if ($dt === false) {
-            throw new \InvalidArgumentException("Failed to parse datetime: {$datetime}");
+            throw new \InvalidArgumentException('Failed to parse datetime: ' . $datetime);
         }
 
         return new self($dt);
@@ -94,7 +97,7 @@ readonly class DateTime implements \Stringable
      */
     public static function today(\DateTimeZone|string|null $timezone = null): self
     {
-        return (new self(null, $timezone))->startOfDay();
+        return new self(null, $timezone)->startOfDay();
     }
 
     /**
@@ -102,7 +105,7 @@ readonly class DateTime implements \Stringable
      */
     public static function tomorrow(\DateTimeZone|string|null $timezone = null): self
     {
-        return (new self(null, $timezone))->addDays(1)->startOfDay();
+        return new self(null, $timezone)->addDays(1)->startOfDay();
     }
 
     /**
@@ -110,7 +113,7 @@ readonly class DateTime implements \Stringable
      */
     public static function yesterday(\DateTimeZone|string|null $timezone = null): self
     {
-        return (new self(null, $timezone))->subDays(1)->startOfDay();
+        return new self(null, $timezone)->subDays(1)->startOfDay();
     }
 
     /**
@@ -288,7 +291,7 @@ readonly class DateTime implements \Stringable
      */
     public function isYesterday(): bool
     {
-        $yesterday = (new \DateTimeImmutable())->modify('-1 day');
+        $yesterday = new \DateTimeImmutable()->modify('-1 day');
         return $this->value->format('Y-m-d') === $yesterday->format('Y-m-d');
     }
 
@@ -297,7 +300,7 @@ readonly class DateTime implements \Stringable
      */
     public function isTomorrow(): bool
     {
-        $tomorrow = (new \DateTimeImmutable())->modify('+1 day');
+        $tomorrow = new \DateTimeImmutable()->modify('+1 day');
         return $this->value->format('Y-m-d') === $tomorrow->format('Y-m-d');
     }
 
@@ -324,7 +327,7 @@ readonly class DateTime implements \Stringable
      */
     public function addYears(int $years): self
     {
-        return new self($this->value->modify("+{$years} years"));
+        return new self($this->value->modify(sprintf('+%d years', $years)));
     }
 
     /**
@@ -332,7 +335,7 @@ readonly class DateTime implements \Stringable
      */
     public function addMonths(int $months): self
     {
-        return new self($this->value->modify("+{$months} months"));
+        return new self($this->value->modify(sprintf('+%d months', $months)));
     }
 
     /**
@@ -340,7 +343,7 @@ readonly class DateTime implements \Stringable
      */
     public function addDays(int $days): self
     {
-        return new self($this->value->modify("+{$days} days"));
+        return new self($this->value->modify(sprintf('+%d days', $days)));
     }
 
     /**
@@ -348,7 +351,7 @@ readonly class DateTime implements \Stringable
      */
     public function addHours(int $hours): self
     {
-        return new self($this->value->modify("+{$hours} hours"));
+        return new self($this->value->modify(sprintf('+%d hours', $hours)));
     }
 
     /**
@@ -356,7 +359,7 @@ readonly class DateTime implements \Stringable
      */
     public function addMinutes(int $minutes): self
     {
-        return new self($this->value->modify("+{$minutes} minutes"));
+        return new self($this->value->modify(sprintf('+%d minutes', $minutes)));
     }
 
     /**
@@ -364,7 +367,7 @@ readonly class DateTime implements \Stringable
      */
     public function addSeconds(int $seconds): self
     {
-        return new self($this->value->modify("+{$seconds} seconds"));
+        return new self($this->value->modify(sprintf('+%d seconds', $seconds)));
     }
 
     /**
@@ -372,7 +375,7 @@ readonly class DateTime implements \Stringable
      */
     public function subYears(int $years): self
     {
-        return new self($this->value->modify("-{$years} years"));
+        return new self($this->value->modify(sprintf('-%d years', $years)));
     }
 
     /**
@@ -380,7 +383,7 @@ readonly class DateTime implements \Stringable
      */
     public function subMonths(int $months): self
     {
-        return new self($this->value->modify("-{$months} months"));
+        return new self($this->value->modify(sprintf('-%d months', $months)));
     }
 
     /**
@@ -388,7 +391,7 @@ readonly class DateTime implements \Stringable
      */
     public function subDays(int $days): self
     {
-        return new self($this->value->modify("-{$days} days"));
+        return new self($this->value->modify(sprintf('-%d days', $days)));
     }
 
     /**
@@ -396,7 +399,7 @@ readonly class DateTime implements \Stringable
      */
     public function subHours(int $hours): self
     {
-        return new self($this->value->modify("-{$hours} hours"));
+        return new self($this->value->modify(sprintf('-%d hours', $hours)));
     }
 
     /**
@@ -404,7 +407,7 @@ readonly class DateTime implements \Stringable
      */
     public function subMinutes(int $minutes): self
     {
-        return new self($this->value->modify("-{$minutes} minutes"));
+        return new self($this->value->modify(sprintf('-%d minutes', $minutes)));
     }
 
     /**
@@ -412,7 +415,7 @@ readonly class DateTime implements \Stringable
      */
     public function subSeconds(int $seconds): self
     {
-        return new self($this->value->modify("-{$seconds} seconds"));
+        return new self($this->value->modify(sprintf('-%d seconds', $seconds)));
     }
 
     /**
@@ -439,11 +442,12 @@ readonly class DateTime implements \Stringable
         try {
             $result = $this->value->modify($modifier);
             if ($result === false) {
-                throw new \InvalidArgumentException("Invalid modifier: {$modifier}");
+                throw new \InvalidArgumentException('Invalid modifier: ' . $modifier);
             }
+
             return new self($result);
-        } catch (\DateMalformedStringException $e) {
-            throw new \InvalidArgumentException("Invalid modifier: {$modifier}", 0, $e);
+        } catch (\DateMalformedStringException $dateMalformedStringException) {
+            throw new \InvalidArgumentException('Invalid modifier: ' . $modifier, 0, $dateMalformedStringException);
         }
     }
 
@@ -462,7 +466,9 @@ readonly class DateTime implements \Stringable
      */
     public function setMonth(int $month): self
     {
-        return new self($this->value->setDate((int) $this->value->format('Y'), $month, (int) $this->value->format('j')));
+        $year = (int) $this->value->format('Y');
+        $day = (int) $this->value->format('j');
+        return new self($this->value->setDate($year, $month, $day));
     }
 
     /**
@@ -633,7 +639,8 @@ readonly class DateTime implements \Stringable
     public function diffInHours(self|string|\DateTimeInterface $other, bool $absolute = true): int
     {
         $otherDt = $this->toDateTimeImmutable($other);
-        $diff = $absolute ? abs($this->value->getTimestamp() - $otherDt->getTimestamp()) : ($this->value->getTimestamp() - $otherDt->getTimestamp());
+        $diff = $this->value->getTimestamp() - $otherDt->getTimestamp();
+        $diff = $absolute ? abs($diff) : $diff;
         return (int) floor($diff / 3600);
     }
 
@@ -643,7 +650,8 @@ readonly class DateTime implements \Stringable
     public function diffInMinutes(self|string|\DateTimeInterface $other, bool $absolute = true): int
     {
         $otherDt = $this->toDateTimeImmutable($other);
-        $diff = $absolute ? abs($this->value->getTimestamp() - $otherDt->getTimestamp()) : ($this->value->getTimestamp() - $otherDt->getTimestamp());
+        $diff = $this->value->getTimestamp() - $otherDt->getTimestamp();
+        $diff = $absolute ? abs($diff) : $diff;
         return (int) floor($diff / 60);
     }
 
@@ -653,8 +661,8 @@ readonly class DateTime implements \Stringable
     public function diffInSeconds(self|string|\DateTimeInterface $other, bool $absolute = true): int
     {
         $otherDt = $this->toDateTimeImmutable($other);
-        $diff = $absolute ? abs($this->value->getTimestamp() - $otherDt->getTimestamp()) : ($this->value->getTimestamp() - $otherDt->getTimestamp());
-        return $diff;
+        $diff = $this->value->getTimestamp() - $otherDt->getTimestamp();
+        return $absolute ? abs($diff) : $diff;
     }
 
     // ==================== Relative Time ====================
@@ -668,30 +676,31 @@ readonly class DateTime implements \Stringable
         $diff = $this->value->diff($now);
 
         if ($diff->y > 0) {
-            return new Str($diff->y === 1 ? '1 year ago' : "{$diff->y} years ago");
+            return new Str($diff->y === 1 ? '1 year ago' : $diff->y . ' years ago');
         }
 
         if ($diff->m > 0) {
-            return new Str($diff->m === 1 ? '1 month ago' : "{$diff->m} months ago");
+            return new Str($diff->m === 1 ? '1 month ago' : $diff->m . ' months ago');
         }
 
         if ($diff->d > 0) {
             if ($diff->d >= 7) {
                 $weeks = (int) floor($diff->d / 7);
-                return new Str($weeks === 1 ? '1 week ago' : "{$weeks} weeks ago");
+                return new Str($weeks === 1 ? '1 week ago' : $weeks . ' weeks ago');
             }
-            return new Str($diff->d === 1 ? '1 day ago' : "{$diff->d} days ago");
+
+            return new Str($diff->d === 1 ? '1 day ago' : $diff->d . ' days ago');
         }
 
         if ($diff->h > 0) {
-            return new Str($diff->h === 1 ? '1 hour ago' : "{$diff->h} hours ago");
+            return new Str($diff->h === 1 ? '1 hour ago' : $diff->h . ' hours ago');
         }
 
         if ($diff->i > 0) {
-            return new Str($diff->i === 1 ? '1 minute ago' : "{$diff->i} minutes ago");
+            return new Str($diff->i === 1 ? '1 minute ago' : $diff->i . ' minutes ago');
         }
 
-        return new Str($diff->s === 0 ? 'just now' : "{$diff->s} seconds ago");
+        return new Str($diff->s === 0 ? 'just now' : $diff->s . ' seconds ago');
     }
 
     /**
@@ -703,30 +712,31 @@ readonly class DateTime implements \Stringable
         $diff = $now->diff($this->value);
 
         if ($diff->y > 0) {
-            return new Str($diff->y === 1 ? 'in 1 year' : "in {$diff->y} years");
+            return new Str($diff->y === 1 ? 'in 1 year' : sprintf('in %d years', $diff->y));
         }
 
         if ($diff->m > 0) {
-            return new Str($diff->m === 1 ? 'in 1 month' : "in {$diff->m} months");
+            return new Str($diff->m === 1 ? 'in 1 month' : sprintf('in %d months', $diff->m));
         }
 
         if ($diff->d > 0) {
             if ($diff->d >= 7) {
                 $weeks = (int) floor($diff->d / 7);
-                return new Str($weeks === 1 ? 'in 1 week' : "in {$weeks} weeks");
+                return new Str($weeks === 1 ? 'in 1 week' : sprintf('in %s weeks', $weeks));
             }
-            return new Str($diff->d === 1 ? 'in 1 day' : "in {$diff->d} days");
+
+            return new Str($diff->d === 1 ? 'in 1 day' : sprintf('in %d days', $diff->d));
         }
 
         if ($diff->h > 0) {
-            return new Str($diff->h === 1 ? 'in 1 hour' : "in {$diff->h} hours");
+            return new Str($diff->h === 1 ? 'in 1 hour' : sprintf('in %d hours', $diff->h));
         }
 
         if ($diff->i > 0) {
-            return new Str($diff->i === 1 ? 'in 1 minute' : "in {$diff->i} minutes");
+            return new Str($diff->i === 1 ? 'in 1 minute' : sprintf('in %d minutes', $diff->i));
         }
 
-        return new Str($diff->s === 0 ? 'just now' : "in {$diff->s} seconds");
+        return new Str($diff->s === 0 ? 'just now' : sprintf('in %d seconds', $diff->s));
     }
 
     /**

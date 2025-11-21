@@ -52,11 +52,11 @@
         "check": [
             "phpstan analyse --memory-limit=1G",
             "rector process --dry-run",
-            "phpcs --standard=PSR12 src/ tests/"
+            "phpcs src/ tests/"
         ],
         "fix": [
             "rector process",
-            "phpcbf --standard=PSR12 src/ tests/"
+            "phpcbf src/ tests/"
         ],
         "bench": "phpbench run --report=aggregate"
     }

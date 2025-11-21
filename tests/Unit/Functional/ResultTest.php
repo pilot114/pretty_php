@@ -20,7 +20,7 @@ describe('Result', function (): void {
         });
 
         it('can create from callable', function (): void {
-            $ok = Result::from(fn() => 42);
+            $ok = Result::from(fn(): int => 42);
             expect($ok->isOk())->toBeTrue();
             expect($ok->unwrap())->toBe(42);
 
@@ -47,7 +47,7 @@ describe('Result', function (): void {
     describe('map', function (): void {
         it('maps Ok values', function (): void {
             $result = Result::ok(5);
-            $mapped = $result->map(fn($x) => $x * 2);
+            $mapped = $result->map(fn($x): int => $x * 2);
 
             expect($mapped->isOk())->toBeTrue();
             expect($mapped->unwrap())->toBe(10);
@@ -63,9 +63,9 @@ describe('Result', function (): void {
 
         it('can chain multiple maps', function (): void {
             $result = Result::ok(5)
-                ->map(fn($x) => $x * 2)
-                ->map(fn($x) => $x + 3)
-                ->map(fn($x) => (string) $x);
+                ->map(fn($x): int => $x * 2)
+                ->map(fn($x): int => $x + 3)
+                ->map(fn($x): string => (string) $x);
 
             expect($result->unwrap())->toBe('13');
         });
@@ -92,7 +92,7 @@ describe('Result', function (): void {
     describe('andThen', function (): void {
         it('chains Ok values', function (): void {
             $result = Result::ok(5);
-            $chained = $result->andThen(fn($x) => Result::ok($x * 2));
+            $chained = $result->andThen(fn($x): \PrettyPhp\Functional\Result => Result::ok($x * 2));
 
             expect($chained->isOk())->toBeTrue();
             expect($chained->unwrap())->toBe(10);
@@ -100,20 +100,20 @@ describe('Result', function (): void {
 
         it('does not chain Err values', function (): void {
             $result = Result::err('error');
-            $chained = $result->andThen(fn($x) => Result::ok($x * 2));
+            $chained = $result->andThen(fn($x): \PrettyPhp\Functional\Result => Result::ok($x * 2));
 
             expect($chained->isErr())->toBeTrue();
             expect($chained->unwrapErr())->toBe('error');
         });
 
         it('can short-circuit on error', function (): void {
-            $divide = fn($x, $y) => $y === 0
+            $divide = fn($x, $y): \PrettyPhp\Functional\Result => $y === 0
                 ? Result::err('division by zero')
                 : Result::ok($x / $y);
 
             $result = Result::ok(10)
-                ->andThen(fn($x) => $divide($x, 2))
-                ->andThen(fn($x) => $divide($x, 0));
+                ->andThen(fn($x): \PrettyPhp\Functional\Result => $divide($x, 2))
+                ->andThen(fn($x): \PrettyPhp\Functional\Result => $divide($x, 0));
 
             expect($result->isErr())->toBeTrue();
             expect($result->unwrapErr())->toBe('division by zero');
@@ -144,7 +144,7 @@ describe('Result', function (): void {
 
         it('throws exception for Err', function (): void {
             $result = Result::err('error');
-            expect(fn() => $result->unwrap())->toThrow(\RuntimeException::class);
+            expect(fn(): mixed => $result->unwrap())->toThrow(\RuntimeException::class);
         });
 
         it('includes error message in exception', function (): void {
@@ -152,8 +152,8 @@ describe('Result', function (): void {
             try {
                 $result->unwrap();
                 expect(true)->toBeFalse(); // Should not reach here
-            } catch (\RuntimeException $e) {
-                expect($e->getMessage())->toContain('custom error');
+            } catch (\RuntimeException $runtimeException) {
+                expect($runtimeException->getMessage())->toContain('custom error');
             }
         });
     });
@@ -166,7 +166,7 @@ describe('Result', function (): void {
 
         it('throws exception for Ok', function (): void {
             $result = Result::ok(42);
-            expect(fn() => $result->unwrapErr())->toThrow(\RuntimeException::class);
+            expect(fn(): mixed => $result->unwrapErr())->toThrow(\RuntimeException::class);
         });
     });
 
@@ -185,12 +185,12 @@ describe('Result', function (): void {
     describe('unwrapOrElse', function (): void {
         it('returns value for Ok', function (): void {
             $result = Result::ok(42);
-            expect($result->unwrapOrElse(fn($e) => 99))->toBe(42);
+            expect($result->unwrapOrElse(fn($e): int => 99))->toBe(42);
         });
 
         it('computes default from error for Err', function (): void {
             $result = Result::err('error');
-            expect($result->unwrapOrElse(fn($e) => strlen($e)))->toBe(5);
+            expect($result->unwrapOrElse(fn($e): int => strlen($e)))->toBe(5);
         });
     });
 
@@ -202,7 +202,7 @@ describe('Result', function (): void {
 
         it('throws exception with custom message for Err', function (): void {
             $result = Result::err('original');
-            expect(fn() => $result->expect('custom error'))
+            expect(fn(): mixed => $result->expect('custom error'))
                 ->toThrow(\RuntimeException::class, 'custom error');
         });
     });
@@ -215,7 +215,7 @@ describe('Result', function (): void {
 
         it('throws exception with custom message for Ok', function (): void {
             $result = Result::ok(42);
-            expect(fn() => $result->expectErr('custom error'))
+            expect(fn(): mixed => $result->expectErr('custom error'))
                 ->toThrow(\RuntimeException::class, 'custom error');
         });
     });
@@ -259,7 +259,7 @@ describe('Result', function (): void {
     describe('mapOr', function (): void {
         it('applies function to Ok', function (): void {
             $result = Result::ok(5);
-            $value = $result->mapOr(0, fn($x) => $x * 2);
+            $value = $result->mapOr(0, fn($x): int => $x * 2);
 
             expect($value)->toBe(10);
         });
@@ -275,14 +275,14 @@ describe('Result', function (): void {
     describe('mapOrElse', function (): void {
         it('applies function to Ok', function (): void {
             $result = Result::ok(5);
-            $value = $result->mapOrElse(fn($e) => 0, fn($x) => $x * 2);
+            $value = $result->mapOrElse(fn($e): int => 0, fn($x): int => $x * 2);
 
             expect($value)->toBe(10);
         });
 
         it('computes default from error for Err', function (): void {
             $result = Result::err('error');
-            $value = $result->mapOrElse(fn($e) => strlen($e), fn($x) => $x * 2);
+            $value = $result->mapOrElse(fn($e): int => strlen($e), fn($x) => $x * 2);
 
             expect($value)->toBe(5);
         });
@@ -337,8 +337,8 @@ describe('Result', function (): void {
 
         it('returns self for chaining', function (): void {
             $result = Result::ok(42)
-                ->inspect(fn() => null)
-                ->map(fn($x) => $x * 2);
+                ->inspect(fn(): null => null)
+                ->map(fn($x): int => $x * 2);
 
             expect($result->unwrap())->toBe(84);
         });
@@ -373,7 +373,7 @@ describe('Result', function (): void {
 
     describe('complex scenarios', function (): void {
         it('can handle division with error handling', function (): void {
-            $divide = fn($x, $y) => $y === 0
+            $divide = fn($x, $y): \PrettyPhp\Functional\Result => $y === 0
                 ? Result::err('division by zero')
                 : Result::ok($x / $y);
 
@@ -387,10 +387,7 @@ describe('Result', function (): void {
         });
 
         it('can parse JSON safely', function (): void {
-            $parseJson = fn(string $json) => Result::from(function () use ($json): mixed {
-                $decoded = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
-                return $decoded;
-            });
+            $parseJson = fn(string $json): \PrettyPhp\Functional\Result => Result::from(fn(): mixed => json_decode($json, true, 512, JSON_THROW_ON_ERROR));
 
             $valid = $parseJson('{"name":"John"}');
             expect($valid->isOk())->toBeTrue();
@@ -402,11 +399,11 @@ describe('Result', function (): void {
         });
 
         it('can chain file operations safely', function (): void {
-            $readConfig = fn() => Result::ok(['timeout' => 30]);
-            $validateTimeout = fn($config) => isset($config['timeout']) && $config['timeout'] > 0
+            $readConfig = fn(): \PrettyPhp\Functional\Result => Result::ok(['timeout' => 30]);
+            $validateTimeout = fn($config): \PrettyPhp\Functional\Result => isset($config['timeout']) && $config['timeout'] > 0
                 ? Result::ok($config['timeout'])
                 : Result::err('invalid timeout');
-            $applyTimeout = fn($timeout) => Result::ok($timeout * 1000);
+            $applyTimeout = fn($timeout): \PrettyPhp\Functional\Result => Result::ok($timeout * 1000);
 
             $result = $readConfig()
                 ->andThen($validateTimeout)
@@ -418,7 +415,7 @@ describe('Result', function (): void {
         it('can handle multiple error types with mapErr', function (): void {
             $result = Result::from(function (): void {
                 throw new \InvalidArgumentException('bad arg');
-            })->mapErr(fn(\Throwable $e) => [
+            })->mapErr(fn(\Throwable $e): array => [
                 'type' => $e::class,
                 'message' => $e->getMessage(),
             ]);

@@ -9,8 +9,11 @@ namespace PrettyPhp\Binary;
 class ARPPacket
 {
     public const HARDWARE_TYPE_ETHERNET = 1;
+
     public const PROTOCOL_TYPE_IPV4 = 0x0800;
+
     public const OPERATION_REQUEST = 1;
+
     public const OPERATION_REPLY = 2;
 
     public function __construct(
@@ -44,6 +47,7 @@ class ARPPacket
         if (count($parts) !== 6) {
             throw new \Exception("Invalid MAC address format");
         }
+
         return pack('C6', ...array_map('hexdec', $parts));
     }
 
@@ -55,10 +59,12 @@ class ARPPacket
         if (strlen($binary) !== 6) {
             throw new \Exception("Invalid binary MAC address length");
         }
+
         $bytes = unpack('C6', $binary);
         if ($bytes === false) {
             throw new \Exception("Failed to unpack MAC address");
         }
+
         /** @var array<int, int> $bytes */
         return implode(':', array_map(fn(int $b): string => sprintf('%02x', $b), $bytes));
     }

@@ -54,27 +54,35 @@ class TCPPacket
         if ($fin) {
             $flags |= 0x01;
         }
+
         if ($syn) {
             $flags |= 0x02;
         }
+
         if ($rst) {
             $flags |= 0x04;
         }
+
         if ($psh) {
             $flags |= 0x08;
         }
+
         if ($ack) {
             $flags |= 0x10;
         }
+
         if ($urg) {
             $flags |= 0x20;
         }
+
         if ($ece) {
             $flags |= 0x40;
         }
+
         if ($cwr) {
             $flags |= 0x80;
         }
+
         if ($ns) {
             $flags |= 0x100;
         }

@@ -41,7 +41,7 @@ describe('Option', function (): void {
     describe('map', function (): void {
         it('maps Some values', function (): void {
             $option = Option::some(5);
-            $result = $option->map(fn($x) => $x * 2);
+            $result = $option->map(fn($x): int => $x * 2);
 
             expect($result->isSome())->toBeTrue();
             expect($result->unwrap())->toBe(10);
@@ -56,9 +56,9 @@ describe('Option', function (): void {
 
         it('can chain multiple maps', function (): void {
             $result = Option::some(5)
-                ->map(fn($x) => $x * 2)
-                ->map(fn($x) => $x + 3)
-                ->map(fn($x) => (string) $x);
+                ->map(fn($x): int => $x * 2)
+                ->map(fn($x): int => $x + 3)
+                ->map(fn($x): string => (string) $x);
 
             expect($result->unwrap())->toBe('13');
         });
@@ -67,7 +67,7 @@ describe('Option', function (): void {
     describe('andThen', function (): void {
         it('chains Some values', function (): void {
             $option = Option::some(5);
-            $result = $option->andThen(fn($x) => Option::some($x * 2));
+            $result = $option->andThen(fn($x): \PrettyPhp\Functional\Option => Option::some($x * 2));
 
             expect($result->isSome())->toBeTrue();
             expect($result->unwrap())->toBe(10);
@@ -75,19 +75,19 @@ describe('Option', function (): void {
 
         it('does not chain None values', function (): void {
             $option = Option::none();
-            $result = $option->andThen(fn($x) => Option::some($x * 2));
+            $result = $option->andThen(fn($x): \PrettyPhp\Functional\Option => Option::some($x * 2));
 
             expect($result->isNone())->toBeTrue();
         });
 
         it('can flatten nested Options', function (): void {
             $result = Option::some(5)
-                ->andThen(fn($x) => $x > 3 ? Option::some($x * 2) : Option::none());
+                ->andThen(fn($x): \PrettyPhp\Functional\Option => $x > 3 ? Option::some($x * 2) : Option::none());
 
             expect($result->unwrap())->toBe(10);
 
             $none = Option::some(2)
-                ->andThen(fn($x) => $x > 3 ? Option::some($x * 2) : Option::none());
+                ->andThen(fn($x): \PrettyPhp\Functional\Option => $x > 3 ? Option::some($x * 2) : Option::none());
 
             expect($none->isNone())->toBeTrue();
         });
@@ -96,7 +96,7 @@ describe('Option', function (): void {
     describe('filter', function (): void {
         it('filters Some values that match predicate', function (): void {
             $option = Option::some(5);
-            $result = $option->filter(fn($x) => $x > 3);
+            $result = $option->filter(fn($x): bool => $x > 3);
 
             expect($result->isSome())->toBeTrue();
             expect($result->unwrap())->toBe(5);
@@ -104,14 +104,14 @@ describe('Option', function (): void {
 
         it('returns None when predicate fails', function (): void {
             $option = Option::some(2);
-            $result = $option->filter(fn($x) => $x > 3);
+            $result = $option->filter(fn($x): bool => $x > 3);
 
             expect($result->isNone())->toBeTrue();
         });
 
         it('returns None for None values', function (): void {
             $option = Option::none();
-            $result = $option->filter(fn($x) => true);
+            $result = $option->filter(fn($x): true => true);
 
             expect($result->isNone())->toBeTrue();
         });
@@ -141,7 +141,7 @@ describe('Option', function (): void {
 
         it('throws exception for None', function (): void {
             $option = Option::none();
-            expect(fn() => $option->unwrap())->toThrow(\RuntimeException::class);
+            expect(fn(): mixed => $option->unwrap())->toThrow(\RuntimeException::class);
         });
     });
 
@@ -160,12 +160,12 @@ describe('Option', function (): void {
     describe('unwrapOrElse', function (): void {
         it('returns value for Some', function (): void {
             $option = Option::some(42);
-            expect($option->unwrapOrElse(fn() => 99))->toBe(42);
+            expect($option->unwrapOrElse(fn(): int => 99))->toBe(42);
         });
 
         it('computes default for None', function (): void {
             $option = Option::none();
-            expect($option->unwrapOrElse(fn() => 99))->toBe(99);
+            expect($option->unwrapOrElse(fn(): int => 99))->toBe(99);
         });
     });
 
@@ -177,7 +177,7 @@ describe('Option', function (): void {
 
         it('throws exception with custom message for None', function (): void {
             $option = Option::none();
-            expect(fn() => $option->expect('custom error'))
+            expect(fn(): mixed => $option->expect('custom error'))
                 ->toThrow(\RuntimeException::class, 'custom error');
         });
     });
@@ -197,7 +197,7 @@ describe('Option', function (): void {
     describe('mapOr', function (): void {
         it('applies function to Some', function (): void {
             $option = Option::some(5);
-            $result = $option->mapOr(0, fn($x) => $x * 2);
+            $result = $option->mapOr(0, fn($x): int => $x * 2);
 
             expect($result)->toBe(10);
         });
@@ -213,14 +213,14 @@ describe('Option', function (): void {
     describe('mapOrElse', function (): void {
         it('applies function to Some', function (): void {
             $option = Option::some(5);
-            $result = $option->mapOrElse(fn() => 0, fn($x) => $x * 2);
+            $result = $option->mapOrElse(fn(): int => 0, fn($x): int => $x * 2);
 
             expect($result)->toBe(10);
         });
 
         it('computes default for None', function (): void {
             $option = Option::none();
-            $result = $option->mapOrElse(fn() => 99, fn($x) => $x * 2);
+            $result = $option->mapOrElse(fn(): int => 99, fn($x) => $x * 2);
 
             expect($result)->toBe(99);
         });
@@ -274,8 +274,8 @@ describe('Option', function (): void {
 
         it('returns self for chaining', function (): void {
             $result = Option::some(42)
-                ->inspect(fn() => null)
-                ->map(fn($x) => $x * 2);
+                ->inspect(fn(): null => null)
+                ->map(fn($x): int => $x * 2);
 
             expect($result->unwrap())->toBe(84);
         });
@@ -283,10 +283,10 @@ describe('Option', function (): void {
 
     describe('complex scenarios', function (): void {
         it('can parse and validate user input', function (): void {
-            $parseAge = fn(?string $input) => Option::from($input)
-                ->filter(fn($s) => $s !== '')
-                ->map(fn($s) => (int) $s)
-                ->filter(fn($age) => $age >= 0 && $age <= 150);
+            $parseAge = fn(?string $input): \PrettyPhp\Functional\Option => Option::from($input)
+                ->filter(fn($s): bool => $s !== '')
+                ->map(fn($s): int => (int) $s)
+                ->filter(fn($age): bool => $age >= 0 && $age <= 150);
 
             expect($parseAge('25')->unwrap())->toBe(25);
             expect($parseAge(null)->isNone())->toBeTrue();
@@ -297,9 +297,9 @@ describe('Option', function (): void {
 
         it('can chain multiple operations safely', function (): void {
             $result = Option::some(['name' => 'John', 'age' => 30])
-                ->map(fn($user) => $user['age'] ?? null)
-                ->filter(fn($age) => $age !== null)
-                ->map(fn($age) => $age * 2)
+                ->map(fn($user): int => $user['age'] ?? null)
+                ->filter(fn($age): true => $age !== null)
+                ->map(fn($age): int => $age * 2)
                 ->unwrapOr(0);
 
             expect($result)->toBe(60);

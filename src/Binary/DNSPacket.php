@@ -13,19 +13,27 @@ class DNSPacket
 {
     // DNS Header Flags
     public const QR_QUERY = 0;
+
     public const QR_RESPONSE = 1;
 
     // DNS Opcodes
     public const OPCODE_QUERY = 0;
+
     public const OPCODE_IQUERY = 1;
+
     public const OPCODE_STATUS = 2;
 
     // DNS Response Codes
     public const RCODE_NO_ERROR = 0;
+
     public const RCODE_FORMAT_ERROR = 1;
+
     public const RCODE_SERVER_FAILURE = 2;
+
     public const RCODE_NAME_ERROR = 3;
+
     public const RCODE_NOT_IMPLEMENTED = 4;
+
     public const RCODE_REFUSED = 5;
 
     public function __construct(

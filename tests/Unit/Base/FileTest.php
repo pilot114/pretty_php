@@ -422,6 +422,7 @@ describe('File', function (): void {
     it('can write file atomically', function (): void {
         $file = new File($this->testFile);
         $file->writeAtomic('atomic content');
+
         expect($file->read()->get())->toBe('atomic content');
     });
 
@@ -429,10 +430,7 @@ describe('File', function (): void {
         file_put_contents($this->testFile, 'locked content');
         $file = new File($this->testFile);
 
-        $result = $file->withLock(function ($handle) {
-            $content = fread($handle, 1024);
-            return $content;
-        }, false);
+        $result = $file->withLock(fn($handle): string|false => fread($handle, 1024), false);
 
         expect($result)->toBe('locked content');
     });
@@ -453,7 +451,7 @@ describe('File', function (): void {
         file_put_contents($this->testFile, 'test');
         $file = new File($this->testFile);
 
-        expect(fn() => iterator_to_array($file->readStream(0)))
+        expect(fn(): array => iterator_to_array($file->readStream(0)))
             ->toThrow(\InvalidArgumentException::class, 'Chunk size must be at least 1');
     });
 

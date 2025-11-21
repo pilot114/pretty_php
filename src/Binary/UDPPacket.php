@@ -26,6 +26,7 @@ class UDPPacket
             // UDP header is 8 bytes + data length
             $this->length = 8 + strlen($data);
         }
+
         if ($checksum === 0) {
             $this->checksum = static::calculate(clone $this);
         }

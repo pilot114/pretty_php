@@ -606,7 +606,6 @@ class Arr
 
     /**
      * Pluck values from array of arrays/objects by key
-     * @param string|int $key
      * @return Arr<mixed>
      */
     public function pluck(string|int $key): self

@@ -11,6 +11,7 @@ describe('Socket', function (): void {
         $socket = Socket::tcp();
         expect($socket)->toBeInstanceOf(Socket::class);
         expect($socket->isClosed())->toBe(false);
+
         $socket->close();
         expect($socket->isClosed())->toBe(true);
     });
@@ -19,21 +20,25 @@ describe('Socket', function (): void {
         $socket = Socket::udp();
         expect($socket)->toBeInstanceOf(Socket::class);
         expect($socket->isClosed())->toBe(false);
+
         $socket->close();
     });
 
     it('can bind a socket to an address', function (): void {
         $socket = Socket::udp();
-        $socket->bind('127.0.0.1', 0); // Port 0 = auto-assign
+        $socket->bind('127.0.0.1', 0);
+         // Port 0 = auto-assign
         $info = $socket->getName();
         expect($info['address'])->toBe('127.0.0.1');
         expect($info['port'])->toBeGreaterThan(0);
+
         $socket->close();
     });
 
     it('can set socket options', function (): void {
         $socket = Socket::udp();
         $socket->setOption(SOL_SOCKET, SO_REUSEADDR, 1);
+
         $value = $socket->getOption(SOL_SOCKET, SO_REUSEADDR);
         expect($value)->toBe(1);
         $socket->close();
@@ -42,6 +47,7 @@ describe('Socket', function (): void {
     it('can set receive timeout', function (): void {
         $socket = Socket::udp();
         $socket->setReceiveTimeout(5, 500000);
+
         expect($socket->isClosed())->toBe(false);
         $socket->close();
     });
@@ -49,6 +55,7 @@ describe('Socket', function (): void {
     it('can set send timeout', function (): void {
         $socket = Socket::udp();
         $socket->setSendTimeout(5, 500000);
+
         expect($socket->isClosed())->toBe(false);
         $socket->close();
     });
@@ -56,6 +63,7 @@ describe('Socket', function (): void {
     it('can set blocking mode', function (): void {
         $socket = Socket::udp();
         $socket->setBlocking(false);
+
         expect($socket->isClosed())->toBe(false);
         $socket->close();
     });
@@ -63,12 +71,14 @@ describe('Socket', function (): void {
     it('throws exception when using closed socket', function (): void {
         $socket = Socket::udp();
         $socket->close();
-        expect(fn() => $socket->send('test'))->toThrow(RuntimeException::class, 'Socket is closed');
+
+        expect(fn(): int => $socket->send('test'))->toThrow(RuntimeException::class, 'Socket is closed');
     });
 
     it('can send and receive UDP data', function (): void {
         $server = Socket::udp();
         $server->bind('127.0.0.1', 0);
+
         $serverInfo = $server->getName();
 
         $client = Socket::udp();
@@ -109,14 +119,7 @@ describe('NetworkInterface', function (): void {
 
     it('can get loopback interface', function (): void {
         $interfaces = NetworkInterface::all();
-        $loopback = null;
-
-        foreach ($interfaces as $interface) {
-            if ($interface->isLoopback()) {
-                $loopback = $interface;
-                break;
-            }
-        }
+        $loopback = array_find($interfaces, fn($interface): bool => $interface->isLoopback());
 
         expect($loopback)->not->toBeNull();
         expect($loopback?->isLoopback())->toBe(true);
@@ -124,14 +127,7 @@ describe('NetworkInterface', function (): void {
 
     it('can check if interface is up', function (): void {
         $interfaces = NetworkInterface::all();
-        $anyUp = false;
-
-        foreach ($interfaces as $interface) {
-            if ($interface->isUp()) {
-                $anyUp = true;
-                break;
-            }
-        }
+        $anyUp = array_any($interfaces, fn($interface): bool => $interface->isUp());
 
         expect($anyUp)->toBe(true);
     });
@@ -160,14 +156,7 @@ describe('NetworkInterface', function (): void {
 
     it('can get IPv4 address from loopback', function (): void {
         $interfaces = NetworkInterface::all();
-        $loopback = null;
-
-        foreach ($interfaces as $interface) {
-            if ($interface->isLoopback() && $interface->isUp()) {
-                $loopback = $interface;
-                break;
-            }
-        }
+        $loopback = array_find($interfaces, fn($interface): bool => $interface->isLoopback() && $interface->isUp());
 
         if ($loopback !== null) {
             $ipv4 = $loopback->getIPv4Address();
@@ -296,7 +285,7 @@ describe('NetworkInterface', function (): void {
 describe('RawSocket', function (): void {
     it('requires root privileges for raw sockets', function (): void {
         if (posix_geteuid() !== 0) {
-            expect(fn() => RawSocket::icmp())->toThrow(RuntimeException::class, 'Raw sockets require superuser');
+            expect(fn(): \PrettyPhp\Binary\RawSocket => RawSocket::icmp())->toThrow(RuntimeException::class, 'Raw sockets require superuser');
         } else {
             $socket = RawSocket::icmp();
             expect($socket)->toBeInstanceOf(RawSocket::class);
@@ -312,6 +301,7 @@ describe('RawSocket', function (): void {
         $socket = RawSocket::icmp();
         expect($socket)->toBeInstanceOf(RawSocket::class);
         expect($socket->isClosed())->toBe(false);
+
         $socket->close();
     });
 
@@ -352,6 +342,7 @@ describe('RawSocket', function (): void {
 
         $socket = RawSocket::icmp();
         $socket->enableIpHeaderInclude();
+
         expect($socket->isIpHeaderIncluded())->toBe(true);
         $socket->close();
     });
@@ -364,6 +355,7 @@ describe('RawSocket', function (): void {
         $socket = RawSocket::icmp();
         $socket->enableIpHeaderInclude();
         $socket->disableIpHeaderInclude();
+
         expect($socket->isIpHeaderIncluded())->toBe(false);
         $socket->close();
     });
@@ -375,6 +367,7 @@ describe('RawSocket', function (): void {
 
         $socket = RawSocket::icmp();
         $socket->setTTL(64);
+
         expect($socket->isClosed())->toBe(false);
         $socket->close();
     });
@@ -386,6 +379,7 @@ describe('RawSocket', function (): void {
 
         $socket = RawSocket::icmp();
         $socket->enableBroadcast();
+
         expect($socket->isClosed())->toBe(false);
         $socket->close();
     });
@@ -394,7 +388,7 @@ describe('RawSocket', function (): void {
 describe('PacketCapture', function (): void {
     it('requires root privileges', function (): void {
         if (posix_geteuid() !== 0) {
-            expect(fn() => PacketCapture::all())->toThrow(RuntimeException::class, 'Packet capture requires superuser');
+            expect(fn(): \PrettyPhp\Binary\PacketCapture => PacketCapture::all())->toThrow(RuntimeException::class, 'Packet capture requires superuser');
         } else {
             $capture = PacketCapture::all();
             expect($capture)->toBeInstanceOf(PacketCapture::class);
@@ -495,7 +489,7 @@ describe('PacketCapture', function (): void {
         }
 
         $capture = PacketCapture::all();
-        expect(fn() => $capture->capture(1, 1))->toThrow(RuntimeException::class, 'not started');
+        expect(fn(): array => $capture->capture(1, 1))->toThrow(RuntimeException::class, 'not started');
     });
 });
 

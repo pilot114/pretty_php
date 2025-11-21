@@ -291,11 +291,7 @@ readonly class Path implements \Stringable
         }
 
         // Check for null bytes
-        if (str_contains($this->path, "\0")) {
-            return false;
-        }
-
-        return true;
+        return !str_contains($this->path, "\0");
     }
 
     /**
@@ -426,7 +422,7 @@ readonly class Path implements \Stringable
 
         try {
             $thisReal = $this->exists() ? $this->realPath()->get() : $this->path;
-            $otherReal = file_exists($otherPath) ? (new self($otherPath))->realPath()->get() : $otherPath;
+            $otherReal = file_exists($otherPath) ? new self($otherPath)->realPath()->get() : $otherPath;
 
             return $thisReal === $otherReal;
         } catch (RuntimeException) {

@@ -359,6 +359,7 @@ describe('TCPPacket', function (): void {
         );
 
         $packet->setFlags(syn: true, ack: true);
+
         expect($packet->dataOffsetAndFlags & 0x12)->toBe(0x12); // SYN + ACK flags
     });
 });

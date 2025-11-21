@@ -10,12 +10,15 @@ use RuntimeException;
 if (!defined('IP_TTL')) {
     define('IP_TTL', 2);
 }
+
 if (!defined('IP_TOS')) {
     define('IP_TOS', 1);
 }
+
 if (!defined('IP_RECVTTL')) {
     define('IP_RECVTTL', 12);
 }
+
 if (!defined('IP_RECVTOS')) {
     define('IP_RECVTOS', 13);
 }
@@ -32,34 +35,57 @@ class RawSocket extends Socket
 
     /**
      * Create a raw socket for ICMP
+     * @throws RuntimeException
      */
     public static function icmp(): self
     {
+        self::checkRootPrivileges();
         return new self(AF_INET, SOCK_RAW, 1); // ICMP protocol is 1
     }
 
     /**
      * Create a raw socket for TCP
+     * @throws RuntimeException
      */
+    #[\Override]
     public static function tcp(): self
     {
+        self::checkRootPrivileges();
         return new self(AF_INET, SOCK_RAW, 6); // TCP protocol is 6
     }
 
     /**
      * Create a raw socket for UDP
+     * @throws RuntimeException
      */
+    #[\Override]
     public static function udp(): self
     {
+        self::checkRootPrivileges();
         return new self(AF_INET, SOCK_RAW, 17); // UDP protocol is 17
     }
 
     /**
      * Create a raw socket for a custom protocol
+     * @throws RuntimeException
      */
     public static function protocol(int $protocol): self
     {
+        self::checkRootPrivileges();
         return new self(AF_INET, SOCK_RAW, $protocol);
+    }
+
+    /**
+     * Check if the current process has root privileges
+     * @throws RuntimeException
+     */
+    private static function checkRootPrivileges(): void
+    {
+        if (posix_geteuid() !== 0) {
+            throw new RuntimeException(
+                'Raw sockets require superuser (root) privileges'
+            );
+        }
     }
 
     /**
@@ -67,6 +93,7 @@ class RawSocket extends Socket
      *
      * When enabled, the application must construct the entire IP header.
      * The kernel will not add its own IP header.
+     * @throws RuntimeException
      */
     public function enableIpHeaderInclude(): self
     {
@@ -74,7 +101,9 @@ class RawSocket extends Socket
             define('IP_HDRINCL', 2);
         }
 
-        $this->setOption(IPPROTO_IP, IP_HDRINCL, 1);
+        $hdrincl = IP_HDRINCL;
+        assert(is_int($hdrincl));
+        $this->setOption(IPPROTO_IP, $hdrincl, 1);
         $this->includeIpHeader = true;
 
         return $this;
@@ -82,6 +111,7 @@ class RawSocket extends Socket
 
     /**
      * Disable IP header inclusion
+     * @throws RuntimeException
      */
     public function disableIpHeaderInclude(): self
     {
@@ -89,7 +119,9 @@ class RawSocket extends Socket
             define('IP_HDRINCL', 2);
         }
 
-        $this->setOption(IPPROTO_IP, IP_HDRINCL, 0);
+        $hdrincl = IP_HDRINCL;
+        assert(is_int($hdrincl));
+        $this->setOption(IPPROTO_IP, $hdrincl, 0);
         $this->includeIpHeader = false;
 
         return $this;
@@ -105,6 +137,7 @@ class RawSocket extends Socket
 
     /**
      * Send a packet (automatically serialized from an object)
+     * @throws RuntimeException
      */
     public function sendPacket(object $packet, string $destination, int $port = 0): PacketResponse
     {
@@ -132,6 +165,7 @@ class RawSocket extends Socket
      *
      * @template T of object
      * @param class-string<T>|null $responseClass
+     * @throws RuntimeException
      */
     public function sendAndReceive(
         object $packet,
@@ -164,7 +198,7 @@ class RawSocket extends Socket
                 bytesReceived: strlen($response['data']),
                 responseTimeMs: $responseTime,
             );
-        } catch (RuntimeException $e) {
+        } catch (RuntimeException) {
             // Timeout or error
             return new PacketResponse(
                 requestData: $data,
@@ -184,6 +218,7 @@ class RawSocket extends Socket
      * @template T of object
      * @param class-string<T>|null $packetClass
      * @return array{data: string, address: string, port: int, packet?: T}
+     * @throws RuntimeException
      */
     public function receivePacket(?string $packetClass = null, int $bufferSize = 65535): array
     {
@@ -200,6 +235,7 @@ class RawSocket extends Socket
      * Enable promiscuous mode (receive all packets on the network)
      *
      * Note: This may require root privileges and may not work on all systems
+     * @throws RuntimeException
      */
     public function enablePromiscuousMode(): self
     {
@@ -212,6 +248,7 @@ class RawSocket extends Socket
      * Set IP options for the socket
      *
      * @param array<string, mixed> $options
+     * @throws RuntimeException
      */
     public function setIpOptions(array $options): self
     {
@@ -221,9 +258,10 @@ class RawSocket extends Socket
                 'tos' => IP_TOS,
                 'recvttl' => IP_RECVTTL,
                 'recvtos' => IP_RECVTOS,
-                default => throw new RuntimeException("Unknown IP option: {$option}"),
+                default => throw new RuntimeException('Unknown IP option: ' . $option),
             };
 
+            assert(is_int($value) || is_string($value) || is_array($value));
             $this->setOption(IPPROTO_IP, $optionCode, $value);
         }
 
@@ -232,6 +270,7 @@ class RawSocket extends Socket
 
     /**
      * Set the Time-To-Live (TTL) for outgoing packets
+     * @throws RuntimeException
      */
     public function setTTL(int $ttl): self
     {
@@ -241,6 +280,7 @@ class RawSocket extends Socket
 
     /**
      * Set the Type of Service (TOS) for outgoing packets
+     * @throws RuntimeException
      */
     public function setTOS(int $tos): self
     {
@@ -250,6 +290,7 @@ class RawSocket extends Socket
 
     /**
      * Bind to a specific network interface
+     * @throws RuntimeException
      */
     public function bindToInterface(string $interfaceName): self
     {
@@ -263,6 +304,7 @@ class RawSocket extends Socket
 
     /**
      * Enable broadcast on the socket
+     * @throws RuntimeException
      */
     public function enableBroadcast(): self
     {
@@ -272,6 +314,7 @@ class RawSocket extends Socket
 
     /**
      * Disable broadcast on the socket
+     * @throws RuntimeException
      */
     public function disableBroadcast(): self
     {

@@ -300,10 +300,12 @@ readonly class Str implements \Stringable
 
         // Capitalize first letter of each word except the first
         $str = mb_strtolower($str);
+
         $words = explode(' ', $str);
         $result = $words[0] ?? '';
+        $counter = count($words);
 
-        for ($i = 1; $i < count($words); $i++) {
+        for ($i = 1; $i < $counter; $i++) {
             if ($words[$i] !== '') {
                 $result .= mb_convert_case($words[$i], MB_CASE_TITLE);
             }

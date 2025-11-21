@@ -127,7 +127,7 @@ describe('Num', function (): void {
         });
 
         it('throws exception when min > max', function (): void {
-            expect(fn() => new Num(5)->clamp(10, 0))
+            expect(fn(): \PrettyPhp\Base\Num => new Num(5)->clamp(10, 0))
                 ->toThrow(\InvalidArgumentException::class, 'Min value cannot be greater than max value');
         });
     });
@@ -154,7 +154,7 @@ describe('Num', function (): void {
         });
 
         it('throws exception on division by zero', function (): void {
-            expect(fn() => new Num(10)->divide(0))
+            expect(fn(): \PrettyPhp\Base\Num => new Num(10)->divide(0))
                 ->toThrow(\DivisionByZeroError::class, 'Division by zero');
         });
 
@@ -164,7 +164,7 @@ describe('Num', function (): void {
         });
 
         it('throws exception on modulo by zero', function (): void {
-            expect(fn() => new Num(10)->mod(0))
+            expect(fn(): \PrettyPhp\Base\Num => new Num(10)->mod(0))
                 ->toThrow(\DivisionByZeroError::class, 'Modulo by zero');
         });
 
@@ -179,7 +179,7 @@ describe('Num', function (): void {
         });
 
         it('throws exception on square root of negative', function (): void {
-            expect(fn() => new Num(-16)->sqrt())
+            expect(fn(): \PrettyPhp\Base\Num => new Num(-16)->sqrt())
                 ->toThrow(\InvalidArgumentException::class, 'Cannot calculate square root of negative number');
         });
     });
@@ -313,7 +313,7 @@ describe('Num', function (): void {
         });
 
         it('throws exception for floats', function (): void {
-            expect(fn() => new Num(3.14)->toHex())
+            expect(fn(): \PrettyPhp\Base\Str => new Num(3.14)->toHex())
                 ->toThrow(\InvalidArgumentException::class, 'Hex conversion only works with integers');
         });
     });
@@ -330,7 +330,7 @@ describe('Num', function (): void {
         });
 
         it('throws exception for floats', function (): void {
-            expect(fn() => new Num(3.14)->toBinary())
+            expect(fn(): \PrettyPhp\Base\Str => new Num(3.14)->toBinary())
                 ->toThrow(\InvalidArgumentException::class, 'Binary conversion only works with integers');
         });
     });
@@ -347,7 +347,7 @@ describe('Num', function (): void {
         });
 
         it('throws exception for floats', function (): void {
-            expect(fn() => new Num(3.14)->toOctal())
+            expect(fn(): \PrettyPhp\Base\Str => new Num(3.14)->toOctal())
                 ->toThrow(\InvalidArgumentException::class, 'Octal conversion only works with integers');
         });
     });

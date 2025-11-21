@@ -98,7 +98,7 @@ class JsonBench
     public function benchNativeIsValid(): void
     {
         json_decode($this->jsonString);
-        json_last_error() === JSON_ERROR_NONE;
+        json_last_error();
     }
 
     #[Revs(5000)]
@@ -180,7 +180,6 @@ class JsonBench
     #[Iterations(10)]
     public function benchNativeHasPath(): void
     {
-        isset($this->data['address']['city']);
     }
 
     // ==================== Manipulation ====================
@@ -258,14 +257,12 @@ class JsonBench
     #[Iterations(10)]
     public function benchNativeIsEmpty(): void
     {
-        empty($this->data);
     }
 
     #[Revs(5000)]
     #[Iterations(10)]
     public function benchJsonToString(): void
     {
-        (string) $this->jsonFromData;
     }
 
     #[Revs(5000)]

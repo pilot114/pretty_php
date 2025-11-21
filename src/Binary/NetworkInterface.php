@@ -10,15 +10,19 @@ use RuntimeException;
 if (!defined('IFF_UP')) {
     define('IFF_UP', 0x1);
 }
+
 if (!defined('IFF_BROADCAST')) {
     define('IFF_BROADCAST', 0x2);
 }
+
 if (!defined('IFF_LOOPBACK')) {
     define('IFF_LOOPBACK', 0x8);
 }
+
 if (!defined('IFF_POINTOPOINT')) {
     define('IFF_POINTOPOINT', 0x10);
 }
+
 if (!defined('IFF_MULTICAST')) {
     define('IFF_MULTICAST', 0x1000);
 }
@@ -28,7 +32,7 @@ if (!defined('IFF_MULTICAST')) {
  *
  * Provides information about network interfaces on the system.
  */
-readonly class NetworkInterface
+readonly class NetworkInterface implements \Stringable
 {
     /**
      * @param array<string, mixed> $info
@@ -56,6 +60,7 @@ readonly class NetworkInterface
         $result = [];
         foreach ($interfaces as $name => $info) {
             assert(is_string($name));
+            /** @var array<string, mixed> $info */
             assert(is_array($info));
             $result[$name] = new self($name, $info);
         }
@@ -87,8 +92,13 @@ readonly class NetworkInterface
      */
     public function isUp(): bool
     {
-        $flags = is_int($this->info['flags'] ?? 0) ? ($this->info['flags'] ?? 0) : 0;
-        return (bool) ($flags & IFF_UP);
+        // Check the 'up' field first (available in newer versions)
+        if (isset($this->info['up'])) {
+            return (bool) $this->info['up'];
+        }
+
+        // Fallback to checking flags in unicast array
+        return $this->checkFlag(IFF_UP);
     }
 
     /**
@@ -96,8 +106,7 @@ readonly class NetworkInterface
      */
     public function isLoopback(): bool
     {
-        $flags = is_int($this->info['flags'] ?? 0) ? ($this->info['flags'] ?? 0) : 0;
-        return (bool) ($flags & IFF_LOOPBACK);
+        return $this->checkFlag(IFF_LOOPBACK);
     }
 
     /**
@@ -105,8 +114,7 @@ readonly class NetworkInterface
      */
     public function isBroadcast(): bool
     {
-        $flags = is_int($this->info['flags'] ?? 0) ? ($this->info['flags'] ?? 0) : 0;
-        return (bool) ($flags & IFF_BROADCAST);
+        return $this->checkFlag(IFF_BROADCAST);
     }
 
     /**
@@ -114,8 +122,7 @@ readonly class NetworkInterface
      */
     public function isPointToPoint(): bool
     {
-        $flags = is_int($this->info['flags'] ?? 0) ? ($this->info['flags'] ?? 0) : 0;
-        return (bool) ($flags & IFF_POINTOPOINT);
+        return $this->checkFlag(IFF_POINTOPOINT);
     }
 
     /**
@@ -123,8 +130,37 @@ readonly class NetworkInterface
      */
     public function isMulticast(): bool
     {
-        $flags = is_int($this->info['flags'] ?? 0) ? ($this->info['flags'] ?? 0) : 0;
-        return (bool) ($flags & IFF_MULTICAST);
+        return $this->checkFlag(IFF_MULTICAST);
+    }
+
+    /**
+     * Check if a specific flag is set in any of the unicast entries
+     */
+    private function checkFlag(int $flag): bool
+    {
+        // Check if flags exist at the top level (older format)
+        if (isset($this->info['flags']) && is_int($this->info['flags'])) {
+            return (bool) ($this->info['flags'] & $flag);
+        }
+
+        // Check flags in unicast array entries (newer format)
+        $unicast = $this->info['unicast'] ?? [];
+        if (!is_array($unicast)) {
+            return false;
+        }
+
+        foreach ($unicast as $entry) {
+            if (!is_array($entry)) {
+                continue;
+            }
+
+            $flags = $entry['flags'] ?? 0;
+            if (is_int($flags) && (bool) ($flags & $flag)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -144,6 +180,7 @@ readonly class NetworkInterface
     public function getUnicastAddresses(): array
     {
         $unicast = $this->info['unicast'] ?? [];
+        /** @var array<array{address: string, netmask?: string, family?: int}> */
         return is_array($unicast) ? $unicast : [];
     }
 
@@ -156,6 +193,7 @@ readonly class NetworkInterface
             if (!is_array($addr)) {
                 continue;
             }
+
             if (($addr['family'] ?? 0) === AF_INET) {
                 $address = $addr['address'] ?? null;
                 return is_string($address) ? $address : null;
@@ -174,6 +212,7 @@ readonly class NetworkInterface
             if (!is_array($addr)) {
                 continue;
             }
+
             if (($addr['family'] ?? 0) === AF_INET6) {
                 $address = $addr['address'] ?? null;
                 return is_string($address) ? $address : null;
@@ -195,6 +234,7 @@ readonly class NetworkInterface
             if (!is_array($addr)) {
                 continue;
             }
+
             if (($addr['family'] ?? 0) === AF_INET && isset($addr['address']) && is_string($addr['address'])) {
                 $addresses[] = $addr['address'];
             }
@@ -215,6 +255,7 @@ readonly class NetworkInterface
             if (!is_array($addr)) {
                 continue;
             }
+
             if (($addr['family'] ?? 0) === AF_INET6 && isset($addr['address']) && is_string($addr['address'])) {
                 $addresses[] = $addr['address'];
             }
@@ -246,11 +287,15 @@ readonly class NetworkInterface
     /**
      * Get statistics
      *
-     * @return array{rx_bytes?: int, tx_bytes?: int, rx_packets?: int, tx_packets?: int, rx_errors?: int, tx_errors?: int}|null
+     * @return array{
+     *     rx_bytes?: int, tx_bytes?: int, rx_packets?: int, tx_packets?: int,
+     *     rx_errors?: int, tx_errors?: int
+     * }|null
      */
     public function getStats(): ?array
     {
         $stats = $this->info['stats'] ?? null;
+        /** @var array{rx_bytes?: int, tx_bytes?: int, rx_packets?: int, tx_packets?: int, rx_errors?: int, tx_errors?: int}|null */
         return is_array($stats) ? $stats : null;
     }
 
@@ -273,14 +318,14 @@ readonly class NetworkInterface
         $ipv6 = $this->getIPv6Address();
         $status = $this->isUp() ? 'UP' : 'DOWN';
 
-        $str = "{$this->name}: {$status}";
+        $str = sprintf('%s: %s', $this->name, $status);
 
         if ($ipv4 !== null) {
-            $str .= " IPv4:{$ipv4}";
+            $str .= ' IPv4:' . $ipv4;
         }
 
         if ($ipv6 !== null) {
-            $str .= " IPv6:{$ipv6}";
+            $str .= ' IPv6:' . $ipv6;
         }
 
         return $str;
@@ -292,7 +337,7 @@ readonly class NetworkInterface
     public function describe(): string
     {
         $lines = [];
-        $lines[] = "Interface: {$this->name}";
+        $lines[] = 'Interface: ' . $this->name;
         $lines[] = "  Status: " . ($this->isUp() ? 'UP' : 'DOWN');
 
         if ($this->isLoopback()) {
@@ -305,12 +350,12 @@ readonly class NetworkInterface
 
         $mtu = $this->getMTU();
         if ($mtu !== null) {
-            $lines[] = "  MTU: {$mtu}";
+            $lines[] = '  MTU: ' . $mtu;
         }
 
         $mac = $this->getMacAddress();
         if ($mac !== null) {
-            $lines[] = "  MAC: {$mac}";
+            $lines[] = '  MAC: ' . $mac;
         }
 
         $ipv4Addresses = $this->getIPv4Addresses();
@@ -327,9 +372,11 @@ readonly class NetworkInterface
         if ($this->isBroadcast()) {
             $flags[] = 'BROADCAST';
         }
+
         if ($this->isMulticast()) {
             $flags[] = 'MULTICAST';
         }
+
         if ($flags !== []) {
             $lines[] = "  Flags: " . implode(', ', $flags);
         }

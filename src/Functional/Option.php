@@ -148,7 +148,6 @@ readonly class Option
             throw new \RuntimeException('Called unwrap on a None value');
         }
 
-        /** @var T */
         return $this->value;
     }
 
@@ -161,7 +160,6 @@ readonly class Option
     public function unwrapOr(mixed $default): mixed
     {
         if ($this->isSome()) {
-            /** @var T */
             return $this->value;
         }
 
@@ -177,7 +175,6 @@ readonly class Option
     public function unwrapOrElse(callable $fn): mixed
     {
         if ($this->isSome()) {
-            /** @var T */
             return $this->value;
         }
 
@@ -196,7 +193,6 @@ readonly class Option
             throw new \RuntimeException($message);
         }
 
-        /** @var T */
         return $this->value;
     }
 
@@ -208,7 +204,6 @@ readonly class Option
     public function toNullable(): mixed
     {
         if ($this->isSome()) {
-            /** @var T */
             return $this->value;
         }
 

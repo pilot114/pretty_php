@@ -28,10 +28,13 @@ class SecurityConfig
      * Rate limiting defaults
      */
     public const DEFAULT_RATE_LIMIT_REQUESTS = 1000;
+
     public const DEFAULT_RATE_LIMIT_WINDOW = 60; // seconds
 
     private static int $maxBufferSize = self::DEFAULT_MAX_BUFFER_SIZE;
+
     private static int $maxNestingDepth = self::DEFAULT_MAX_NESTING_DEPTH;
+
     private static bool $strictMode = false;
 
     /**
@@ -42,6 +45,7 @@ class SecurityConfig
         if ($size <= 0) {
             throw new SecurityException('Max buffer size must be positive');
         }
+
         self::$maxBufferSize = $size;
     }
 
@@ -61,6 +65,7 @@ class SecurityConfig
         if ($depth <= 0) {
             throw new SecurityException('Max nesting depth must be positive');
         }
+
         self::$maxNestingDepth = $depth;
     }
 

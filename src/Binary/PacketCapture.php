@@ -15,18 +15,24 @@ use RuntimeException;
 class PacketCapture
 {
     private ?RawSocket $socket = null;
+
     private bool $capturing = false;
-    /** @var array<callable> */
+
+    /** @var array<callable(CapturedPacket): void> */
     private array $handlers = [];
+
     /** @var array<string> */
     private array $filters = [];
+
     private int $capturedPackets = 0;
+
     private int $droppedPackets = 0;
 
     /**
      * @param string $interface Network interface to capture from (e.g., 'eth0', 'wlan0')
      * @param int $protocol Protocol to capture (0 = all, or specific protocol number)
      * @param int $bufferSize Buffer size for packet capture
+     * @throws RuntimeException
      */
     public function __construct(
         private readonly string $interface = '',
@@ -43,6 +49,7 @@ class PacketCapture
 
     /**
      * Create a packet capture for all protocols
+     * @throws RuntimeException
      */
     public static function all(string $interface = ''): self
     {
@@ -51,6 +58,7 @@ class PacketCapture
 
     /**
      * Create a packet capture for ICMP packets
+     * @throws RuntimeException
      */
     public static function icmp(string $interface = ''): self
     {
@@ -59,6 +67,7 @@ class PacketCapture
 
     /**
      * Create a packet capture for TCP packets
+     * @throws RuntimeException
      */
     public static function tcp(string $interface = ''): self
     {
@@ -67,6 +76,7 @@ class PacketCapture
 
     /**
      * Create a packet capture for UDP packets
+     * @throws RuntimeException
      */
     public static function udp(string $interface = ''): self
     {
@@ -75,6 +85,7 @@ class PacketCapture
 
     /**
      * Start capturing packets
+     * @throws RuntimeException
      */
     public function start(): self
     {
@@ -155,6 +166,7 @@ class PacketCapture
      * @param int $count Number of packets to capture (0 = unlimited)
      * @param float $timeout Timeout in seconds (0 = no timeout)
      * @return array<CapturedPacket>
+     * @throws RuntimeException
      */
     public function capture(int $count = 0, float $timeout = 0): array
     {
@@ -178,7 +190,7 @@ class PacketCapture
 
             // Try to receive a packet
             try {
-                if ($this->socket === null) {
+                if (!$this->socket instanceof \PrettyPhp\Binary\RawSocket) {
                     break;
                 }
 
@@ -206,7 +218,7 @@ class PacketCapture
                 foreach ($this->handlers as $handler) {
                     $handler($packet);
                 }
-            } catch (RuntimeException $e) {
+            } catch (RuntimeException) {
                 // No packet available (non-blocking mode)
                 usleep(10000); // Sleep 10ms to avoid busy waiting
             }
@@ -220,6 +232,7 @@ class PacketCapture
      *
      * @param callable(CapturedPacket): bool $callback Return false to stop capturing
      * @param float $timeout Timeout in seconds (0 = no timeout)
+     * @throws RuntimeException
      */
     public function captureStream(callable $callback, float $timeout = 0): int
     {
@@ -238,7 +251,7 @@ class PacketCapture
 
             // Try to receive a packet
             try {
-                if ($this->socket === null) {
+                if (!$this->socket instanceof \PrettyPhp\Binary\RawSocket) {
                     break;
                 }
 
@@ -267,7 +280,7 @@ class PacketCapture
                 if ($continue === false) {
                     break;
                 }
-            } catch (RuntimeException $e) {
+            } catch (RuntimeException) {
                 // No packet available (non-blocking mode)
                 usleep(10000); // Sleep 10ms to avoid busy waiting
             }
@@ -306,13 +319,7 @@ class PacketCapture
             return true;
         }
 
-        foreach ($this->filters as $filter) {
-            if (!str_contains($data, $filter)) {
-                return false;
-            }
-        }
-
-        return true;
+        return array_all($this->filters, fn($filter): bool => str_contains($data, $filter));
     }
 
     /**
@@ -321,99 +328,5 @@ class PacketCapture
     public function __destruct()
     {
         $this->stop();
-    }
-}
-
-/**
- * CapturedPacket - Represents a captured network packet
- */
-readonly class CapturedPacket
-{
-    public function __construct(
-        public string $data,
-        public float $timestamp,
-        public string $sourceAddress,
-        public int $sourcePort,
-        public int $length,
-        public string $interface,
-    ) {
-    }
-
-    /**
-     * Parse the packet data as a specific packet type
-     *
-     * @template T of object
-     * @param class-string<T> $packetClass
-     * @return T
-     */
-    public function parse(string $packetClass): object
-    {
-        return Binary::unpack($this->data, $packetClass);
-    }
-
-    /**
-     * Parse as IP packet
-     */
-    public function parseIP(): IPPacket
-    {
-        return Binary::unpack($this->data, IPPacket::class);
-    }
-
-    /**
-     * Parse as ICMP packet (skipping IP header)
-     */
-    public function parseICMP(int $ipHeaderSize = 20): ICMPPacket
-    {
-        $icmpData = substr($this->data, $ipHeaderSize);
-        return Binary::unpack($icmpData, ICMPPacket::class);
-    }
-
-    /**
-     * Parse as TCP packet (skipping IP header)
-     */
-    public function parseTCP(int $ipHeaderSize = 20): TCPPacket
-    {
-        $tcpData = substr($this->data, $ipHeaderSize);
-        return Binary::unpack($tcpData, TCPPacket::class);
-    }
-
-    /**
-     * Parse as UDP packet (skipping IP header)
-     */
-    public function parseUDP(int $ipHeaderSize = 20): UDPPacket
-    {
-        $udpData = substr($this->data, $ipHeaderSize);
-        return Binary::unpack($udpData, UDPPacket::class);
-    }
-
-    /**
-     * Get packet data as hexadecimal string
-     */
-    public function toHex(): string
-    {
-        return bin2hex($this->data);
-    }
-
-    /**
-     * Get formatted timestamp
-     */
-    public function getFormattedTimestamp(string $format = 'Y-m-d H:i:s.u'): string
-    {
-        $dt = \DateTime::createFromFormat('U.u', (string) $this->timestamp);
-        return $dt !== false ? $dt->format($format) : '';
-    }
-
-    /**
-     * Get a summary of the packet
-     */
-    public function getSummary(): string
-    {
-        return sprintf(
-            '[%s] %s:%d (%d bytes)',
-            $this->getFormattedTimestamp('H:i:s.u'),
-            $this->sourceAddress,
-            $this->sourcePort,
-            $this->length
-        );
     }
 }

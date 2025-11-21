@@ -12,14 +12,21 @@ namespace PrettyPhp\Binary;
 class HTTPPacket
 {
     public const METHOD_GET = 'GET';
+
     public const METHOD_POST = 'POST';
+
     public const METHOD_PUT = 'PUT';
+
     public const METHOD_DELETE = 'DELETE';
+
     public const METHOD_HEAD = 'HEAD';
+
     public const METHOD_OPTIONS = 'OPTIONS';
+
     public const METHOD_PATCH = 'PATCH';
 
     public const HTTP_VERSION_10 = 'HTTP/1.0';
+
     public const HTTP_VERSION_11 = 'HTTP/1.1';
 
     /**
@@ -150,7 +157,7 @@ class HTTPPacket
 
         // Parse headers
         $headers = [];
-        while (count($lines) > 0) {
+        while ($lines !== []) {
             $line = array_shift($lines);
             if ($line === '') {
                 break; // Empty line separates headers from body
@@ -161,6 +168,7 @@ class HTTPPacket
                 $headers[trim($headerParts[0])] = trim($headerParts[1]);
             }
         }
+
         $packet->headers = $headers;
 
         // Remaining lines are the body

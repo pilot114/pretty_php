@@ -31,7 +31,8 @@ return RectorConfig::configure()
         PHPUnitSetList::PHPUNIT_110,
     ])
     ->withSkip([
-        // Skip some rules that might cause issues
+        // Skip RemoveNonExistingVarAnnotationRector to preserve PHPStan type hints
+        \Rector\DeadCode\Rector\Node\RemoveNonExistingVarAnnotationRector::class,
     ])
     ->withPhpSets(
         php84: true

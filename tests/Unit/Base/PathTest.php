@@ -325,7 +325,7 @@ describe('Path', function (): void {
 
     it('throws exception for invalid real path', function (): void {
         $path = new Path('/nonexistent/path');
-        expect(fn() => $path->realPath())
+        expect(fn(): \PrettyPhp\Base\Path => $path->realPath())
             ->toThrow(RuntimeException::class, 'Unable to resolve real path');
     });
 

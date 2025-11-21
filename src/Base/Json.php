@@ -28,8 +28,6 @@ readonly class Json implements \Stringable
 
     /**
      * Create from data to be encoded
-     *
-     * @param mixed $data
      */
     public static function fromData(mixed $data): self
     {
@@ -156,6 +154,7 @@ readonly class Json implements \Stringable
             if (!is_string($this->value)) {
                 return Result::err('Invalid JSON: value is not a string');
             }
+
             json_decode($this->value);
         }
 
@@ -178,11 +177,13 @@ readonly class Json implements \Stringable
             if (!is_string($this->value)) {
                 return $this;
             }
+
             // Decode and re-encode with pretty print
             $decoded = json_decode($this->value, true);
             if (json_last_error() !== JSON_ERROR_NONE) {
                 return $this;
             }
+
             $pretty = json_encode($decoded, $flags);
         } else {
             $pretty = json_encode($this->value, $flags);
@@ -204,11 +205,13 @@ readonly class Json implements \Stringable
             if (!is_string($this->value)) {
                 return $this;
             }
+
             // Decode and re-encode without pretty print
             $decoded = json_decode($this->value, true);
             if (json_last_error() !== JSON_ERROR_NONE) {
                 return $this;
             }
+
             $minified = json_encode($decoded);
         } else {
             $minified = json_encode($this->value);
@@ -235,6 +238,7 @@ readonly class Json implements \Stringable
             if (!is_string($this->value)) {
                 return Result::err("Invalid JSON: value is not a string");
             }
+
             $decoded = json_decode($this->value, true);
             if (json_last_error() !== JSON_ERROR_NONE) {
                 return Result::err(json_last_error_msg());
@@ -255,7 +259,7 @@ readonly class Json implements \Stringable
                 $current = $current->{$key};
             } else {
                 /** @phpstan-ignore return.type */
-                return Result::err("Path not found: {$path}");
+                return Result::err('Path not found: ' . $path);
             }
         }
 
@@ -284,6 +288,7 @@ readonly class Json implements \Stringable
             if (!is_string($this->value)) {
                 return Result::err('Failed to decode this JSON: value is not a string');
             }
+
             $thisDecoded = json_decode($this->value, true);
             if (json_last_error() !== JSON_ERROR_NONE) {
                 /** @phpstan-ignore return.type */
@@ -297,6 +302,7 @@ readonly class Json implements \Stringable
             if (!is_string($other->value)) {
                 return Result::err('Failed to decode other JSON: value is not a string');
             }
+
             $otherDecoded = json_decode($other->value, true);
             if (json_last_error() !== JSON_ERROR_NONE) {
                 /** @phpstan-ignore return.type */
@@ -328,6 +334,7 @@ readonly class Json implements \Stringable
             if (!is_string($this->value)) {
                 return Result::err('Invalid JSON: value is not a string');
             }
+
             $decoded = json_decode($this->value, true);
             if (json_last_error() !== JSON_ERROR_NONE) {
                 return Result::err(json_last_error_msg());
@@ -353,6 +360,7 @@ readonly class Json implements \Stringable
                 if (!isset($current[$key]) || !is_array($current[$key])) {
                     $current[$key] = [];
                 }
+
                 $current = &$current[$key];
             }
         }
@@ -372,6 +380,7 @@ readonly class Json implements \Stringable
             if (!is_string($this->value)) {
                 return Result::err('Invalid JSON: value is not a string');
             }
+
             $decoded = json_decode($this->value, true);
             if (json_last_error() !== JSON_ERROR_NONE) {
                 return Result::err(json_last_error_msg());
@@ -395,14 +404,15 @@ readonly class Json implements \Stringable
                     unset($current[$key]);
                 } else {
                     /** @phpstan-ignore return.type */
-                    return Result::err("Path not found: {$path}");
+                    return Result::err('Path not found: ' . $path);
                 }
             } else {
                 // Navigate deeper
                 if (!isset($current[$key]) || !is_array($current[$key])) {
                     /** @phpstan-ignore return.type */
-                    return Result::err("Path not found: {$path}");
+                    return Result::err('Path not found: ' . $path);
                 }
+
                 $current = &$current[$key];
             }
         }
@@ -421,6 +431,7 @@ readonly class Json implements \Stringable
             if (!is_string($this->value)) {
                 return 0;
             }
+
             $decoded = json_decode($this->value, true);
             if (json_last_error() !== JSON_ERROR_NONE) {
                 return 0;

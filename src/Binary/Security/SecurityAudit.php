@@ -47,7 +47,7 @@ class SecurityAudit
             if ($format === 'A*') {
                 $this->addFinding(
                     'warning',
-                    "Property '{$property->getName()}' uses unbounded string format (A*)",
+                    sprintf("Property '%s' uses unbounded string format (A*)", $property->getName()),
                     'Consider using a fixed-length format like A20 to prevent buffer issues'
                 );
             }
@@ -56,7 +56,7 @@ class SecurityAudit
             if (class_exists($format)) {
                 $this->addFinding(
                     'info',
-                    "Property '{$property->getName()}' contains nested structure: {$format}",
+                    sprintf("Property '%s' contains nested structure: %s", $property->getName(), $format),
                     'Ensure nesting depth limits are configured to prevent stack overflow'
                 );
             }
@@ -74,7 +74,7 @@ class SecurityAudit
     {
         $this->findings = [];
 
-        if ($socket->getRateLimiter() === null) {
+        if (!$socket->getRateLimiter() instanceof \PrettyPhp\Binary\Security\RateLimiter) {
             $this->addFinding(
                 'warning',
                 'Socket does not have rate limiting configured',
@@ -183,8 +183,9 @@ class SecurityAudit
 
             $report .= "{$emoji} **{$message}**\n";
             if ($recommendation !== null) {
-                $report .= "   {$recommendation}\n";
+                $report .= sprintf('   %s%s', $recommendation, PHP_EOL);
             }
+
             $report .= "\n";
         }
 
@@ -195,9 +196,8 @@ class SecurityAudit
         $report .= "4. Use strict mode in production environments\n";
         $report .= "5. Regularly audit code using SecurityAudit::auditBinaryStructure()\n";
         $report .= "6. Implement proper error handling for security exceptions\n";
-        $report .= "7. Run raw socket operations with minimum required privileges\n";
 
-        return $report;
+        return $report . "7. Run raw socket operations with minimum required privileges\n";
     }
 
     /**

@@ -13,6 +13,7 @@ use PrettyPhp\Binary\Security\SecurityException;
 class Binary
 {
     public const ENDIAN_BIG = 'big';
+
     public const ENDIAN_LITTLE = 'little';
 
     public function __construct(
@@ -76,7 +77,8 @@ class Binary
                 /** @var class-string $originalFormat */
                 $totalSize += self::calculateObjectSize($value, $originalFormat);
             } else {
-                $totalSize += self::getFormatSize($originalFormat, $binaryAttr->endian, is_string($value) ? $value : null);
+                $stringValue = is_string($value) ? $value : null;
+                $totalSize += self::getFormatSize($originalFormat, $binaryAttr->endian, $stringValue);
             }
         }
 
@@ -87,7 +89,6 @@ class Binary
     {
         $binaryData = '';
         $bitFieldBuffer = 0;
-        $bitFieldOffset = 0;
         $bitFieldSize = 0;
 
         foreach (new ReflectionClass($object)->getProperties() as $property) {
@@ -127,6 +128,7 @@ class Binary
                 for ($i = 0; $i < $bytes; $i++) {
                     $binaryData .= pack('C', ($bitFieldBuffer >> ($i * 8)) & 0xFF);
                 }
+
                 $bitFieldBuffer = 0;
                 $bitFieldSize = 0;
             }
@@ -217,6 +219,7 @@ class Binary
                     if ($byte === false || !isset($byte[1]) || !is_int($byte[1])) {
                         throw new Exception(sprintf("Failed to read byte for bit field '%s'.", $property->getName()));
                     }
+
                     $byteValue = $byte[1];
                     $bitFieldBuffer |= ($byteValue << ($bitFieldBytesRead * 8));
                     $bitFieldBytesRead++;
@@ -331,7 +334,7 @@ class Binary
             if ($conditionalAttrs !== []) {
                 $cond = $conditionalAttrs[0]->newInstance();
                 $valueStr = is_scalar($cond->value) ? (string) $cond->value : var_export($cond->value, true);
-                $conditional = " (if {$cond->field} {$cond->operator} {$valueStr})";
+                $conditional = sprintf(' (if %s %s %s)', $cond->field, $cond->operator, $valueStr);
             }
 
             // Check for validation
@@ -341,14 +344,17 @@ class Binary
                 $val = $validateAttr->newInstance();
                 $constraints = [];
                 if ($val->min !== null) {
-                    $constraints[] = "min={$val->min}";
+                    $constraints[] = 'min=' . $val->min;
                 }
+
                 if ($val->max !== null) {
-                    $constraints[] = "max={$val->max}";
+                    $constraints[] = 'max=' . $val->max;
                 }
+
                 if ($val->in !== null) {
                     $constraints[] = "in=[" . implode(',', $val->in) . "]";
                 }
+
                 if ($validation === '' && $constraints !== []) {
                     $validation = implode(', ', $constraints);
                 }
@@ -373,9 +379,13 @@ class Binary
                 foreach ($bitFieldGroup as $bf) {
                     $totalBits = max($totalBits, $bf['offset'] + $bf['bits']);
                 }
+
                 $bytes = (int) ceil($totalBits / 8);
 
-                $bitFieldNames = array_map(fn($bf) => "{$bf['name']}[{$bf['bits']}bits]", $bitFieldGroup);
+                $bitFieldNames = array_map(
+                    fn(array $bf): string => sprintf('%s[%sbits]', $bf['name'], $bf['bits']),
+                    $bitFieldGroup
+                );
                 $doc .= sprintf(
                     "| %d | %d | %s | BitField | - | %s |\n",
                     $offset,
@@ -407,7 +417,7 @@ class Binary
             } else {
                 $size = self::getFormatSize($format, $endian);
                 $typeDesc = match (true) {
-                    is_numeric($format) => "{$format}-bit",
+                    is_numeric($format) => $format . '-bit',
                     default => $format,
                 };
 
@@ -430,9 +440,13 @@ class Binary
             foreach ($bitFieldGroup as $bf) {
                 $totalBits = max($totalBits, $bf['offset'] + $bf['bits']);
             }
+
             $bytes = (int) ceil($totalBits / 8);
 
-            $bitFieldNames = array_map(fn($bf) => "{$bf['name']}[{$bf['bits']}bits]", $bitFieldGroup);
+            $bitFieldNames = array_map(
+                fn(array $bf): string => sprintf('%s[%sbits]', $bf['name'], $bf['bits']),
+                $bitFieldGroup
+            );
             $doc .= sprintf(
                 "| %d | %d | %s | BitField | - | %s |\n",
                 $offset,
@@ -442,8 +456,6 @@ class Binary
             );
         }
 
-        $doc .= "\n**Total Size**: ~{$offset} bytes (excluding variable-length fields)\n";
-
-        return $doc;
+        return $doc . "\n**Total Size**: ~{$offset} bytes (excluding variable-length fields)\n";
     }
 }

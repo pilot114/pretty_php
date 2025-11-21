@@ -69,10 +69,10 @@ class SecurityTest extends TestCase
 
     public function testSecurityConfigMaxBufferSize(): void
     {
-        $this->assertEquals(SecurityConfig::DEFAULT_MAX_BUFFER_SIZE, SecurityConfig::getMaxBufferSize());
+        $this->assertSame(SecurityConfig::DEFAULT_MAX_BUFFER_SIZE, SecurityConfig::getMaxBufferSize());
 
         SecurityConfig::setMaxBufferSize(1024);
-        $this->assertEquals(1024, SecurityConfig::getMaxBufferSize());
+        $this->assertSame(1024, SecurityConfig::getMaxBufferSize());
     }
 
     public function testSecurityConfigInvalidMaxBufferSize(): void
@@ -83,10 +83,10 @@ class SecurityTest extends TestCase
 
     public function testSecurityConfigMaxNestingDepth(): void
     {
-        $this->assertEquals(SecurityConfig::DEFAULT_MAX_NESTING_DEPTH, SecurityConfig::getMaxNestingDepth());
+        $this->assertSame(SecurityConfig::DEFAULT_MAX_NESTING_DEPTH, SecurityConfig::getMaxNestingDepth());
 
         SecurityConfig::setMaxNestingDepth(50);
-        $this->assertEquals(50, SecurityConfig::getMaxNestingDepth());
+        $this->assertSame(50, SecurityConfig::getMaxNestingDepth());
     }
 
     public function testSecurityConfigInvalidMaxNestingDepth(): void
@@ -214,10 +214,10 @@ class SecurityTest extends TestCase
     public function testRateLimiterGetRemainingTokens(): void
     {
         $limiter = new RateLimiter(10, 60);
-        $this->assertEquals(10, $limiter->getRemainingTokens());
+        $this->assertSame(10, $limiter->getRemainingTokens());
 
         $limiter->tryOperation();
-        $this->assertEquals(9, $limiter->getRemainingTokens());
+        $this->assertSame(9, $limiter->getRemainingTokens());
     }
 
     public function testRateLimiterReset(): void
@@ -229,11 +229,11 @@ class SecurityTest extends TestCase
             $limiter->tryOperation();
         }
 
-        $this->assertEquals(0, $limiter->getRemainingTokens());
+        $this->assertSame(0, $limiter->getRemainingTokens());
 
         // Reset should restore all tokens
         $limiter->reset();
-        $this->assertEquals(5, $limiter->getRemainingTokens());
+        $this->assertSame(5, $limiter->getRemainingTokens());
     }
 
     public function testRateLimiterDisable(): void
@@ -257,7 +257,7 @@ class SecurityTest extends TestCase
     public function testSocketRateLimiterIntegration(): void
     {
         $socket = Socket::udp();
-        $this->assertNull($socket->getRateLimiter());
+        $this->assertNotInstanceOf(\PrettyPhp\Binary\Security\RateLimiter::class, $socket->getRateLimiter());
 
         $limiter = RateLimiter::default();
         $socket->setRateLimiter($limiter);
@@ -280,17 +280,9 @@ class SecurityTest extends TestCase
         $findings = $audit->auditSocket($socket);
 
         $this->assertIsArray($findings);
-        $this->assertNotEmpty($findings); // Should warn about missing rate limiter
-
-        // Check that warning exists
-        $hasWarning = false;
-        foreach ($findings as $finding) {
-            if ($finding['severity'] === 'warning' &&
-                str_contains($finding['message'], 'rate limiting')) {
-                $hasWarning = true;
-                break;
-            }
-        }
+        $this->assertNotEmpty($findings);
+        $hasWarning = array_any($findings, fn($finding): bool => $finding['severity'] === 'warning' &&
+            str_contains($finding['message'], 'rate limiting'));
         $this->assertTrue($hasWarning);
     }
 
@@ -350,8 +342,8 @@ class SecurityTest extends TestCase
 
         SecurityConfig::reset();
 
-        $this->assertEquals(SecurityConfig::DEFAULT_MAX_BUFFER_SIZE, SecurityConfig::getMaxBufferSize());
-        $this->assertEquals(SecurityConfig::DEFAULT_MAX_NESTING_DEPTH, SecurityConfig::getMaxNestingDepth());
+        $this->assertSame(SecurityConfig::DEFAULT_MAX_BUFFER_SIZE, SecurityConfig::getMaxBufferSize());
+        $this->assertSame(SecurityConfig::DEFAULT_MAX_NESTING_DEPTH, SecurityConfig::getMaxNestingDepth());
         $this->assertFalse(SecurityConfig::isStrictMode());
     }
 
@@ -397,12 +389,12 @@ class SecurityTest extends TestCase
         $limiter->tryOperation();
         $limiter->tryOperation();
 
-        $this->assertEquals(8, $limiter->getRemainingTokens());
+        $this->assertSame(8, $limiter->getRemainingTokens());
 
         // Wait for refill (1 second)
         sleep(1);
 
         // Tokens should be refilled
-        $this->assertEquals(10, $limiter->getRemainingTokens());
+        $this->assertSame(10, $limiter->getRemainingTokens());
     }
 }
