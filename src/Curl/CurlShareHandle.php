@@ -19,7 +19,8 @@ namespace PrettyPhp\Curl;
  */
 final class CurlShareHandle
 {
-    private \CurlShareHandle $handle;
+    private readonly \CurlShareHandle $handle;
+
     private bool $closed = false;
 
     /**

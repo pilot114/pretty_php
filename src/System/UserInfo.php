@@ -30,18 +30,25 @@ readonly class UserInfo
     {
         $info = posix_getpwnam($username);
         if ($info === false) {
-            throw new \RuntimeException("User not found: {$username}");
+            throw new \RuntimeException('User not found: ' . $username);
         }
 
-        return new self(
-            $info['name'],
-            $info['passwd'],
-            $info['uid'],
-            $info['gid'],
-            $info['gecos'],
-            $info['dir'],
-            $info['shell']
-        );
+        /** @var string $name */
+        $name = $info['name'];
+        /** @var string $passwd */
+        $passwd = $info['passwd'];
+        /** @var int $uid */
+        $uid = $info['uid'];
+        /** @var int $gid */
+        $gid = $info['gid'];
+        /** @var string $gecos */
+        $gecos = $info['gecos'];
+        /** @var string $dir */
+        $dir = $info['dir'];
+        /** @var string $shell */
+        $shell = $info['shell'];
+
+        return new self($name, $passwd, $uid, $gid, $gecos, $dir, $shell);
     }
 
     /**
@@ -52,18 +59,25 @@ readonly class UserInfo
     {
         $info = posix_getpwuid($uid);
         if ($info === false) {
-            throw new \RuntimeException("User with UID {$uid} not found");
+            throw new \RuntimeException(sprintf('User with UID %d not found', $uid));
         }
 
-        return new self(
-            $info['name'],
-            $info['passwd'],
-            $info['uid'],
-            $info['gid'],
-            $info['gecos'],
-            $info['dir'],
-            $info['shell']
-        );
+        /** @var string $name */
+        $name = $info['name'];
+        /** @var string $passwd */
+        $passwd = $info['passwd'];
+        /** @var int $uidValue */
+        $uidValue = $info['uid'];
+        /** @var int $gid */
+        $gid = $info['gid'];
+        /** @var string $gecos */
+        $gecos = $info['gecos'];
+        /** @var string $dir */
+        $dir = $info['dir'];
+        /** @var string $shell */
+        $shell = $info['shell'];
+
+        return new self($name, $passwd, $uidValue, $gid, $gecos, $dir, $shell);
     }
 
     /**

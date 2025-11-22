@@ -158,7 +158,6 @@ final class Curl
      * @param string $filename Path to the file
      * @param string|null $mimeType MIME type of the file
      * @param string|null $postFilename Filename to use in the upload
-     * @return \CURLFile
      */
     public static function file(
         string $filename,
@@ -171,10 +170,11 @@ final class Curl
     /**
      * Get CURL version information
      *
-     * @return array<string, mixed>
+     * @return array{version_number: int, age: int, features: int, ssl_version_number: int, version: string, host: string, ssl_version: string, libz_version: string, protocols: array<int, string>}
      */
     public static function version(): array
     {
+        /** @var array{version_number: int, age: int, features: int, ssl_version_number: int, version: string, host: string, ssl_version: string, libz_version: string, protocols: array<int, string>} */
         return CurlHandle::version();
     }
 
@@ -216,8 +216,9 @@ final class Curl
         if ($headers !== []) {
             $formattedHeaders = [];
             foreach ($headers as $key => $value) {
-                $formattedHeaders[] = "{$key}: {$value}";
+                $formattedHeaders[] = sprintf('%s: %s', $key, $value);
             }
+
             $options[CURLOPT_HTTPHEADER] = $formattedHeaders;
         }
 

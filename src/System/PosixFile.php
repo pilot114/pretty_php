@@ -12,16 +12,30 @@ use PrettyPhp\Base\Str;
 readonly class PosixFile
 {
     // Access modes
-    public const F_OK = 0;  // File exists
-    public const R_OK = 4;  // Read permission
-    public const W_OK = 2;  // Write permission
+    public const F_OK = 0;
+
+      // File exists
+    public const R_OK = 4;
+
+      // Read permission
+    public const W_OK = 2;
+
+      // Write permission
     public const X_OK = 1;  // Execute permission
 
     // File types for mknod
-    public const S_IFREG = 0100000;  // Regular file
-    public const S_IFCHR = 0020000;  // Character device
-    public const S_IFBLK = 0060000;  // Block device
-    public const S_IFIFO = 0010000;  // FIFO (named pipe)
+    public const S_IFREG = 0100000;
+
+      // Regular file
+    public const S_IFCHR = 0020000;
+
+      // Character device
+    public const S_IFBLK = 0060000;
+
+      // Block device
+    public const S_IFIFO = 0010000;
+
+      // FIFO (named pipe)
     public const S_IFSOCK = 0140000; // Socket
 
     /**
@@ -48,6 +62,7 @@ readonly class PosixFile
 
     /**
      * Check if file descriptor is a terminal
+     * @param int|resource $fd
      */
     public static function isatty(mixed $fd): bool
     {
@@ -62,7 +77,7 @@ readonly class PosixFile
     {
         $result = posix_pathconf($path, $name);
         if ($result === false) {
-            throw new \RuntimeException("Failed to get path configuration for {$path}");
+            throw new \RuntimeException('Failed to get path configuration for ' . $path);
         }
 
         return $result;
@@ -70,6 +85,7 @@ readonly class PosixFile
 
     /**
      * Get file descriptor configuration value
+     * @param int|resource $fd
      * @throws \RuntimeException
      */
     public static function fpathconf(mixed $fd, int $name): int|false
@@ -90,7 +106,7 @@ readonly class PosixFile
     {
         $result = posix_mkfifo($path, $mode);
         if (!$result) {
-            throw new \RuntimeException("Failed to create FIFO at {$path}");
+            throw new \RuntimeException('Failed to create FIFO at ' . $path);
         }
 
         return true;
@@ -104,7 +120,7 @@ readonly class PosixFile
     {
         $result = posix_mknod($path, $mode, $major, $minor);
         if (!$result) {
-            throw new \RuntimeException("Failed to create node at {$path}");
+            throw new \RuntimeException('Failed to create node at ' . $path);
         }
 
         return true;
@@ -112,6 +128,7 @@ readonly class PosixFile
 
     /**
      * Get terminal name
+     * @param int|resource $fd
      * @throws \RuntimeException
      */
     public static function ttyname(mixed $fd): Str
@@ -126,6 +143,7 @@ readonly class PosixFile
 
     /**
      * Check if path is readable
+     * @throws \RuntimeException
      */
     public static function isReadable(string $path): bool
     {
@@ -134,6 +152,7 @@ readonly class PosixFile
 
     /**
      * Check if path is writable
+     * @throws \RuntimeException
      */
     public static function isWritable(string $path): bool
     {
@@ -142,6 +161,7 @@ readonly class PosixFile
 
     /**
      * Check if path is executable
+     * @throws \RuntimeException
      */
     public static function isExecutable(string $path): bool
     {
@@ -150,6 +170,7 @@ readonly class PosixFile
 
     /**
      * Check if path exists
+     * @throws \RuntimeException
      */
     public static function exists(string $path): bool
     {

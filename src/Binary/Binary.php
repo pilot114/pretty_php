@@ -54,7 +54,6 @@ class Binary
      * Calculate the total size of an object in bytes
      *
      * @param class-string $className
-     * @phpstan-param class-string $className
      */
     private static function calculateObjectSize(object $object, string $className): int
     {
@@ -163,6 +162,9 @@ class Binary
      * @template T of object
      * @param class-string<T> $className
      * @return T
+     * @throws BufferOverflowException
+     * @throws SecurityException
+     * @throws Exception
      */
     public static function unpack(string $binaryData, string $className, int $nestingDepth = 0): object
     {
@@ -506,6 +508,7 @@ class Binary
                         'type' => 'bitfield',
                     ];
                 }
+
                 $bitFieldGroup = [];
             }
 
@@ -546,14 +549,12 @@ class Binary
         }
 
         // Flush any remaining bit field group
-        if ($bitFieldGroup !== []) {
-            foreach ($bitFieldGroup as $bf) {
-                $fields[] = [
-                    'name' => $bf['name'],
-                    'bits' => $bf['bits'],
-                    'type' => 'bitfield',
-                ];
-            }
+        foreach ($bitFieldGroup as $bf) {
+            $fields[] = [
+                'name' => $bf['name'],
+                'bits' => $bf['bits'],
+                'type' => 'bitfield',
+            ];
         }
 
         // Generate diagram
@@ -565,7 +566,7 @@ class Binary
             if ($field['type'] === 'nested') {
                 // Flush current row
                 if ($currentRow !== []) {
-                    $doc .= self::renderAsciiRow($currentRow, $currentBits, $firstRow);
+                    $doc .= self::renderAsciiRow($currentRow, $currentBits);
                     $firstRow = false;
                     $currentRow = [];
                     $currentBits = 0;
@@ -579,7 +580,7 @@ class Binary
             if ($field['type'] === 'variable') {
                 // Flush current row
                 if ($currentRow !== []) {
-                    $doc .= self::renderAsciiRow($currentRow, $currentBits, $firstRow);
+                    $doc .= self::renderAsciiRow($currentRow, $currentBits);
                     $firstRow = false;
                     $currentRow = [];
                     $currentBits = 0;
@@ -596,9 +597,10 @@ class Binary
             if ($currentBits + $fieldBits > 32) {
                 // Render current row and start new one
                 if ($currentRow !== []) {
-                    $doc .= self::renderAsciiRow($currentRow, $currentBits, $firstRow);
+                    $doc .= self::renderAsciiRow($currentRow, $currentBits);
                     $firstRow = false;
                 }
+
                 $currentRow = [$field];
                 $currentBits = $fieldBits;
             } else {
@@ -608,7 +610,7 @@ class Binary
 
             // If current row is exactly 32 bits, render it
             if ($currentBits === 32) {
-                $doc .= self::renderAsciiRow($currentRow, $currentBits, $firstRow);
+                $doc .= self::renderAsciiRow($currentRow, $currentBits);
                 $firstRow = false;
                 $currentRow = [];
                 $currentBits = 0;
@@ -617,28 +619,22 @@ class Binary
 
         // Render any remaining fields
         if ($currentRow !== []) {
-            $doc .= self::renderAsciiRow($currentRow, $currentBits, $firstRow);
+            $doc .= self::renderAsciiRow($currentRow, $currentBits);
         }
 
-        $doc .= "+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+\n";
-
-        return $doc;
+        return $doc . "+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+\n";
     }
 
     /**
      * Render a single row of ASCII diagram
      *
-     * @param array<array{name: string, bits: int, type: string}> $fields
+     * @param array<array{name: string, bits: int|string, type: string}> $fields
      */
-    private static function renderAsciiRow(array $fields, int $totalBits, bool $firstRow): string
+    private static function renderAsciiRow(array $fields, int $totalBits): string
     {
         $row = '';
 
-        if ($firstRow) {
-            $row .= "+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+\n";
-        } else {
-            $row .= "+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+\n";
-        }
+        $row .= "+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+\n";
 
         // Calculate padding
         $padding = 32 - $totalBits;
@@ -646,7 +642,7 @@ class Binary
         $row .= "|";
         foreach ($fields as $field) {
             $fieldBits = (int) $field['bits'];
-            $width = (int) ($fieldBits * 2); // Each bit takes 2 characters (+-) in the row
+            $width = $fieldBits * 2; // Each bit takes 2 characters (+-) in the row
 
             $name = $field['name'];
             // Only truncate if name is significantly longer than width
@@ -660,13 +656,11 @@ class Binary
 
         // Add padding if needed
         if ($padding > 0) {
-            $paddingWidth = (int) ($padding * 2);
+            $paddingWidth = $padding * 2;
             $row .= str_pad("", $paddingWidth, " ");
             $row .= "|";
         }
 
-        $row .= "\n";
-
-        return $row;
+        return $row . "\n";
     }
 }

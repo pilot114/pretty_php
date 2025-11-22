@@ -27,6 +27,8 @@ readonly class PosixSystem
     public static function sysconf(int $name): int
     {
         $result = posix_sysconf($name);
+        // posix_sysconf returns int on success, false on failure
+        // @phpstan-ignore identical.alwaysFalse
         if ($result === false) {
             throw new \RuntimeException("Failed to get system configuration");
         }

@@ -176,9 +176,9 @@ describe('PosixUser', function (): void {
         try {
             $login = PosixUser::getLogin();
             expect($login)->toBeString();
-        } catch (\RuntimeException $e) {
+        } catch (\RuntimeException $runtimeException) {
             // posix_getlogin may fail in some environments (e.g., Docker)
-            expect($e->getMessage())->toContain('Failed to get login name');
+            expect($runtimeException->getMessage())->toContain('Failed to get login name');
         }
     })->skip(posix_getlogin() === false, 'posix_getlogin not available in this environment');
 });

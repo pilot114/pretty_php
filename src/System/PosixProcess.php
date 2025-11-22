@@ -27,6 +27,7 @@ readonly class PosixProcess
 
     /**
      * Get process group ID
+     * @throws \RuntimeException
      */
     public static function groupId(?int $pid = null): int
     {
@@ -96,7 +97,7 @@ readonly class PosixProcess
     {
         $result = posix_kill($pid, $signal);
         if (!$result) {
-            throw new \RuntimeException("Failed to send signal {$signal} to process {$pid}");
+            throw new \RuntimeException(sprintf('Failed to send signal %d to process %d', $signal, $pid));
         }
 
         return true;

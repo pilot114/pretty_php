@@ -141,16 +141,8 @@ if (!function_exists('datetime')) {
     }
 }
 
-if (!function_exists('date')) {
-    /**
-     * Creates a Date utility class for static date operations.
-     * Note: This shadows the global date() function - use Date::format() instead.
-     */
-    function date(): Date
-    {
-        return new Date();
-    }
-}
+// Note: date() function not available as Date class has private constructor
+// Use Date::format(), Date::now(), etc. static methods instead
 
 if (!function_exists('interval')) {
     /**
@@ -175,7 +167,7 @@ if (!function_exists('timezone')) {
         return new Timezone($value);
     }
 }
-      
+
 if (!function_exists('session')) {
     /**
      * Get or set session values.

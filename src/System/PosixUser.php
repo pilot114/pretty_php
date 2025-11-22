@@ -51,7 +51,7 @@ readonly class PosixUser
     {
         $result = posix_setuid($uid);
         if (!$result) {
-            throw new \RuntimeException("Failed to set UID to {$uid}");
+            throw new \RuntimeException('Failed to set UID to ' . $uid);
         }
 
         return true;
@@ -65,7 +65,7 @@ readonly class PosixUser
     {
         $result = posix_seteuid($uid);
         if (!$result) {
-            throw new \RuntimeException("Failed to set effective UID to {$uid}");
+            throw new \RuntimeException('Failed to set effective UID to ' . $uid);
         }
 
         return true;
@@ -79,7 +79,7 @@ readonly class PosixUser
     {
         $result = posix_setgid($gid);
         if (!$result) {
-            throw new \RuntimeException("Failed to set GID to {$gid}");
+            throw new \RuntimeException('Failed to set GID to ' . $gid);
         }
 
         return true;
@@ -93,7 +93,7 @@ readonly class PosixUser
     {
         $result = posix_setegid($gid);
         if (!$result) {
-            throw new \RuntimeException("Failed to set effective GID to {$gid}");
+            throw new \RuntimeException('Failed to set effective GID to ' . $gid);
         }
 
         return true;
@@ -183,6 +183,7 @@ readonly class PosixUser
             throw new \RuntimeException("Failed to get supplementary groups");
         }
 
+        /** @var Arr<int> */
         return new Arr($groups);
     }
 
@@ -194,7 +195,7 @@ readonly class PosixUser
     {
         $result = posix_initgroups($username, $gid);
         if (!$result) {
-            throw new \RuntimeException("Failed to initialize groups for user {$username}");
+            throw new \RuntimeException('Failed to initialize groups for user ' . $username);
         }
 
         return true;

@@ -138,6 +138,7 @@ final readonly class Posix
 
     /**
      * Check if file is accessible
+     * @throws \RuntimeException
      */
     public static function access(string $path, int $mode = PosixFile::F_OK): bool
     {
@@ -197,6 +198,7 @@ final readonly class Posix
 
     /**
      * Check if file descriptor is a terminal
+     * @param int|resource $fd
      */
     public static function isatty(mixed $fd): bool
     {

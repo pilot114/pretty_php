@@ -19,7 +19,8 @@ namespace PrettyPhp\Curl;
  */
 final class CurlMultiHandle
 {
-    private \CurlMultiHandle $handle;
+    private readonly \CurlMultiHandle $handle;
+
     private bool $closed = false;
 
     /** @var array<int, CurlHandle> */
@@ -108,7 +109,6 @@ final class CurlMultiHandle
     {
         $this->ensureHandleExists();
 
-        /** @phpstan-ignore paramOut.type */
         $result = curl_multi_exec($this->handle, $stillRunning);
 
         if ($result !== CURLM_OK && $result !== CURLM_CALL_MULTI_PERFORM) {
@@ -147,7 +147,7 @@ final class CurlMultiHandle
         $this->ensureHandleExists();
         $result = curl_multi_getcontent($curlHandle->getHandle());
 
-        return $result === null ? null : $result;
+        return $result ?? null;
     }
 
     /**
@@ -155,13 +155,13 @@ final class CurlMultiHandle
      *
      * @param-out int $messagesInQueue
      * @param int $messagesInQueue Reference to get the number of messages still in queue
-     * @return array<string, mixed>|false Information array or false if no messages
+     * @return array{msg: int, result: int, handle: \CurlHandle}|false Information array or false if no messages
      * @throws CurlMultiException If handle is closed
      */
     public function infoRead(int &$messagesInQueue = 0): array|false
     {
         $this->ensureHandleExists();
-        /** @phpstan-ignore paramOut.type, return.type */
+        /** @var array{msg: int, result: int, handle: \CurlHandle}|false */
         return curl_multi_info_read($this->handle, $messagesInQueue);
     }
 
@@ -178,7 +178,7 @@ final class CurlMultiHandle
         $this->ensureHandleExists();
 
         if (!curl_multi_setopt($this->handle, $option, $value)) {
-            throw new CurlMultiException("Failed to set multi option {$option}");
+            throw new CurlMultiException('Failed to set multi option ' . $option);
         }
 
         return $this;

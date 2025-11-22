@@ -271,7 +271,7 @@ class Session
      * Get the session cookie parameters
      * Wrapper for session_get_cookie_params()
      *
-     * @return array<string, mixed> Array containing current session cookie information
+     * @return array{lifetime: int<0, max>, path: non-falsy-string, domain: string, secure: bool, httponly: bool, samesite: 'Lax'|'lax'|'None'|'none'|'Strict'|'strict'}
      */
     public static function getCookieParams(): array
     {
@@ -312,12 +312,15 @@ class Session
         if ($path !== null) {
             $params[] = $path;
         }
+
         if ($domain !== null) {
             $params[] = $domain;
         }
+
         if ($secure !== null) {
             $params[] = $secure;
         }
+
         if ($httponly !== null) {
             $params[] = $httponly;
         }

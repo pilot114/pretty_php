@@ -30,7 +30,7 @@ final class Date
      * Get current datetime
      * PHP: date_create() / new DateTime('now')
      */
-    public static function now(Timezone|\DateTimeZone|string|null $timezone = null): DateTime
+    public static function now(\DateTimeZone|string|null $timezone = null): DateTime
     {
         return DateTime::now($timezone);
     }
@@ -62,7 +62,8 @@ final class Date
      */
     public static function format(string $format, ?int $timestamp = null): Str
     {
-        return new Str(date($format, $timestamp ?? time()));
+        $ts = $timestamp ?? time();
+        return new Str(date($format, $ts));
     }
 
     /**
@@ -77,10 +78,17 @@ final class Date
     /**
      * Format timestamp as integer
      * PHP: idate()
+     * @throws \RuntimeException
      */
     public static function idate(string $format, ?int $timestamp = null): int
     {
-        return idate($format, $timestamp ?? time());
+        $ts = $timestamp ?? time();
+        $result = idate($format, $ts);
+        if ($result === false) {
+            throw new \RuntimeException("Failed to format timestamp using idate");
+        }
+
+        return $result;
     }
 
     // ==================== Parsing ====================
@@ -111,6 +119,7 @@ final class Date
      */
     public static function parse(string $datetime): array
     {
+        /** @var array{year: int|false, month: int|false, day: int|false, hour: int|false, minute: int|false, second: int|false, fraction: float|false, warning_count: int, warnings: array<int, string>, error_count: int, errors: array<int, string>, is_localtime: bool, zone_type?: int, zone?: int, is_dst?: bool, tz_abbr?: string, tz_id?: string} */
         return date_parse($datetime);
     }
 
@@ -135,6 +144,7 @@ final class Date
      */
     public static function parseFromFormat(string $format, string $datetime): array
     {
+        /** @var array{year: int|false, month: int|false, day: int|false, hour: int|false, minute: int|false, second: int|false, fraction: float|false, warning_count: int, warnings: array<int, string>, error_count: int, errors: array<int, string>, is_localtime: bool} */
         return date_parse_from_format($format, $datetime);
     }
 
@@ -224,20 +234,11 @@ final class Date
      * Get local time
      * PHP: localtime()
      *
-     * @return array<int>|array{
-     *     tm_sec: int,
-     *     tm_min: int,
-     *     tm_hour: int,
-     *     tm_mday: int,
-     *     tm_mon: int,
-     *     tm_year: int,
-     *     tm_wday: int,
-     *     tm_yday: int,
-     *     tm_isdst: int
-     * }
+     * @return ($associative is true ? array{tm_sec: int, tm_min: int, tm_hour: int, tm_mday: int, tm_mon: int, tm_year: int, tm_wday: int, tm_yday: int, tm_isdst: int} : array<int>)
      */
     public static function localtime(?int $timestamp = null, bool $associative = false): array
     {
+        /** @var ($associative is true ? array{tm_sec: int, tm_min: int, tm_hour: int, tm_mday: int, tm_mon: int, tm_year: int, tm_wday: int, tm_yday: int, tm_isdst: int} : array<int>) */
         return localtime($timestamp ?? time(), $associative);
     }
 
@@ -271,14 +272,14 @@ final class Date
     }
 
     // ==================== Sun Times ====================
-
     /**
      * Get sunrise time for a date and location
-     * PHP: date_sunrise()
+     * PHP: date_sunrise() (deprecated - use date_sun_info() instead)
      */
+    #[\Deprecated(message: 'Use sunInfo() instead')]
     public static function sunrise(
         int $timestamp,
-        int $returnFormat = \SUNFUNCS_RET_STRING,
+        int $returnFormat = 1,
         ?float $latitude = null,
         ?float $longitude = null,
         ?float $zenith = null,
@@ -289,11 +290,12 @@ final class Date
 
     /**
      * Get sunset time for a date and location
-     * PHP: date_sunset()
+     * PHP: date_sunset() (deprecated - use date_sun_info() instead)
      */
+    #[\Deprecated(message: 'Use sunInfo() instead')]
     public static function sunset(
         int $timestamp,
-        int $returnFormat = \SUNFUNCS_RET_STRING,
+        int $returnFormat = 1,
         ?float $latitude = null,
         ?float $longitude = null,
         ?float $zenith = null,
@@ -320,6 +322,7 @@ final class Date
      */
     public static function sunInfo(int $timestamp, float $latitude, float $longitude): array
     {
+        /** @var array{sunrise: int, sunset: int, transit: int, civil_twilight_begin: int, civil_twilight_end: int, nautical_twilight_begin: int, nautical_twilight_end: int, astronomical_twilight_begin: int, astronomical_twilight_end: int} */
         return date_sun_info($timestamp, $latitude, $longitude);
     }
 
@@ -331,7 +334,7 @@ final class Date
      */
     public static function create(
         string $datetime = 'now',
-        Timezone|\DateTimeZone|string|null $timezone = null
+        \DateTimeZone|string|null $timezone = null
     ): DateTime {
         return new DateTime($datetime, $timezone);
     }
@@ -343,7 +346,7 @@ final class Date
     public static function createFromFormat(
         string $format,
         string $datetime,
-        Timezone|\DateTimeZone|string|null $timezone = null
+        \DateTimeZone|string|null $timezone = null
     ): DateTime {
         return DateTime::fromFormat($format, $datetime, $timezone);
     }
@@ -354,7 +357,7 @@ final class Date
      */
     public static function createFromTimestamp(
         int $timestamp,
-        Timezone|\DateTimeZone|string|null $timezone = null
+        \DateTimeZone|string|null $timezone = null
     ): DateTime {
         return DateTime::fromTimestamp($timestamp, $timezone);
     }
@@ -412,7 +415,7 @@ final class Date
     /**
      * Get today at midnight
      */
-    public static function today(Timezone|\DateTimeZone|string|null $timezone = null): DateTime
+    public static function today(\DateTimeZone|string|null $timezone = null): DateTime
     {
         return DateTime::today($timezone);
     }
@@ -420,7 +423,7 @@ final class Date
     /**
      * Get yesterday at midnight
      */
-    public static function yesterday(Timezone|\DateTimeZone|string|null $timezone = null): DateTime
+    public static function yesterday(\DateTimeZone|string|null $timezone = null): DateTime
     {
         return DateTime::yesterday($timezone);
     }
@@ -428,7 +431,7 @@ final class Date
     /**
      * Get tomorrow at midnight
      */
-    public static function tomorrow(Timezone|\DateTimeZone|string|null $timezone = null): DateTime
+    public static function tomorrow(\DateTimeZone|string|null $timezone = null): DateTime
     {
         return DateTime::tomorrow($timezone);
     }
@@ -438,17 +441,29 @@ final class Date
     /**
      * Common date format constants
      */
-    public const ATOM = \DateTimeInterface::ATOM;
-    public const COOKIE = \DateTimeInterface::COOKIE;
-    public const ISO8601 = \DateTimeInterface::ISO8601;
-    public const RFC822 = \DateTimeInterface::RFC822;
-    public const RFC850 = \DateTimeInterface::RFC850;
-    public const RFC1036 = \DateTimeInterface::RFC1036;
-    public const RFC1123 = \DateTimeInterface::RFC1123;
-    public const RFC2822 = \DateTimeInterface::RFC2822;
-    public const RFC3339 = \DateTimeInterface::RFC3339;
-    public const RFC3339_EXTENDED = \DateTimeInterface::RFC3339_EXTENDED;
-    public const RFC7231 = \DateTimeInterface::RFC7231;
-    public const RSS = \DateTimeInterface::RSS;
-    public const W3C = \DateTimeInterface::W3C;
+    public const string ATOM = \DateTimeInterface::ATOM;
+
+    public const string COOKIE = \DateTimeInterface::COOKIE;
+
+    public const string ISO8601 = \DateTimeInterface::ISO8601;
+
+    public const string RFC822 = \DateTimeInterface::RFC822;
+
+    public const string RFC850 = \DateTimeInterface::RFC850;
+
+    public const string RFC1036 = \DateTimeInterface::RFC1036;
+
+    public const string RFC1123 = \DateTimeInterface::RFC1123;
+
+    public const string RFC2822 = \DateTimeInterface::RFC2822;
+
+    public const string RFC3339 = \DateTimeInterface::RFC3339;
+
+    public const string RFC3339_EXTENDED = \DateTimeInterface::RFC3339_EXTENDED;
+
+    public const string RFC7231 = \DateTimeInterface::RFC7231;
+
+    public const string RSS = \DateTimeInterface::RSS;
+
+    public const string W3C = \DateTimeInterface::W3C;
 }

@@ -29,13 +29,18 @@ readonly class ProcessTimes
             throw new \RuntimeException("Failed to get process times");
         }
 
-        return new self(
-            $times['ticks'],
-            $times['utime'],
-            $times['stime'],
-            $times['cutime'],
-            $times['cstime']
-        );
+        /** @var int $ticks */
+        $ticks = $times['ticks'];
+        /** @var int $utime */
+        $utime = $times['utime'];
+        /** @var int $stime */
+        $stime = $times['stime'];
+        /** @var int $cutime */
+        $cutime = $times['cutime'];
+        /** @var int $cstime */
+        $cstime = $times['cstime'];
+
+        return new self($ticks, $utime, $stime, $cutime, $cstime);
     }
 
     /**

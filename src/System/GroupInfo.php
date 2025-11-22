@@ -31,15 +31,19 @@ readonly class GroupInfo
     {
         $info = posix_getgrnam($groupname);
         if ($info === false) {
-            throw new \RuntimeException("Group not found: {$groupname}");
+            throw new \RuntimeException('Group not found: ' . $groupname);
         }
 
-        return new self(
-            $info['name'],
-            $info['passwd'],
-            $info['gid'],
-            $info['members']
-        );
+        /** @var string $name */
+        $name = $info['name'];
+        /** @var string $passwd */
+        $passwd = $info['passwd'];
+        /** @var int $gid */
+        $gid = $info['gid'];
+        /** @var array<string> $members */
+        $members = $info['members'];
+
+        return new self($name, $passwd, $gid, $members);
     }
 
     /**
@@ -50,15 +54,19 @@ readonly class GroupInfo
     {
         $info = posix_getgrgid($gid);
         if ($info === false) {
-            throw new \RuntimeException("Group with GID {$gid} not found");
+            throw new \RuntimeException(sprintf('Group with GID %d not found', $gid));
         }
 
-        return new self(
-            $info['name'],
-            $info['passwd'],
-            $info['gid'],
-            $info['members']
-        );
+        /** @var string $name */
+        $name = $info['name'];
+        /** @var string $passwd */
+        $passwd = $info['passwd'];
+        /** @var int $gidValue */
+        $gidValue = $info['gid'];
+        /** @var array<string> $members */
+        $members = $info['members'];
+
+        return new self($name, $passwd, $gidValue, $members);
     }
 
     /**

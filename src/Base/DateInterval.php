@@ -63,9 +63,11 @@ readonly class DateInterval implements \Stringable
         if ($years > 0) {
             $spec .= $years . 'Y';
         }
+
         if ($months > 0) {
             $spec .= $months . 'M';
         }
+
         if ($days > 0) {
             $spec .= $days . 'D';
         }
@@ -75,9 +77,11 @@ readonly class DateInterval implements \Stringable
             if ($hours > 0) {
                 $spec .= $hours . 'H';
             }
+
             if ($minutes > 0) {
                 $spec .= $minutes . 'M';
             }
+
             if ($seconds > 0) {
                 $spec .= $seconds . 'S';
             }
@@ -139,9 +143,11 @@ readonly class DateInterval implements \Stringable
         if ($this->value->y > 0) {
             $spec .= $this->value->y . 'Y';
         }
+
         if ($this->value->m > 0) {
             $spec .= $this->value->m . 'M';
         }
+
         if ($this->value->d > 0) {
             $spec .= $this->value->d . 'D';
         }
@@ -152,9 +158,11 @@ readonly class DateInterval implements \Stringable
             if ($this->value->h > 0) {
                 $spec .= $this->value->h . 'H';
             }
+
             if ($this->value->i > 0) {
                 $spec .= $this->value->i . 'M';
             }
+
             if ($this->value->s > 0) {
                 $spec .= $this->value->s . 'S';
             }
@@ -173,23 +181,28 @@ readonly class DateInterval implements \Stringable
         if ($this->value->y > 0) {
             $parts[] = $this->value->y . ($this->value->y === 1 ? ' year' : ' years');
         }
+
         if ($this->value->m > 0) {
             $parts[] = $this->value->m . ($this->value->m === 1 ? ' month' : ' months');
         }
+
         if ($this->value->d > 0) {
             $parts[] = $this->value->d . ($this->value->d === 1 ? ' day' : ' days');
         }
+
         if ($this->value->h > 0) {
             $parts[] = $this->value->h . ($this->value->h === 1 ? ' hour' : ' hours');
         }
+
         if ($this->value->i > 0) {
             $parts[] = $this->value->i . ($this->value->i === 1 ? ' minute' : ' minutes');
         }
+
         if ($this->value->s > 0) {
             $parts[] = $this->value->s . ($this->value->s === 1 ? ' second' : ' seconds');
         }
 
-        if (empty($parts)) {
+        if ($parts === []) {
             return new Str('0 seconds');
         }
 
@@ -249,15 +262,15 @@ readonly class DateInterval implements \Stringable
     /**
      * Get microseconds
      */
-    public function microseconds(): int
+    public function microseconds(): float
     {
-        return (int) $this->value->f;
+        return $this->value->f;
     }
 
     /**
      * Get total days (only available if interval was created from diff)
      */
-    public function totalDays(): int|false
+    public function totalDays(): int|float|false
     {
         return $this->value->days;
     }
@@ -332,8 +345,8 @@ readonly class DateInterval implements \Stringable
      *     hours: int,
      *     minutes: int,
      *     seconds: int,
-     *     microseconds: int,
-     *     total_days: int|false,
+     *     microseconds: float,
+     *     total_days: int|float|false,
      *     inverted: bool
      * }
      */
@@ -346,7 +359,7 @@ readonly class DateInterval implements \Stringable
             'hours' => $this->value->h,
             'minutes' => $this->value->i,
             'seconds' => $this->value->s,
-            'microseconds' => (int) $this->value->f,
+            'microseconds' => $this->value->f,
             'total_days' => $this->value->days,
             'inverted' => $this->value->invert === 1,
         ];

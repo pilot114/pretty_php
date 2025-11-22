@@ -32,14 +32,20 @@ readonly class SystemInfo
             throw new \RuntimeException("Failed to get system information");
         }
 
-        return new self(
-            $info['sysname'],
-            $info['nodename'],
-            $info['release'],
-            $info['version'],
-            $info['machine'],
-            $info['domainname'] ?? null
-        );
+        /** @var string $sysname */
+        $sysname = $info['sysname'];
+        /** @var string $nodename */
+        $nodename = $info['nodename'];
+        /** @var string $release */
+        $release = $info['release'];
+        /** @var string $version */
+        $version = $info['version'];
+        /** @var string $machine */
+        $machine = $info['machine'];
+        /** @var string|null $domainname */
+        $domainname = $info['domainname'] ?? null;
+
+        return new self($sysname, $nodename, $release, $version, $machine, $domainname);
     }
 
     public function getSysname(): Str

@@ -22,6 +22,7 @@ namespace PrettyPhp\Curl;
 final class CurlHandle
 {
     private \CurlHandle $handle;
+
     private bool $closed = false;
 
     /**
@@ -59,7 +60,7 @@ final class CurlHandle
         $this->ensureHandleExists();
 
         if (!curl_setopt($this->handle, $option, $value)) {
-            throw new CurlException("Failed to set CURL option {$option}");
+            throw new CurlException('Failed to set CURL option ' . $option);
         }
 
         return $this;
@@ -105,8 +106,7 @@ final class CurlHandle
     /**
      * Get information about the last transfer
      *
-     * @param int|null $option Specific CURLINFO_XXX constant or null for all info
-     * @return mixed Information about the transfer
+     * @return ($option is null ? array<string, mixed> : mixed)
      * @throws CurlException If handle is closed
      */
     public function getInfo(?int $option = null): mixed
@@ -232,7 +232,7 @@ final class CurlHandle
         $result = curl_pause($this->handle, $bitmask);
 
         if ($result !== 0) {
-            throw new CurlException("Failed to pause/unpause connection: error code {$result}");
+            throw new CurlException('Failed to pause/unpause connection: error code ' . $result);
         }
 
         return $this;
@@ -258,13 +258,12 @@ final class CurlHandle
     /**
      * Get CURL version information
      *
-     * @return array<string, mixed> Version information
+     * @return array{version_number: int, age: int, features: int, ssl_version_number: int, version: string, host: string, ssl_version: string, libz_version: string, protocols: array<int, string>}
      */
     public static function version(): array
     {
-        /** @var array<string, mixed> */
-        $version = curl_version();
-        return is_array($version) ? $version : [];
+        /** @var array{version_number: int, age: int, features: int, ssl_version_number: int, version: string, host: string, ssl_version: string, libz_version: string, protocols: array<int, string>} */
+        return curl_version();
     }
 
     /**

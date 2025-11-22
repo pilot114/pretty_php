@@ -44,7 +44,7 @@ describe('Timezone', function (): void {
         it('can create from abbreviation', function (): void {
             $tz = Timezone::fromAbbreviation('EST');
             expect($tz)->not->toBeNull();
-            if ($tz !== null) {
+            if ($tz instanceof \PrettyPhp\Base\Timezone) {
                 expect($tz->name()->get())->toContain('America');
             }
         });
