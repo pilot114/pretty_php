@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace PrettyPhp\Base;
 
+use PrettyPhp\Exception\NumException;
+
 readonly class Num implements \Stringable
 {
     public function __construct(
@@ -89,11 +91,13 @@ readonly class Num implements \Stringable
 
     /**
      * Clamp value between min and max
+     *
+     * @throws NumException
      */
     public function clamp(int|float $min, int|float $max): self
     {
         if ($min > $max) {
-            throw new \InvalidArgumentException('Min value cannot be greater than max value');
+            throw new NumException('Min value cannot be greater than max value');
         }
 
         $clamped = max($min, min($max, $this->value));
@@ -158,11 +162,13 @@ readonly class Num implements \Stringable
 
     /**
      * Square root
+     *
+     * @throws NumException
      */
     public function sqrt(): self
     {
         if ($this->value < 0) {
-            throw new \InvalidArgumentException('Cannot calculate square root of negative number');
+            throw new NumException('Cannot calculate square root of negative number');
         }
 
         return new self(sqrt($this->value));
@@ -265,11 +271,13 @@ readonly class Num implements \Stringable
 
     /**
      * Convert to hexadecimal string
+     *
+     * @throws NumException
      */
     public function toHex(bool $prefix = false): Str
     {
         if (!is_int($this->value)) {
-            throw new \InvalidArgumentException('Hex conversion only works with integers');
+            throw new NumException('Hex conversion only works with integers');
         }
 
         $hex = dechex($this->value);
@@ -278,11 +286,13 @@ readonly class Num implements \Stringable
 
     /**
      * Convert to binary string
+     *
+     * @throws NumException
      */
     public function toBinary(bool $prefix = false): Str
     {
         if (!is_int($this->value)) {
-            throw new \InvalidArgumentException('Binary conversion only works with integers');
+            throw new NumException('Binary conversion only works with integers');
         }
 
         $binary = decbin($this->value);
@@ -291,11 +301,13 @@ readonly class Num implements \Stringable
 
     /**
      * Convert to octal string
+     *
+     * @throws NumException
      */
     public function toOctal(bool $prefix = false): Str
     {
         if (!is_int($this->value)) {
-            throw new \InvalidArgumentException('Octal conversion only works with integers');
+            throw new NumException('Octal conversion only works with integers');
         }
 
         $octal = decoct($this->value);

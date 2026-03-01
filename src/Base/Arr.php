@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace PrettyPhp\Base;
 
 use Closure;
+use PrettyPhp\Exception\ArrException;
+use PrettyPhp\Functional\Option;
 
 /**
  * @template T
@@ -98,16 +100,68 @@ class Arr
         return new self($newArray);
     }
 
-    public function pop(): mixed
+    /**
+     * @return Option<T>
+     */
+    public function pop(): Option
     {
+        if ($this->isEmpty()) {
+            return Option::none();
+        }
+
         $newArray = $this->value;
-        return array_pop($newArray);
+        /** @var T $value */
+        $value = array_pop($newArray);
+        return Option::some($value);
     }
 
-    public function shift(): mixed
+    /**
+     * @return Option<T>
+     */
+    public function shift(): Option
     {
+        if ($this->isEmpty()) {
+            return Option::none();
+        }
+
         $newArray = $this->value;
-        return array_shift($newArray);
+        /** @var T $value */
+        $value = array_shift($newArray);
+        return Option::some($value);
+    }
+
+    /**
+     * Pop the last element, returning both the element and the remaining array.
+     *
+     * @return array{Option<T>, Arr<T>}
+     */
+    public function popWithRemainder(): array
+    {
+        if ($this->isEmpty()) {
+            return [Option::none(), new self([])];
+        }
+
+        $newArray = $this->value;
+        /** @var T $value */
+        $value = array_pop($newArray);
+        return [Option::some($value), new self($newArray)];
+    }
+
+    /**
+     * Shift the first element, returning both the element and the remaining array.
+     *
+     * @return array{Option<T>, Arr<T>}
+     */
+    public function shiftWithRemainder(): array
+    {
+        if ($this->isEmpty()) {
+            return [Option::none(), new self([])];
+        }
+
+        $newArray = $this->value;
+        /** @var T $value */
+        $value = array_shift($newArray);
+        return [Option::some($value), new self($newArray)];
     }
 
     /**
@@ -342,11 +396,12 @@ class Arr
 
     /**
      * @return Arr<array<int, T>>
+     * @throws ArrException
      */
     public function chunk(int $size): self
     {
         if ($size < 1) {
-            throw new \InvalidArgumentException('Chunk size must be at least 1');
+            throw new ArrException('Chunk size must be at least 1');
         }
 
         /** @var array<int, array<int, T>> $chunked */
@@ -405,10 +460,13 @@ class Arr
         }
     }
 
+    /**
+     * @throws ArrException
+     */
     public function min(): mixed
     {
         if ($this->isEmpty()) {
-            throw new \InvalidArgumentException('Cannot get minimum of empty array');
+            throw new ArrException('Cannot get minimum of empty array');
         }
 
         /** @var non-empty-array<int|string, T> $nonEmptyValue */
@@ -416,10 +474,13 @@ class Arr
         return min($nonEmptyValue);
     }
 
+    /**
+     * @throws ArrException
+     */
     public function max(): mixed
     {
         if ($this->isEmpty()) {
-            throw new \InvalidArgumentException('Cannot get maximum of empty array');
+            throw new ArrException('Cannot get maximum of empty array');
         }
 
         /** @var non-empty-array<int|string, T> $nonEmptyValue */

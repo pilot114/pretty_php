@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace PrettyPhp\Curl;
 
-use RuntimeException;
+use PrettyPhp\Exception\PrettyPhpException;
 
 /**
  * Base exception for CURL errors
  */
-class CurlException extends RuntimeException
+class CurlException extends PrettyPhpException
 {
     public function __construct(
         string $message,

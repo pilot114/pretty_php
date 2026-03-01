@@ -15,6 +15,7 @@ use PrettyPhp\Base\Str;
 use PrettyPhp\Base\Timezone;
 use PrettyPhp\Functional\Option;
 use PrettyPhp\Functional\Result;
+use PrettyPhp\Functional\TryResult;
 
 if (!function_exists('str')) {
     function str(string $value): Str
@@ -165,6 +166,20 @@ if (!function_exists('timezone')) {
     function timezone(\DateTimeZone|string $value): Timezone
     {
         return new Timezone($value);
+    }
+}
+
+if (!function_exists('tryCall')) {
+    /**
+     * Execute a callable and wrap the result in a TryResult.
+     *
+     * @template T
+     * @param callable(): T $fn
+     * @return TryResult<T>
+     */
+    function tryCall(callable $fn): TryResult
+    {
+        return TryResult::of($fn);
     }
 }
 

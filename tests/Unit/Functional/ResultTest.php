@@ -371,6 +371,69 @@ describe('Result', function (): void {
         });
     });
 
+    describe('flatten', function (): void {
+        it('flattens nested Ok result', function (): void {
+            $nested = Result::ok(Result::ok(42));
+            $flat = $nested->flatten();
+            expect($flat->isOk())->toBeTrue();
+            expect($flat->unwrap())->toBe(42);
+        });
+
+        it('flattens nested Err result', function (): void {
+            $nested = Result::ok(Result::err('inner error'));
+            $flat = $nested->flatten();
+            expect($flat->isErr())->toBeTrue();
+            expect($flat->unwrapErr())->toBe('inner error');
+        });
+
+        it('preserves outer Err', function (): void {
+            $result = Result::err('outer error');
+            $flat = $result->flatten();
+            expect($flat->isErr())->toBeTrue();
+            expect($flat->unwrapErr())->toBe('outer error');
+        });
+
+        it('returns self when not nested', function (): void {
+            $result = Result::ok(42);
+            $flat = $result->flatten();
+            expect($flat->isOk())->toBeTrue();
+            expect($flat->unwrap())->toBe(42);
+        });
+    });
+
+    describe('fold', function (): void {
+        it('applies onOk for Ok values', function (): void {
+            $result = Result::ok(5);
+            $value = $result->fold(
+                fn($x): string => "success: $x",
+                fn($e): string => "error: $e"
+            );
+            expect($value)->toBe('success: 5');
+        });
+
+        it('applies onErr for Err values', function (): void {
+            $result = Result::err('failure');
+            $value = $result->fold(
+                fn($x): string => "success: $x",
+                fn($e): string => "error: $e"
+            );
+            expect($value)->toBe('error: failure');
+        });
+
+        it('can produce a common type from both branches', function (): void {
+            $okResult = Result::ok(200);
+            $errResult = Result::err('not found');
+
+            $toStatus = fn(Result $r): int => $r->fold(
+                fn($code): int => $code,
+                fn($msg): int => 404
+            );
+
+            expect($toStatus($okResult))->toBe(200);
+            expect($toStatus($errResult))->toBe(404);
+        });
+    });
+
     describe('complex scenarios', function (): void {
         it('can handle division with error handling', function (): void {
             $divide = fn($x, $y): \PrettyPhp\Functional\Result => $y === 0

@@ -1,5 +1,6 @@
 <?php
 
+use PrettyPhp\Base\ArraySessionStorage;
 use PrettyPhp\Base\Session;
 use PrettyPhp\Base\Arr;
 
@@ -238,5 +239,128 @@ describe('Session', function (): void {
             expect($result)->toBeTrue();
             expect(Session::get('name'))->toBe('John');
         }
+    });
+});
+
+describe('Session with ArraySessionStorage', function (): void {
+    beforeEach(function (): void {
+        Session::useStorage(new ArraySessionStorage());
+    });
+
+    afterEach(function (): void {
+        Session::useStorage(null);
+    });
+
+    it('can set and get values', function (): void {
+        Session::start();
+        Session::set('name', 'John');
+        expect(Session::get('name'))->toBe('John');
+    });
+
+    it('returns default for missing key', function (): void {
+        Session::start();
+        expect(Session::get('missing', 'default'))->toBe('default');
+    });
+
+    it('can check if key exists', function (): void {
+        Session::start();
+        Session::set('name', 'John');
+        expect(Session::has('name'))->toBeTrue();
+        expect(Session::has('missing'))->toBeFalse();
+    });
+
+    it('can remove a key', function (): void {
+        Session::start();
+        Session::set('name', 'John');
+        Session::remove('name');
+        expect(Session::has('name'))->toBeFalse();
+    });
+
+    it('can get all session data', function (): void {
+        Session::start();
+        Session::set('name', 'John');
+        Session::set('age', 30);
+        $all = Session::all();
+        expect($all['name'])->toBe('John');
+        expect($all['age'])->toBe(30);
+    });
+
+    it('can clear all data', function (): void {
+        Session::start();
+        Session::set('name', 'John');
+        Session::clear();
+        expect(Session::all())->toBe([]);
+    });
+
+    it('can replace all data', function (): void {
+        Session::start();
+        Session::set('name', 'John');
+        Session::replace(['city' => 'NYC']);
+        expect(Session::has('name'))->toBeFalse();
+        expect(Session::get('city'))->toBe('NYC');
+    });
+
+    it('can flash and get flash data', function (): void {
+        Session::start();
+        Session::flash('message', 'Success!');
+        expect(Session::hasFlash('message'))->toBeTrue();
+        $value = Session::getFlash('message');
+        expect($value)->toBe('Success!');
+        expect(Session::hasFlash('message'))->toBeFalse();
+    });
+
+    it('can keep flash data', function (): void {
+        Session::start();
+        Session::flash('message', 'Hello');
+        Session::ageFlashData();
+        // After aging, _flash should move to _old_flash then be removed
+        // But if we keep it, it should come back to _flash
+        // Let's set up the scenario properly
+        Session::useStorage(new ArraySessionStorage([
+            '_old_flash' => ['message' => 'Hello'],
+            '_flash' => [],
+        ]));
+        Session::keepFlash('message');
+        expect(Session::hasFlash('message'))->toBeTrue();
+    });
+
+    it('can pull a value', function (): void {
+        Session::start();
+        Session::set('name', 'John');
+        $value = Session::pull('name');
+        expect($value)->toBe('John');
+        expect(Session::has('name'))->toBeFalse();
+    });
+
+    it('can push and pop from arrays', function (): void {
+        Session::start();
+        Session::set('items', ['a', 'b']);
+        Session::push('items', 'c');
+        expect(Session::get('items'))->toBe(['a', 'b', 'c']);
+        $value = Session::pop('items');
+        expect($value)->toBe('c');
+        expect(Session::get('items'))->toBe(['a', 'b']);
+    });
+
+    it('can increment and decrement', function (): void {
+        Session::start();
+        Session::set('counter', 5);
+        expect(Session::increment('counter'))->toBe(6);
+        expect(Session::decrement('counter', 2))->toBe(4);
+    });
+
+    it('can convert to Arr', function (): void {
+        Session::start();
+        Session::set('name', 'John');
+        $arr = Session::toArr();
+        expect($arr)->toBeInstanceOf(Arr::class);
+    });
+
+    it('can check empty state', function (): void {
+        Session::start();
+        expect(Session::isEmpty())->toBeTrue();
+        Session::set('name', 'John');
+        expect(Session::isEmpty())->toBeFalse();
+        expect(Session::isNotEmpty())->toBeTrue();
     });
 });

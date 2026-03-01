@@ -10,6 +10,29 @@ namespace PrettyPhp\Base;
  */
 class Session
 {
+    private static ?SessionStorageInterface $storage = null;
+
+    /**
+     * Set the storage backend for session data.
+     * Pass null to reset to the default NativeSessionStorage.
+     */
+    public static function useStorage(?SessionStorageInterface $storage): void
+    {
+        self::$storage = $storage;
+    }
+
+    /**
+     * Get the current storage backend.
+     */
+    private static function storage(): SessionStorageInterface
+    {
+        if (self::$storage === null) {
+            self::$storage = new NativeSessionStorage();
+        }
+
+        return self::$storage;
+    }
+
     /**
      * Start a new session or resume existing one
      * Wrapper for session_start()
@@ -409,7 +432,7 @@ class Session
             self::start();
         }
 
-        return $_SESSION[$key] ?? $default;
+        return self::storage()->get($key, $default);
     }
 
     /**
@@ -424,7 +447,7 @@ class Session
             self::start();
         }
 
-        $_SESSION[$key] = $value;
+        self::storage()->set($key, $value);
     }
 
     /**
@@ -439,7 +462,7 @@ class Session
             self::start();
         }
 
-        return array_key_exists($key, $_SESSION);
+        return self::storage()->has($key);
     }
 
     /**
@@ -453,7 +476,7 @@ class Session
             self::start();
         }
 
-        unset($_SESSION[$key]);
+        self::storage()->remove($key);
     }
 
     /**
@@ -467,8 +490,7 @@ class Session
             self::start();
         }
 
-        /** @var array<string, mixed> */
-        return $_SESSION;
+        return self::storage()->all();
     }
 
     /**
@@ -482,7 +504,7 @@ class Session
             self::start();
         }
 
-        $_SESSION = $data;
+        self::storage()->replace($data);
     }
 
     /**
@@ -494,7 +516,7 @@ class Session
             self::start();
         }
 
-        $_SESSION = [];
+        self::storage()->clear();
     }
 
     /**
@@ -509,14 +531,14 @@ class Session
             self::start();
         }
 
-        if (!isset($_SESSION['_flash']) || !is_array($_SESSION['_flash'])) {
-            $_SESSION['_flash'] = [];
+        $storage = self::storage();
+        $flash = $storage->get('_flash', []);
+        if (!is_array($flash)) {
+            $flash = [];
         }
 
-        /** @var array<string, mixed> $flash */
-        $flash = $_SESSION['_flash'];
         $flash[$key] = $value;
-        $_SESSION['_flash'] = $flash;
+        $storage->set('_flash', $flash);
     }
 
     /**
@@ -532,15 +554,15 @@ class Session
             self::start();
         }
 
-        if (!isset($_SESSION['_flash']) || !is_array($_SESSION['_flash'])) {
+        $storage = self::storage();
+        $flash = $storage->get('_flash', []);
+        if (!is_array($flash)) {
             return $default;
         }
 
-        /** @var array<string, mixed> $flash */
-        $flash = $_SESSION['_flash'];
         $value = $flash[$key] ?? $default;
         unset($flash[$key]);
-        $_SESSION['_flash'] = $flash;
+        $storage->set('_flash', $flash);
 
         return $value;
     }
@@ -557,12 +579,11 @@ class Session
             self::start();
         }
 
-        if (!isset($_SESSION['_flash']) || !is_array($_SESSION['_flash'])) {
+        $flash = self::storage()->get('_flash', []);
+        if (!is_array($flash)) {
             return false;
         }
 
-        /** @var array<string, mixed> $flash */
-        $flash = $_SESSION['_flash'];
         return isset($flash[$key]);
     }
 
@@ -578,19 +599,17 @@ class Session
         }
 
         $keys = is_array($keys) ? $keys : [$keys];
+        $storage = self::storage();
 
-        if (!isset($_SESSION['_old_flash']) || !is_array($_SESSION['_old_flash'])) {
+        $oldFlash = $storage->get('_old_flash', []);
+        if (!is_array($oldFlash)) {
             return;
         }
 
-        if (!isset($_SESSION['_flash']) || !is_array($_SESSION['_flash'])) {
-            $_SESSION['_flash'] = [];
+        $flash = $storage->get('_flash', []);
+        if (!is_array($flash)) {
+            $flash = [];
         }
-
-        /** @var array<string, mixed> $flash */
-        $flash = $_SESSION['_flash'];
-        /** @var array<string, mixed> $oldFlash */
-        $oldFlash = $_SESSION['_old_flash'];
 
         foreach ($keys as $key) {
             if (isset($oldFlash[$key])) {
@@ -598,7 +617,7 @@ class Session
             }
         }
 
-        $_SESSION['_flash'] = $flash;
+        $storage->set('_flash', $flash);
     }
 
     /**
@@ -611,13 +630,15 @@ class Session
             self::start();
         }
 
-        if (isset($_SESSION['_flash'])) {
-            $_SESSION['_old_flash'] = $_SESSION['_flash'];
-            $_SESSION['_flash'] = [];
+        $storage = self::storage();
+
+        if ($storage->has('_flash')) {
+            $storage->set('_old_flash', $storage->get('_flash'));
+            $storage->set('_flash', []);
         }
 
-        if (isset($_SESSION['_old_flash'])) {
-            unset($_SESSION['_old_flash']);
+        if ($storage->has('_old_flash')) {
+            $storage->remove('_old_flash');
         }
     }
 

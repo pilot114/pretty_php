@@ -128,7 +128,7 @@ describe('Num', function (): void {
 
         it('throws exception when min > max', function (): void {
             expect(fn(): \PrettyPhp\Base\Num => new Num(5)->clamp(10, 0))
-                ->toThrow(\InvalidArgumentException::class, 'Min value cannot be greater than max value');
+                ->toThrow(PrettyPhp\Exception\NumException::class, 'Min value cannot be greater than max value');
         });
     });
 
@@ -180,7 +180,7 @@ describe('Num', function (): void {
 
         it('throws exception on square root of negative', function (): void {
             expect(fn(): \PrettyPhp\Base\Num => new Num(-16)->sqrt())
-                ->toThrow(\InvalidArgumentException::class, 'Cannot calculate square root of negative number');
+                ->toThrow(PrettyPhp\Exception\NumException::class, 'Cannot calculate square root of negative number');
         });
     });
 
@@ -314,7 +314,7 @@ describe('Num', function (): void {
 
         it('throws exception for floats', function (): void {
             expect(fn(): \PrettyPhp\Base\Str => new Num(3.14)->toHex())
-                ->toThrow(\InvalidArgumentException::class, 'Hex conversion only works with integers');
+                ->toThrow(PrettyPhp\Exception\NumException::class, 'Hex conversion only works with integers');
         });
     });
 
@@ -331,7 +331,7 @@ describe('Num', function (): void {
 
         it('throws exception for floats', function (): void {
             expect(fn(): \PrettyPhp\Base\Str => new Num(3.14)->toBinary())
-                ->toThrow(\InvalidArgumentException::class, 'Binary conversion only works with integers');
+                ->toThrow(PrettyPhp\Exception\NumException::class, 'Binary conversion only works with integers');
         });
     });
 
@@ -348,7 +348,7 @@ describe('Num', function (): void {
 
         it('throws exception for floats', function (): void {
             expect(fn(): \PrettyPhp\Base\Str => new Num(3.14)->toOctal())
-                ->toThrow(\InvalidArgumentException::class, 'Octal conversion only works with integers');
+                ->toThrow(PrettyPhp\Exception\NumException::class, 'Octal conversion only works with integers');
         });
     });
 

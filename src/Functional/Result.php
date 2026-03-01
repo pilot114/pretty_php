@@ -396,4 +396,46 @@ readonly class Result
 
         return $other;
     }
+
+    /**
+     * Converts from Result<Result<T, E>, E> to Result<T, E>.
+     * Flattens one level of nesting.
+     *
+     * @return ($this is self<self<mixed, mixed>, mixed> ? self<mixed, mixed> : self<T, E>)
+     */
+    public function flatten(): self
+    {
+        if ($this->isErr()) {
+            /** @var E $error */
+            $error = $this->error;
+            return self::err($error);
+        }
+
+        if ($this->value instanceof self) {
+            return $this->value;
+        }
+
+        return $this;
+    }
+
+    /**
+     * Handles both Ok and Err branches, producing a single value.
+     *
+     * @template U
+     * @param callable(T): U $onOk
+     * @param callable(E): U $onErr
+     * @return U
+     */
+    public function fold(callable $onOk, callable $onErr): mixed
+    {
+        if ($this->isOk()) {
+            /** @var T $value */
+            $value = $this->value;
+            return $onOk($value);
+        }
+
+        /** @var E $error */
+        $error = $this->error;
+        return $onErr($error);
+    }
 }

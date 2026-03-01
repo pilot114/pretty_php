@@ -2,6 +2,7 @@
 
 use PrettyPhp\Base\Arr;
 use PrettyPhp\Base\Str;
+use PrettyPhp\Functional\Option;
 
 describe('Arr', function (): void {
     it('can be constructed and get value', function (): void {
@@ -43,12 +44,50 @@ describe('Arr', function (): void {
 
     it('can pop element', function (): void {
         $result = new Arr([1, 2, 3])->pop();
-        expect($result)->toBe(3);
+        expect($result)->toBeInstanceOf(Option::class);
+        expect($result->isSome())->toBeTrue();
+        expect($result->unwrap())->toBe(3);
+    });
+
+    it('returns None when popping empty array', function (): void {
+        $result = new Arr([])->pop();
+        expect($result->isNone())->toBeTrue();
     });
 
     it('can shift element', function (): void {
         $result = new Arr([1, 2, 3])->shift();
-        expect($result)->toBe(1);
+        expect($result)->toBeInstanceOf(Option::class);
+        expect($result->isSome())->toBeTrue();
+        expect($result->unwrap())->toBe(1);
+    });
+
+    it('returns None when shifting empty array', function (): void {
+        $result = new Arr([])->shift();
+        expect($result->isNone())->toBeTrue();
+    });
+
+    it('can pop with remainder', function (): void {
+        [$element, $remainder] = new Arr([1, 2, 3])->popWithRemainder();
+        expect($element->unwrap())->toBe(3);
+        expect($remainder->get())->toBe([1, 2]);
+    });
+
+    it('returns None and empty array when popping with remainder on empty array', function (): void {
+        [$element, $remainder] = new Arr([])->popWithRemainder();
+        expect($element->isNone())->toBeTrue();
+        expect($remainder->isEmpty())->toBeTrue();
+    });
+
+    it('can shift with remainder', function (): void {
+        [$element, $remainder] = new Arr([1, 2, 3])->shiftWithRemainder();
+        expect($element->unwrap())->toBe(1);
+        expect($remainder->get())->toBe([2, 3]);
+    });
+
+    it('returns None and empty array when shifting with remainder on empty array', function (): void {
+        [$element, $remainder] = new Arr([])->shiftWithRemainder();
+        expect($element->isNone())->toBeTrue();
+        expect($remainder->isEmpty())->toBeTrue();
     });
 
     it('can unshift element', function (): void {
@@ -193,7 +232,7 @@ describe('Arr', function (): void {
 
     it('throws exception for invalid chunk size', function (): void {
         expect(fn(): \PrettyPhp\Base\Arr => new Arr([1, 2, 3])->chunk(0))
-            ->toThrow(InvalidArgumentException::class, 'Chunk size must be at least 1');
+            ->toThrow(PrettyPhp\Exception\ArrException::class, 'Chunk size must be at least 1');
     });
 
     it('can join elements', function (): void {
@@ -237,7 +276,7 @@ describe('Arr', function (): void {
 
     it('throws exception for min on empty array', function (): void {
         expect(fn(): mixed => new Arr([])->min())
-            ->toThrow(InvalidArgumentException::class, 'Cannot get minimum of empty array');
+            ->toThrow(PrettyPhp\Exception\ArrException::class, 'Cannot get minimum of empty array');
     });
 
     it('can get maximum value', function (): void {
@@ -246,7 +285,7 @@ describe('Arr', function (): void {
 
     it('throws exception for max on empty array', function (): void {
         expect(fn(): mixed => new Arr([])->max())
-            ->toThrow(InvalidArgumentException::class, 'Cannot get maximum of empty array');
+            ->toThrow(PrettyPhp\Exception\ArrException::class, 'Cannot get maximum of empty array');
     });
 
     it('can get sum', function (): void {

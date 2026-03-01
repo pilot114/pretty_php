@@ -283,4 +283,66 @@ readonly class Option
 
         return $this;
     }
+
+    /**
+     * Zips this Option with another Option.
+     * If both are Some, returns Some([T, U]). Otherwise returns None.
+     *
+     * @template U
+     * @param self<U> $other
+     * @return self<array{T, U}>
+     */
+    public function zip(self $other): self
+    {
+        if ($this->isSome() && $other->isSome()) {
+            /** @var T $thisValue */
+            $thisValue = $this->value;
+            /** @var U $otherValue */
+            $otherValue = $other->value;
+            /** @var array{T, U} $pair */
+            $pair = [$thisValue, $otherValue];
+            /** @phpstan-ignore return.type (invariant template: array{T, U} vs T) */
+            return self::some($pair);
+        }
+
+        return self::none();
+    }
+
+    /**
+     * Converts from Option<Option<T>> to Option<T>.
+     * Flattens one level of nesting.
+     *
+     * @return ($this is self<self<mixed>> ? self<mixed> : self<T>)
+     */
+    public function flatten(): self
+    {
+        if ($this->isNone()) {
+            return self::none();
+        }
+
+        if ($this->value instanceof self) {
+            return $this->value;
+        }
+
+        return $this;
+    }
+
+    /**
+     * Converts from Option<T> to Result<T, E>.
+     * Some(v) becomes Ok(v), None becomes Err($error).
+     *
+     * @template E
+     * @param E $error
+     * @return Result<T, E>
+     */
+    public function toResult(mixed $error): Result
+    {
+        if ($this->isSome()) {
+            /** @var T $value */
+            $value = $this->value;
+            return Result::ok($value);
+        }
+
+        return Result::err($error);
+    }
 }

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace PrettyPhp\Base;
 
 use FilesystemIterator;
-use RuntimeException;
+use PrettyPhp\Exception\PathException;
 use SplFileInfo;
 
 readonly class Path implements \Stringable
@@ -62,7 +62,7 @@ readonly class Path implements \Stringable
     }
 
     /**
-     * @throws RuntimeException
+     * @throws PathException
      */
     public function resolve(): self
     {
@@ -72,14 +72,14 @@ readonly class Path implements \Stringable
 
         $cwd = getcwd();
         if ($cwd === false) {
-            throw new RuntimeException("Unable to get current working directory");
+            throw new PathException("Unable to get current working directory");
         }
 
         return new self($cwd)->join($this->path)->normalize();
     }
 
     /**
-     * @throws RuntimeException
+     * @throws PathException
      */
     public function relative(string $to): self
     {
@@ -140,30 +140,30 @@ readonly class Path implements \Stringable
     }
 
     /**
-     * @throws RuntimeException
+     * @throws PathException
      */
     public function mkdir(int $mode = 0755, bool $recursive = false): self
     {
         if (!mkdir($this->path, $mode, $recursive) && !is_dir($this->path)) {
-            throw new RuntimeException('Unable to create directory: ' . $this->path);
+            throw new PathException('Unable to create directory: ' . $this->path);
         }
 
         return $this;
     }
 
     /**
-     * @throws RuntimeException
+     * @throws PathException
      * @return Arr<string>
      */
     public function listFiles(): Arr
     {
         if (!is_dir($this->path)) {
-            throw new RuntimeException('Path is not a directory: ' . $this->path);
+            throw new PathException('Path is not a directory: ' . $this->path);
         }
 
         $files = scandir($this->path);
         if ($files === false) {
-            throw new RuntimeException('Unable to list directory: ' . $this->path);
+            throw new PathException('Unable to list directory: ' . $this->path);
         }
 
         $result = array_filter($files, fn(string $file): bool => $file !== '.' && $file !== '..');
@@ -191,7 +191,10 @@ readonly class Path implements \Stringable
     }
 
     /**
-     * @throws RuntimeException
+     * @throws PathException
+     * @throws \UnexpectedValueException
+     * @throws \PrettyPhp\Exception\FileException
+     * @throws \RuntimeException
      */
     public function size(): int
     {
@@ -200,7 +203,7 @@ readonly class Path implements \Stringable
         }
 
         if (!$this->isDirectory()) {
-            throw new RuntimeException('Path does not exist: ' . $this->path);
+            throw new PathException('Path does not exist: ' . $this->path);
         }
 
         $size = 0;
@@ -251,17 +254,17 @@ readonly class Path implements \Stringable
 
     /**
      * Get the target of a symbolic link
-     * @throws RuntimeException
+     * @throws PathException
      */
     public function readLink(): self
     {
         if (!$this->isLink()) {
-            throw new RuntimeException('Path is not a symbolic link: ' . $this->path);
+            throw new PathException('Path is not a symbolic link: ' . $this->path);
         }
 
         $target = readlink($this->path);
         if ($target === false) {
-            throw new RuntimeException('Unable to read symbolic link: ' . $this->path);
+            throw new PathException('Unable to read symbolic link: ' . $this->path);
         }
 
         return new self($target);
@@ -269,12 +272,12 @@ readonly class Path implements \Stringable
 
     /**
      * Create a symbolic link
-     * @throws RuntimeException
+     * @throws PathException
      */
     public function symlink(string $target): self
     {
         if (!symlink($target, $this->path)) {
-            throw new RuntimeException(sprintf('Unable to create symbolic link from %s to %s', $this->path, $target));
+            throw new PathException(sprintf('Unable to create symbolic link from %s to %s', $this->path, $target));
         }
 
         return $this;
@@ -401,13 +404,13 @@ readonly class Path implements \Stringable
 
     /**
      * Get real path, resolving all symbolic links
-     * @throws RuntimeException
+     * @throws PathException
      */
     public function realPath(): self
     {
         $real = realpath($this->path);
         if ($real === false) {
-            throw new RuntimeException('Unable to resolve real path: ' . $this->path);
+            throw new PathException('Unable to resolve real path: ' . $this->path);
         }
 
         return new self($real);
@@ -425,7 +428,7 @@ readonly class Path implements \Stringable
             $otherReal = file_exists($otherPath) ? new self($otherPath)->realPath()->get() : $otherPath;
 
             return $thisReal === $otherReal;
-        } catch (RuntimeException) {
+        } catch (PathException) {
             return $this->path === $otherPath;
         }
     }

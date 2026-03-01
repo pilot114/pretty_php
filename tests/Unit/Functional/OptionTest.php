@@ -1,6 +1,7 @@
 <?php
 
 use PrettyPhp\Functional\Option;
+use PrettyPhp\Functional\Result;
 
 describe('Option', function (): void {
     describe('construction', function (): void {
@@ -278,6 +279,80 @@ describe('Option', function (): void {
                 ->map(fn($x): int => $x * 2);
 
             expect($result->unwrap())->toBe(84);
+        });
+    });
+
+    describe('zip', function (): void {
+        it('zips two Some values into a tuple', function (): void {
+            $result = Option::some(1)->zip(Option::some('a'));
+            expect($result->isSome())->toBeTrue();
+            expect($result->unwrap())->toBe([1, 'a']);
+        });
+
+        it('returns None when left is None', function (): void {
+            $result = Option::none()->zip(Option::some('a'));
+            expect($result->isNone())->toBeTrue();
+        });
+
+        it('returns None when right is None', function (): void {
+            $result = Option::some(1)->zip(Option::none());
+            expect($result->isNone())->toBeTrue();
+        });
+
+        it('returns None when both are None', function (): void {
+            $result = Option::none()->zip(Option::none());
+            expect($result->isNone())->toBeTrue();
+        });
+    });
+
+    describe('flatten', function (): void {
+        it('flattens nested Some', function (): void {
+            $nested = Option::some(Option::some(42));
+            $flat = $nested->flatten();
+            expect($flat->isSome())->toBeTrue();
+            expect($flat->unwrap())->toBe(42);
+        });
+
+        it('flattens nested None', function (): void {
+            $nested = Option::some(Option::none());
+            $flat = $nested->flatten();
+            expect($flat->isNone())->toBeTrue();
+        });
+
+        it('preserves outer None', function (): void {
+            $option = Option::none();
+            $flat = $option->flatten();
+            expect($flat->isNone())->toBeTrue();
+        });
+
+        it('returns self when not nested', function (): void {
+            $option = Option::some(42);
+            $flat = $option->flatten();
+            expect($flat->isSome())->toBeTrue();
+            expect($flat->unwrap())->toBe(42);
+        });
+    });
+
+    describe('toResult', function (): void {
+        it('converts Some to Ok', function (): void {
+            $result = Option::some(42)->toResult('error');
+            expect($result)->toBeInstanceOf(Result::class);
+            expect($result->isOk())->toBeTrue();
+            expect($result->unwrap())->toBe(42);
+        });
+
+        it('converts None to Err', function (): void {
+            $result = Option::none()->toResult('not found');
+            expect($result)->toBeInstanceOf(Result::class);
+            expect($result->isErr())->toBeTrue();
+            expect($result->unwrapErr())->toBe('not found');
+        });
+
+        it('is inverse of Result::toOption for Some/Ok', function (): void {
+            $original = Option::some(42);
+            $roundTripped = $original->toResult('error')->toOption();
+            expect($roundTripped->isSome())->toBeTrue();
+            expect($roundTripped->unwrap())->toBe(42);
         });
     });
 

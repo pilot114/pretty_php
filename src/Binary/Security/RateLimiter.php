@@ -21,6 +21,7 @@ class RateLimiter
     /**
      * @param int $maxRequests Maximum number of requests allowed
      * @param int $windowSeconds Time window in seconds
+     * @throws SecurityException
      */
     public function __construct(
         private readonly int $maxRequests,
@@ -40,6 +41,7 @@ class RateLimiter
 
     /**
      * Create a rate limiter with default settings
+     * @throws SecurityException
      */
     public static function default(): self
     {
@@ -51,6 +53,7 @@ class RateLimiter
 
     /**
      * Create a strict rate limiter (lower limits)
+     * @throws SecurityException
      */
     public static function strict(): self
     {
@@ -59,6 +62,7 @@ class RateLimiter
 
     /**
      * Create a permissive rate limiter (higher limits)
+     * @throws SecurityException
      */
     public static function permissive(): self
     {

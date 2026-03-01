@@ -343,8 +343,10 @@ $packet = new ICMPPacket(
 
 **Stack/Queue Operations:**
 - `push(mixed $value): self` - Add element to end
-- `pop(): self` - Remove element from end
-- `shift(): self` - Remove element from start
+- `pop(): Option<T>` - Remove and return last element (Some) or None if empty
+- `shift(): Option<T>` - Remove and return first element (Some) or None if empty
+- `popWithRemainder(): array{Option<T>, Arr<T>}` - Pop with remaining array
+- `shiftWithRemainder(): array{Option<T>, Arr<T>}` - Shift with remaining array
 - `unshift(mixed $value): self` - Add element to start
 
 **Searching:**
@@ -409,7 +411,7 @@ $packet = new ICMPPacket(
 - `lastModified(): int` - Get last modification timestamp
 - `extension(): string` - Get file extension
 - `basename(): string` - Get filename with extension
-- `dirname(): string` - Get directory path
+- `dirname(): Path` - Get directory path as Path object
 - `mimeType(): string` - Get MIME type
 - `permissions(): int` - Get file permissions
 
@@ -446,7 +448,7 @@ $packet = new ICMPPacket(
 **Building:**
 - `join(string ...$segments): Path` - Join path segments
 - `normalize(): Path` - Normalize path (resolve `.` and `..`)
-- `resolve(string $base): Path` - Resolve relative path against base
+- `resolve(): Path` - Resolve to real path (no parameters)
 
 **Relationships:**
 - `relative(string $to): Path` - Get relative path to target
@@ -468,6 +470,263 @@ $packet = new ICMPPacket(
 **Information:**
 - `size(): int` - Get file/directory size
 - `__toString(): string` - Get path as string
+
+### Num Class
+
+**Creation:**
+- `num(int|float $value): Num` - Helper function to create Num instance
+- `new Num(int|float $value)` - Constructor
+
+**Arithmetic:**
+- `add(int|float $number): self` - Add a number
+- `subtract(int|float $number): self` - Subtract a number
+- `multiply(int|float $number): self` - Multiply by a number
+- `divide(int|float $number): self` - Divide by a number
+- `mod(int|float $number): self` - Modulo operation
+- `pow(int|float $exponent): self` - Power operation
+- `sqrt(): self` - Square root
+- `abs(): self` - Get absolute value
+
+**Rounding:**
+- `round(int $precision = 0): self` - Round to precision
+- `floor(): self` - Round down
+- `ceil(): self` - Round up
+- `clamp(int|float $min, int|float $max): self` - Clamp between min and max
+
+**Formatting:**
+- `format(int $decimals = 0, string $decimalSeparator = '.', string $thousandsSeparator = ','): Str` - Format number
+- `currency(string $currencySymbol = '$', int $decimals = 2): Str` - Format as currency
+
+**Type Checks:**
+- `isEven(): bool` / `isOdd(): bool` / `isPrime(): bool`
+- `isPositive(): bool` / `isNegative(): bool` / `isZero(): bool`
+- `isInt(): bool` / `isFloat(): bool`
+- `inRange(int|float $min, int|float $max): bool` - Range check
+
+**Comparison:**
+- `equals(int|float $other): bool` / `greaterThan(int|float $other): bool` / `lessThan(int|float $other): bool`
+- `greaterThanOrEqual(int|float $other): bool` / `lessThanOrEqual(int|float $other): bool`
+- `min(int|float $other): self` / `max(int|float $other): self`
+
+**Conversion:**
+- `toHex(bool $prefix = false): Str` / `toBinary(bool $prefix = false): Str` / `toOctal(bool $prefix = false): Str`
+- `fromHex(string $hex): self` / `fromBinary(string $binary): self` / `fromOctal(string $octal): self` *(static)*
+- `toInt(): int` / `toFloat(): float` / `get(): int|float` / `__toString(): string`
+
+---
+
+### Json Class
+
+**Creation:**
+- `json(mixed $data): Json` - Helper function
+- `Json::fromString(string $json): self` - Create from JSON string
+- `Json::fromData(mixed $data): self` - Create from data
+
+**Encoding/Decoding:**
+- `encode(int $flags = 0, int $depth = 512): Result<Str, string>` - Encode to JSON
+- `decode(bool $associative = true, int $depth = 512, int $flags = 0): Result<Arr, string>` - Decode to array
+- `decodeObject(int $depth = 512, int $flags = 0): Result<object, string>` - Decode to object
+
+**Validation:**
+- `isValid(): bool` - Check if valid JSON
+- `validate(): Result<self, string>` - Validate and return Result
+
+**Formatting:**
+- `pretty(int $flags = ...): self` - Pretty print
+- `minify(): self` - Minify
+
+**Path Queries:**
+- `path(string $path): Result<mixed, string>` - Query by dot-path (e.g. "user.name")
+- `hasPath(string $path): bool` - Check if path exists
+
+**Manipulation:**
+- `merge(Json $other): Result<self, string>` - Merge with another JSON
+- `set(string $path, mixed $value): Result<self, string>` - Set value at path
+- `remove(string $path): Result<self, string>` - Remove value at path
+
+**Utility:**
+- `size(): int` / `isEmpty(): bool`
+- `toStr(): Str` / `toArr(): Result<Arr, string>`
+- `get(): mixed` / `__toString(): string`
+
+---
+
+### DateTime Class
+
+**Creation:**
+- `datetime(string|int|null $value = null): DateTime` - Helper function
+- `DateTime::now()` / `DateTime::today()` / `DateTime::tomorrow()` / `DateTime::yesterday()`
+- `DateTime::fromTimestamp(int $timestamp)` / `DateTime::fromFormat(string $format, string $datetime)`
+- `DateTime::parse(string $datetime)` / `DateTime::fromImmutable(\DateTimeImmutable $dt)`
+
+**Formatting:**
+- `format(string $format): Str` / `toIso8601(): Str` / `toRfc2822(): Str` / `toRfc3339(): Str`
+- `toDateString(): Str` / `toTimeString(): Str` / `toDateTimeString(): Str`
+- `timestamp(): int`
+
+**Comparison:**
+- `equals(...)` / `isBefore(...)` / `isAfter(...)` / `isBetween(...)`
+- `isPast()` / `isFuture()` / `isToday()` / `isYesterday()` / `isTomorrow()`
+- `isWeekend()` / `isWeekday()` / `isLeapYear()`
+
+**Manipulation:**
+- `addYears(int)` / `addMonths(int)` / `addDays(int)` / `addHours(int)` / `addMinutes(int)` / `addSeconds(int)`
+- `subYears(int)` / `subMonths(int)` / `subDays(int)` / `subHours(int)` / `subMinutes(int)` / `subSeconds(int)`
+- `modify(string $modifier): self` / `add(\DateInterval $interval): self` / `sub(\DateInterval $interval): self`
+- `setYear(int)` / `setMonth(int)` / `setDay(int)` / `setTime(int, int, int)` / `setDate(int, int, int)`
+- `startOfDay()` / `endOfDay()` / `startOfMonth()` / `endOfMonth()` / `startOfYear()` / `endOfYear()`
+- `startOfWeek()` / `endOfWeek()`
+
+**Difference:**
+- `diff(...)` / `diffInYears(...)` / `diffInMonths(...)` / `diffInDays(...)` / `diffInHours(...)` / `diffInMinutes(...)` / `diffInSeconds(...)`
+- `ago(): Str` / `until(): Str` / `diffForHumans(): Str`
+
+**Components:**
+- `year()` / `month()` / `day()` / `hour()` / `minute()` / `second()` / `microsecond()`
+- `dayOfWeek()` / `dayOfYear()` / `weekOfYear()` / `daysInMonth()` / `quarter()`
+
+**Timezone:**
+- `timezone()` / `tz(): Timezone` / `timezoneName(): Str`
+- `toTimezone(...)` / `toUtc()` / `timezoneOffset(): int`
+
+---
+
+### Date Class (Static Utility)
+
+**Current Time:**
+- `Date::time(): int` / `Date::now(): DateTime`
+- `Date::year()` / `Date::month()` / `Date::day()` / `Date::hour()` / `Date::minute()` / `Date::second()`
+- `Date::today()` / `Date::yesterday()` / `Date::tomorrow()`
+
+**Factory:**
+- `Date::create(string $datetime): DateTime`
+- `Date::createFromFormat(string $format, string $datetime): DateTime`
+- `Date::createFromTimestamp(int $timestamp): DateTime`
+
+**Validation:**
+- `Date::checkdate(int $month, int $day, int $year): bool`
+- `Date::isValid(int $year, int $month, int $day): bool`
+
+**Formatting:**
+- `Date::format(string $format, ?int $timestamp = null): Str`
+- `Date::gmdate(string $format, ?int $timestamp = null): Str`
+
+**Parsing:**
+- `Date::parse(string $datetime): array`
+- `Date::parseFromFormat(string $format, string $datetime): array`
+- `Date::strtotime(string $datetime): int|false`
+
+---
+
+### Session Class
+
+**Lifecycle:**
+- `Session::start(array $options = []): bool` / `Session::destroy(): bool`
+- `Session::close(): void` / `Session::commit(): void` / `Session::abort(): bool`
+- `Session::reset(): bool` / `Session::regenerateId(bool $deleteOld = false): bool`
+
+**Status:**
+- `Session::isActive(): bool` / `Session::isDisabled(): bool` / `Session::isNone(): bool`
+- `Session::status(): int`
+
+**Data Access:**
+- `Session::get(string $key, mixed $default = null): mixed`
+- `Session::set(string $key, mixed $value): void`
+- `Session::has(string $key): bool` / `Session::remove(string $key): void`
+- `Session::all(): array` / `Session::replace(array $data): void` / `Session::clear(): void`
+- `Session::pull(string $key, mixed $default = null): mixed` - Get and remove
+- `Session::increment(string $key, int $amount = 1): int`
+- `Session::decrement(string $key, int $amount = 1): int`
+- `Session::push(string $key, mixed $value): void` / `Session::pop(string $key): mixed`
+
+**Flash Data:**
+- `Session::flash(string $key, mixed $value): void`
+- `Session::getFlash(string $key, mixed $default = null): mixed`
+- `Session::hasFlash(string $key): bool`
+- `Session::keepFlash(string|array $keys): void`
+- `Session::ageFlashData(): void`
+
+**Configuration:**
+- `Session::id(?string $id = null): string|false`
+- `Session::name(?string $name = null): string|false`
+- `Session::savePath(?string $path = null): string|false`
+- `Session::cacheLimiter(?string $limiter = null): string|false`
+- `Session::cacheExpire(?int $expire = null): int|false`
+- `Session::getCookieParams(): array` / `Session::setCookieParams(...): bool`
+- `Session::getTimeout(): int` / `Session::setTimeout(int $seconds): void`
+
+---
+
+### Option Class
+
+**Creation:**
+- `some(mixed $value): Option` - Helper to create Some
+- `none(): Option` - Helper to create None
+- `Option::some(mixed $value): self` / `Option::none(): self` / `Option::from(mixed $value): self`
+
+**Checking:**
+- `isSome(): bool` / `isNone(): bool`
+
+**Transformation:**
+- `map(callable $fn): self` - Map contained value
+- `andThen(callable $fn): self` - FlatMap (returns Option)
+- `filter(callable $predicate): self` - Filter by predicate
+- `flatten(): self` - Flatten nested Option
+- `zip(Option $other): self` - Combine two Options into tuple
+
+**Extraction:**
+- `unwrap(): mixed` - Get value (throws if None)
+- `unwrapOr(mixed $default): mixed` - Get value or default
+- `unwrapOrElse(callable $fn): mixed` - Get value or compute
+- `expect(string $message): mixed` - Get value with custom error
+
+**Mapping with Default:**
+- `mapOr(mixed $default, callable $fn): mixed`
+- `mapOrElse(callable $default, callable $fn): mixed`
+
+**Conversion:**
+- `toNullable(): mixed` - Convert to T|null
+- `toResult(mixed $error): Result` - Some→Ok, None→Err
+- `orElse(Option $alt): self` / `xor(Option $other): self` / `inspect(callable $fn): self`
+
+---
+
+### Result Class
+
+**Creation:**
+- `ok(mixed $value): Result` - Helper to create Ok
+- `err(mixed $error): Result` - Helper to create Err
+- `Result::ok(mixed $value): self` / `Result::err(mixed $error): self`
+- `Result::from(callable $fn): self` - Catch exceptions as Err
+
+**Checking:**
+- `isOk(): bool` / `isErr(): bool`
+
+**Transformation:**
+- `map(callable $fn): self` - Map Ok value
+- `mapErr(callable $fn): self` - Map Err value
+- `andThen(callable $fn): self` - FlatMap (returns Result)
+- `flatten(): self` - Flatten nested Result
+- `fold(callable $onOk, callable $onErr): mixed` - Handle both branches
+
+**Extraction:**
+- `unwrap(): mixed` / `unwrapErr(): mixed` - Get value/error (throws)
+- `unwrapOr(mixed $default): mixed` - Get Ok value or default
+- `unwrapOrElse(callable $fn): mixed` - Get Ok value or compute from error
+- `expect(string $msg): mixed` / `expectErr(string $msg): mixed`
+
+**Mapping with Default:**
+- `mapOr(mixed $default, callable $fn): mixed`
+- `mapOrElse(callable $default, callable $fn): mixed`
+
+**Combination:**
+- `and(Result $other): self` / `or(Result $other): self` / `orElse(Result $alt): self`
+
+**Conversion:**
+- `toOption(): Option` / `toErrOption(): Option`
+
+**Inspection:**
+- `inspect(callable $fn): self` / `inspectErr(callable $fn): self`
 
 ---
 

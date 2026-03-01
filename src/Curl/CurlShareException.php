@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace PrettyPhp\Curl;
 
-use RuntimeException;
+use PrettyPhp\Exception\PrettyPhpException;
 
 /**
  * Exception for CURL Share errors
  */
-class CurlShareException extends RuntimeException
+class CurlShareException extends PrettyPhpException
 {
     public function __construct(
         string $message,

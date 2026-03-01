@@ -452,7 +452,7 @@ describe('File', function (): void {
         $file = new File($this->testFile);
 
         expect(fn(): array => iterator_to_array($file->readStream(0)))
-            ->toThrow(\InvalidArgumentException::class, 'Chunk size must be at least 1');
+            ->toThrow(PrettyPhp\Exception\FileException::class, 'Chunk size must be at least 1');
     });
 
     it('can write file using stream', function (): void {

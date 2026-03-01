@@ -39,6 +39,7 @@ class SecurityConfig
 
     /**
      * Set maximum buffer size for unpacking operations
+     * @throws SecurityException
      */
     public static function setMaxBufferSize(int $size): void
     {
@@ -59,6 +60,7 @@ class SecurityConfig
 
     /**
      * Set maximum nesting depth
+     * @throws SecurityException
      */
     public static function setMaxNestingDepth(int $depth): void
     {
