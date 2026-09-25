@@ -48,7 +48,7 @@ class ARPPacket
             throw new \Exception("Invalid MAC address format");
         }
 
-        return pack('C6', ...array_map('hexdec', $parts));
+        return pack('C6', ...array_map(hexdec(...), $parts));
     }
 
     /**
@@ -62,7 +62,7 @@ class ARPPacket
 
         $bytes = unpack('C6', $binary);
         if ($bytes === false) {
-            throw new \Exception("Failed to unpack MAC address");
+            throw new \Exception("Failed to unpack MAC address"); // @codeCoverageIgnore
         }
 
         /** @var array<int, int> $bytes */

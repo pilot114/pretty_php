@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use PrettyPhp\Curl\CurlShareException;
 use PrettyPhp\Curl\CurlShareHandle;
 
@@ -26,7 +28,8 @@ describe('CurlShareHandle', function (): void {
         it('throws on closed handle', function (): void {
             $share = new CurlShareHandle();
             $share->close();
-            expect(fn () => $share->shareDns())
+
+            expect(fn (): \PrettyPhp\Curl\CurlShareHandle => $share->shareDns())
                 ->toThrow(CurlShareException::class, 'CURL Share handle is closed');
         });
     });
@@ -35,6 +38,7 @@ describe('CurlShareHandle', function (): void {
         it('can unshare DNS cache', function (): void {
             $share = new CurlShareHandle();
             $share->shareDns();
+
             $result = $share->unshareDns();
             expect($result)->toBe($share); // chainable
         });
@@ -50,7 +54,8 @@ describe('CurlShareHandle', function (): void {
         it('throws on closed handle', function (): void {
             $share = new CurlShareHandle();
             $share->close();
-            expect(fn () => $share->shareSslSession())
+
+            expect(fn (): \PrettyPhp\Curl\CurlShareHandle => $share->shareSslSession())
                 ->toThrow(CurlShareException::class, 'CURL Share handle is closed');
         });
     });
@@ -59,6 +64,7 @@ describe('CurlShareHandle', function (): void {
         it('can unshare SSL sessions', function (): void {
             $share = new CurlShareHandle();
             $share->shareSslSession();
+
             $result = $share->unshareSslSession();
             expect($result)->toBe($share); // chainable
         });
@@ -74,7 +80,8 @@ describe('CurlShareHandle', function (): void {
         it('throws on closed handle', function (): void {
             $share = new CurlShareHandle();
             $share->close();
-            expect(fn () => $share->shareConnect())
+
+            expect(fn (): \PrettyPhp\Curl\CurlShareHandle => $share->shareConnect())
                 ->toThrow(CurlShareException::class, 'CURL Share handle is closed');
         });
     });
@@ -83,6 +90,7 @@ describe('CurlShareHandle', function (): void {
         it('can unshare connections', function (): void {
             $share = new CurlShareHandle();
             $share->shareConnect();
+
             $result = $share->unshareConnect();
             expect($result)->toBe($share); // chainable
         });
@@ -98,7 +106,8 @@ describe('CurlShareHandle', function (): void {
         it('throws on closed handle', function (): void {
             $share = new CurlShareHandle();
             $share->close();
-            expect(fn () => $share->setOption(CURLSHOPT_SHARE, CURL_LOCK_DATA_DNS))
+
+            expect(fn (): \PrettyPhp\Curl\CurlShareHandle => $share->setOption(CURLSHOPT_SHARE, CURL_LOCK_DATA_DNS))
                 ->toThrow(CurlShareException::class, 'CURL Share handle is closed');
         });
     });
@@ -128,7 +137,8 @@ describe('CurlShareHandle', function (): void {
         it('throws getErrorNumber on closed handle', function (): void {
             $share = new CurlShareHandle();
             $share->close();
-            expect(fn () => $share->getErrorNumber())
+
+            expect(fn (): int => $share->getErrorNumber())
                 ->toThrow(CurlShareException::class, 'CURL Share handle is closed');
         });
     });
@@ -137,15 +147,17 @@ describe('CurlShareHandle', function (): void {
         it('can be closed', function (): void {
             $share = new CurlShareHandle();
             $share->close();
-            expect(fn () => $share->getHandle())
+
+            expect(fn (): \CurlShareHandle => $share->getHandle())
                 ->toThrow(CurlShareException::class, 'CURL Share handle is closed');
         });
 
         it('can be closed multiple times safely', function (): void {
             $share = new CurlShareHandle();
             $share->close();
-            $share->close(); // should not throw
-            expect(fn () => $share->getHandle())
+            $share->close();
+             // should not throw
+            expect(fn (): \CurlShareHandle => $share->getHandle())
                 ->toThrow(CurlShareException::class);
         });
     });

@@ -81,12 +81,15 @@ readonly class PosixProcess
      */
     public static function setSid(): int
     {
+        // Detaches the process from its controlling terminal, so it cannot be exercised by the test suite
+        // @codeCoverageIgnoreStart
         $result = posix_setsid();
         if ($result === -1) {
             throw new \RuntimeException("Failed to set session ID");
         }
 
         return $result;
+        // @codeCoverageIgnoreEnd
     }
 
     /**

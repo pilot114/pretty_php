@@ -26,9 +26,7 @@ class Session
      */
     private static function storage(): SessionStorageInterface
     {
-        if (self::$storage === null) {
-            self::$storage = new NativeSessionStorage();
-        }
+        self::$storage ??= new NativeSessionStorage();
 
         return self::$storage;
     }
@@ -294,7 +292,14 @@ class Session
      * Get the session cookie parameters
      * Wrapper for session_get_cookie_params()
      *
-     * @return array{lifetime: int<0, max>, path: non-falsy-string, domain: string, secure: bool, httponly: bool, samesite: 'Lax'|'lax'|'None'|'none'|'Strict'|'strict'}
+     * @return array{
+     *     lifetime: int<0, max>,
+     *     path: non-falsy-string,
+     *     domain: string,
+     *     secure: bool,
+     *     httponly: bool,
+     *     samesite: 'Lax'|'lax'|'None'|'none'|'Strict'|'strict'
+     * }
      */
     public static function getCookieParams(): array
     {
@@ -307,11 +312,12 @@ class Session
      *
      * @param int|array{
      *     lifetime?: int,
-     *     path?: string|null,
-     *     domain?: string|null,
-     *     secure?: bool|null,
-     *     httponly?: bool|null,
-     *     samesite?: 'Lax'|'lax'|'None'|'none'|'Strict'|'strict'
+     *     path?: string,
+     *     domain?: string,
+     *     secure?: bool,
+     *     httponly?: bool,
+     *     samesite?: 'Lax'|'lax'|'None'|'none'|'Strict'|'strict',
+     *     partitioned?: bool
      * } $lifetimeOrOptions The lifetime of the cookie in seconds, or an options array
      * @param string|null $path The path on the domain where the cookie will work
      * @param string|null $domain The cookie domain
@@ -327,7 +333,6 @@ class Session
         ?bool $httponly = null
     ): bool {
         if (is_array($lifetimeOrOptions)) {
-            /** @var array{lifetime?: int, path?: string|null, domain?: string|null, secure?: bool|null, httponly?: bool|null, samesite?: 'Lax'|'lax'|'None'|'none'|'Strict'|'strict'} $lifetimeOrOptions */
             return session_set_cookie_params($lifetimeOrOptions);
         }
 

@@ -54,7 +54,7 @@ readonly class PosixFile
     public static function eaccess(string $path, int $mode = self::F_OK): bool
     {
         if (!function_exists('posix_eaccess')) {
-            throw new \RuntimeException("posix_eaccess is not available on this system");
+            throw new \RuntimeException("posix_eaccess is not available on this system"); // @codeCoverageIgnore
         }
 
         return posix_eaccess($path, $mode);

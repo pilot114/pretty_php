@@ -40,12 +40,7 @@ readonly class DateInterval implements \Stringable
      */
     public static function fromDateString(string $dateString): self
     {
-        $interval = \DateInterval::createFromDateString($dateString);
-        if ($interval === false) {
-            throw new \InvalidArgumentException('Failed to create interval from: ' . $dateString);
-        }
-
-        return new self($interval);
+        return new self(\DateInterval::createFromDateString($dateString));
     }
 
     /**

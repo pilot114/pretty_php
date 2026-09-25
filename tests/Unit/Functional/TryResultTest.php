@@ -59,7 +59,7 @@ describe('TryResult', function (): void {
 
         it('does not map failure values', function (): void {
             $try = TryResult::failure(new RuntimeException('error'))
-                ->map(fn ($x) => $x * 2);
+                ->map(fn ($x): int|float => $x * 2);
             expect($try->isFailure())->toBeTrue();
             expect($try->getError()?->getMessage())->toBe('error');
         });
@@ -199,8 +199,8 @@ describe('TryResult', function (): void {
             $try = TryResult::failure($original);
             try {
                 $try->get();
-            } catch (RuntimeException $e) {
-                expect($e->getPrevious())->toBe($original);
+            } catch (RuntimeException $runtimeException) {
+                expect($runtimeException->getPrevious())->toBe($original);
             }
         });
 
@@ -302,7 +302,7 @@ describe('TryResult', function (): void {
 
         it('can recover from division by zero', function (): void {
             $result = TryResult::of(fn (): int => 10)
-                ->map(fn ($x): float|int => intdiv($x, 0))
+                ->map(fn ($x): int => intdiv($x, 0))
                 ->recover(fn ($e): int => 0);
 
             expect($result->isSuccess())->toBeTrue();

@@ -177,8 +177,9 @@ readonly class TryResult
     public function get(): mixed
     {
         if ($this->isFailure()) {
+            $reason = $this->error instanceof \Throwable ? $this->error->getMessage() : 'unknown error';
             throw new \RuntimeException(
-                'Called get on a Failure: ' . ($this->error !== null ? $this->error->getMessage() : 'unknown error'),
+                'Called get on a Failure: ' . $reason,
                 0,
                 $this->error
             );

@@ -509,3 +509,99 @@ describe('File', function (): void {
         unlink($currentDirFile);
     });
 });
+
+describe('File failure handling', function (): void {
+    beforeEach(function (): void {
+        $this->dir = sys_get_temp_dir() . '/pretty_php_file_failures_' . uniqid();
+        mkdir($this->dir . '/readonly', 0755, true);
+
+        $this->locked = $this->dir . '/locked.txt';
+        file_put_contents($this->locked, 'secret');
+        chmod($this->locked, 0000);
+
+        $this->source = $this->dir . '/source.txt';
+        file_put_contents($this->source, 'data');
+
+        $this->readonlyDir = $this->dir . '/readonly';
+        chmod($this->readonlyDir, 0555);
+    });
+
+    afterEach(function (): void {
+        chmod($this->readonlyDir, 0755);
+        chmod($this->locked, 0644);
+        removeDirectory($this->dir);
+    });
+
+    it('throws when reading unreadable file', function (): void {
+        $file = new File($this->locked);
+        expect(fn (): Str => @$file->read())->toThrow(\PrettyPhp\Exception\FileException::class, 'Unable to read file');
+        expect(fn (): array => iterator_to_array(@$file->readLinesGenerator()))
+            ->toThrow(\PrettyPhp\Exception\FileException::class, 'Unable to open file');
+        expect(fn (): array => iterator_to_array(@$file->readStream()))
+            ->toThrow(\PrettyPhp\Exception\FileException::class, 'Unable to open file');
+        expect(fn (): mixed => @$file->withLock(fn ($h): int => 1))
+            ->toThrow(\PrettyPhp\Exception\FileException::class, 'Unable to open file');
+        expect(fn (): Str => @$file->hash())
+            ->toThrow(\PrettyPhp\Exception\FileException::class, 'Unable to calculate hash');
+        expect(fn (): Str => @$file->mimeType())
+            ->toThrow(\PrettyPhp\Exception\FileException::class, 'Unable to determine MIME type');
+        expect(fn (): Str => @$file->mimeTypeDetailed())
+            ->toThrow(\PrettyPhp\Exception\FileException::class, 'Unable to determine MIME type');
+    });
+
+    it('throws when writing fails', function (): void {
+        $full = new File('/dev/full');
+        expect(fn (): File => @$full->write('x'))->toThrow(\PrettyPhp\Exception\FileException::class, 'Unable to write file');
+        expect(fn (): File => @$full->append('x'))->toThrow(\PrettyPhp\Exception\FileException::class, 'Unable to append');
+        expect(fn (): File => @$full->writeStream(['x']))
+            ->toThrow(\PrettyPhp\Exception\FileException::class, 'Unable to write to file');
+
+        $readonly = new File($this->readonlyDir . '/new.txt');
+        expect(fn (): File => @$readonly->writeStream(['x']))
+            ->toThrow(\PrettyPhp\Exception\FileException::class, 'Unable to open file for writing');
+        expect(fn (): File => @$readonly->touch())->toThrow(\PrettyPhp\Exception\FileException::class, 'Unable to touch');
+    });
+
+    it('throws when writeStream target directory is missing', function (): void {
+        expect(fn (): File => new File($this->dir . '/missing/file.txt')->writeStream(['x']))
+            ->toThrow(\PrettyPhp\Exception\FileException::class, 'Directory does not exist');
+    });
+
+    it('throws when copy or move fails', function (): void {
+        $file = new File($this->source);
+        expect(fn (): File => @$file->copy($this->readonlyDir . '/copy.txt'))
+            ->toThrow(\PrettyPhp\Exception\FileException::class, 'Unable to copy file');
+        expect(fn (): File => @$file->move($this->readonlyDir . '/moved.txt'))
+            ->toThrow(\PrettyPhp\Exception\FileException::class, 'Unable to move file');
+    });
+
+    it('throws when chmod is not permitted', function (): void {
+        expect(fn (): File => @new File('/etc/passwd')->chmod(0777))
+            ->toThrow(\PrettyPhp\Exception\FileException::class, 'Unable to change file permissions');
+    })->skip(fn (): bool => posix_geteuid() === 0, 'root can chmod any file');
+
+    it('cleans up temp file when atomic rename fails', function (): void {
+        $before = glob(sys_get_temp_dir() . '/atomic_*') ?: [];
+        expect(fn (): File => @new File($this->readonlyDir . '/atomic.txt')->writeAtomic('x'))
+            ->toThrow(\PrettyPhp\Exception\FileException::class, 'Unable to rename');
+        expect(glob(sys_get_temp_dir() . '/atomic_*') ?: [])->toBe($before);
+    });
+
+    it('throws on missing file for stream and hash operations', function (): void {
+        $missing = new File($this->dir . '/missing.txt');
+        expect(fn (): mixed => $missing->withLock(fn ($h): int => 1))
+            ->toThrow(\PrettyPhp\Exception\FileException::class, 'File does not exist');
+        expect(fn (): array => iterator_to_array($missing->readStream()))
+            ->toThrow(\PrettyPhp\Exception\FileException::class, 'File does not exist');
+        expect(fn (): Str => $missing->hash())->toThrow(\PrettyPhp\Exception\FileException::class, 'File does not exist');
+        expect(fn (): Str => $missing->mimeTypeDetailed())
+            ->toThrow(\PrettyPhp\Exception\FileException::class, 'File does not exist');
+    });
+})->skip(fn (): bool => posix_geteuid() === 0, 'permission-based failures cannot be simulated as root');
+
+describe('File atomic write', function (): void {
+    it('throws when atomic write directory is missing', function (): void {
+        expect(fn (): File => new File('/no/such/dir/file.txt')->writeAtomic('x'))
+            ->toThrow(\PrettyPhp\Exception\FileException::class, 'Directory does not exist');
+    });
+});

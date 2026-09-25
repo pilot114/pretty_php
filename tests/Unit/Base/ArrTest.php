@@ -412,3 +412,35 @@ describe('Arr', function (): void {
         expect($names->get())->toBe(['John', 'Jane']);
     });
 });
+
+describe('Arr edge cases', function (): void {
+    it('creates from plain array', function (): void {
+        expect(Arr::from([1, 2])->get())->toBe([1, 2]);
+    });
+
+    it('throws when joining non-stringable values', function (): void {
+        expect(fn (): Str => new Arr([[1]])->join(','))
+            ->toThrow(\PrettyPhp\Exception\ArrException::class, 'Cannot join value of type array');
+    });
+
+    it('unzips empty array and skips non-array tuples', function (): void {
+        expect(new Arr([])->unzip()->get())->toBe([]);
+        expect(new Arr([[1, 'a'], 'skip', [2, 'b']])->unzip()->get())->toBe([[1, 2], ['a', 'b']]);
+    });
+
+    it('sorts objects by multiple keys and keeps equal items', function (): void {
+        $a = new \stdClass();
+        $a->age = 30;
+        $a->name = 'B';
+
+        $b = new \stdClass();
+        $b->age = 30;
+        $b->name = 'A';
+
+        $sorted = new Arr([$a, $b])->sortByKeys(['age' => 'asc', 'name' => 'asc'])->get();
+        expect($sorted[0]->name)->toBe('A');
+
+        $same = new Arr([['x' => 1], ['x' => 1]])->sortByKeys(['x' => 'desc'])->get();
+        expect($same)->toBe([['x' => 1], ['x' => 1]]);
+    });
+});

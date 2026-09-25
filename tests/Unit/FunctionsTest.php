@@ -49,3 +49,10 @@ describe('Helper Functions', function (): void {
         expect($path)->toBeInstanceOf(Path::class);
     });
 });
+
+describe('num helper', function (): void {
+    it('creates Num instance', function (): void {
+        expect(num(5))->toBeInstanceOf(\PrettyPhp\Base\Num::class);
+        expect(num(5)->get())->toBe(5);
+    });
+});

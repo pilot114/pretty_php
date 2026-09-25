@@ -129,9 +129,6 @@ class HTTPPacket
     public static function fromRaw(string $raw): self
     {
         $lines = explode("\r\n", $raw);
-        if ($lines === []) {
-            throw new \Exception('Empty HTTP packet');
-        }
 
         $firstLine = array_shift($lines);
         $parts = explode(' ', $firstLine, 3);
@@ -150,7 +147,7 @@ class HTTPPacket
         } else {
             // Response: VERSION STATUS_CODE REASON_PHRASE
             $packet->isRequest = false;
-            $packet->version = $parts[0] ?? self::HTTP_VERSION_11;
+            $packet->version = $parts[0];
             $packet->statusCode = isset($parts[1]) ? (int) $parts[1] : 200;
             $packet->reasonPhrase = $parts[2] ?? 'OK';
         }

@@ -193,3 +193,28 @@ describe('Timezone', function (): void {
         });
     });
 });
+
+describe('Timezone edge cases', function (): void {
+    it('returns null for unknown abbreviation', function (): void {
+        expect(Timezone::fromAbbreviation('zzz'))->toBeNull();
+    });
+
+    it('returns transitions within ranges', function (): void {
+        $tz = new Timezone('Europe/Berlin');
+        expect($tz->transitions(1_700_000_000, 1_720_000_000))->toBeArray()->not->toBeEmpty();
+        expect($tz->transitions(1_700_000_000))->toBeArray()->not->toBeEmpty();
+    });
+
+    it('lists identifiers per region', function (string $method, string $prefix): void {
+        $list = Timezone::$method();
+        expect($list)->toBeInstanceOf(Arr::class);
+        expect($list->first())->toStartWith($prefix);
+    })->with([
+        ['antarctica', 'Antarctica/'],
+        ['arctic', 'Arctic/'],
+        ['atlantic', 'Atlantic/'],
+        ['australia', 'Australia/'],
+        ['indian', 'Indian/'],
+        ['pacific', 'Pacific/'],
+    ]);
+});

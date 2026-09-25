@@ -54,7 +54,7 @@ readonly class File
 
         $size = filesize($this->path);
         if ($size === false) {
-            throw new FileException('Unable to get file size: ' . $this->path);
+            throw new FileException('Unable to get file size: ' . $this->path); // @codeCoverageIgnore
         }
 
         return $size;
@@ -71,7 +71,7 @@ readonly class File
 
         $time = filemtime($this->path);
         if ($time === false) {
-            throw new FileException('Unable to get modification time: ' . $this->path);
+            throw new FileException('Unable to get modification time: ' . $this->path); // @codeCoverageIgnore
         }
 
         return $time;
@@ -266,7 +266,7 @@ readonly class File
 
         $perms = fileperms($this->path);
         if ($perms === false) {
-            throw new FileException('Unable to get file permissions: ' . $this->path);
+            throw new FileException('Unable to get file permissions: ' . $this->path); // @codeCoverageIgnore
         }
 
         return $perms;
@@ -315,13 +315,13 @@ readonly class File
 
         $tempFile = tempnam($dir, 'atomic_');
         if ($tempFile === false) {
-            throw new FileException('Unable to create temporary file in: ' . $dir);
+            throw new FileException('Unable to create temporary file in: ' . $dir); // @codeCoverageIgnore
         }
 
         try {
             $result = file_put_contents($tempFile, $content);
             if ($result === false) {
-                throw new FileException('Unable to write to temporary file: ' . $tempFile);
+                throw new FileException('Unable to write to temporary file: ' . $tempFile); // @codeCoverageIgnore
             }
 
             if (!rename($tempFile, $this->path)) {
@@ -360,7 +360,7 @@ readonly class File
         try {
             $lockType = $exclusive ? LOCK_EX : LOCK_SH;
             if (!flock($handle, $lockType)) {
-                throw new FileException('Unable to lock file: ' . $this->path);
+                throw new FileException('Unable to lock file: ' . $this->path); // @codeCoverageIgnore
             }
 
             return $callback($handle);
@@ -395,7 +395,7 @@ readonly class File
             while (!feof($handle)) {
                 $chunk = fread($handle, $chunkSize);
                 if ($chunk === false) {
-                    throw new FileException('Unable to read from file: ' . $this->path);
+                    throw new FileException('Unable to read from file: ' . $this->path); // @codeCoverageIgnore
                 }
 
                 if ($chunk !== '') {
@@ -468,19 +468,15 @@ readonly class File
 
         $finfo = finfo_open(FILEINFO_MIME_TYPE);
         if ($finfo === false) {
-            throw new FileException('Unable to open fileinfo');
+            throw new FileException('Unable to open fileinfo'); // @codeCoverageIgnore
         }
 
-        try {
-            $mimeType = finfo_file($finfo, $this->path);
-            if ($mimeType === false) {
-                throw new FileException('Unable to determine MIME type: ' . $this->path);
-            }
-
-            return new Str($mimeType);
-        } finally {
-            finfo_close($finfo);
+        $mimeType = finfo_file($finfo, $this->path);
+        if ($mimeType === false) {
+            throw new FileException('Unable to determine MIME type: ' . $this->path);
         }
+
+        return new Str($mimeType);
     }
 
     /**
@@ -492,7 +488,7 @@ readonly class File
     {
         $tempFile = tempnam(sys_get_temp_dir(), $prefix);
         if ($tempFile === false) {
-            throw new FileException('Unable to create temporary file');
+            throw new FileException('Unable to create temporary file'); // @codeCoverageIgnore
         }
 
         return new self($tempFile);

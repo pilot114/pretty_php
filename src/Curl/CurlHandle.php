@@ -159,7 +159,7 @@ final class CurlHandle
         $result = curl_escape($this->handle, $string);
 
         if ($result === false) {
-            throw new CurlException('Failed to escape string');
+            throw new CurlException('Failed to escape string'); // @codeCoverageIgnore
         }
 
         return $result;
@@ -176,7 +176,7 @@ final class CurlHandle
         $result = curl_unescape($this->handle, $string);
 
         if ($result === false) {
-            throw new CurlException('Failed to unescape string');
+            throw new CurlException('Failed to unescape string'); // @codeCoverageIgnore
         }
 
         return $result;
@@ -195,7 +195,7 @@ final class CurlHandle
         $newHandle = curl_copy_handle($this->handle);
 
         if ($newHandle === false) {
-            throw new CurlException('Failed to copy CURL handle');
+            throw new CurlException('Failed to copy CURL handle'); // @codeCoverageIgnore
         }
 
         $new = new self();
@@ -249,7 +249,7 @@ final class CurlHandle
         $this->ensureHandleExists();
 
         if (!curl_upkeep($this->handle)) {
-            throw new CurlException('Failed to perform connection upkeep');
+            throw new CurlException('Failed to perform connection upkeep'); // @codeCoverageIgnore
         }
 
         return $this;
@@ -258,7 +258,17 @@ final class CurlHandle
     /**
      * Get CURL version information
      *
-     * @return array{version_number: int, age: int, features: int, ssl_version_number: int, version: string, host: string, ssl_version: string, libz_version: string, protocols: array<int, string>}
+     * @return array{
+     *     version_number: int,
+     *     age: int,
+     *     features: int,
+     *     ssl_version_number: int,
+     *     version: string,
+     *     host: string,
+     *     ssl_version: string,
+     *     libz_version: string,
+     *     protocols: array<int, string>
+     * }
      */
     public static function version(): array
     {
@@ -283,14 +293,14 @@ final class CurlHandle
     }
 
     /**
-     * Close the CURL handle and free resources
+     * Close the CURL handle
+     *
+     * The native handle is freed automatically once it is no longer referenced
+     * (curl_close() is a no-op since PHP 8.0)
      */
     public function close(): void
     {
-        if (!$this->closed) {
-            curl_close($this->handle);
-            $this->closed = true;
-        }
+        $this->closed = true;
     }
 
     /**

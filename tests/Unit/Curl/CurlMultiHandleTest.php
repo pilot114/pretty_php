@@ -29,8 +29,9 @@ describe('CurlMultiHandle', function (): void {
         it('throws on closed multi handle', function (): void {
             $multi = new CurlMultiHandle();
             $multi->close();
+
             $handle = new CurlHandle();
-            expect(fn () => $multi->addHandle($handle))
+            expect(fn (): \PrettyPhp\Curl\CurlMultiHandle => $multi->addHandle($handle))
                 ->toThrow(CurlMultiException::class, 'CURL Multi handle is closed');
         });
     });
@@ -47,8 +48,9 @@ describe('CurlMultiHandle', function (): void {
         it('throws on closed multi handle', function (): void {
             $multi = new CurlMultiHandle();
             $multi->close();
+
             $handle = new CurlHandle();
-            expect(fn () => $multi->removeHandle($handle))
+            expect(fn (): \PrettyPhp\Curl\CurlMultiHandle => $multi->removeHandle($handle))
                 ->toThrow(CurlMultiException::class, 'CURL Multi handle is closed');
         });
     });
@@ -65,8 +67,9 @@ describe('CurlMultiHandle', function (): void {
         it('throws on closed handle', function (): void {
             $multi = new CurlMultiHandle();
             $multi->close();
+
             $stillRunning = 0;
-            expect(fn () => $multi->execute($stillRunning))
+            expect(fn (): int => $multi->execute($stillRunning))
                 ->toThrow(CurlMultiException::class, 'CURL Multi handle is closed');
         });
     });
@@ -81,7 +84,8 @@ describe('CurlMultiHandle', function (): void {
         it('throws on closed handle', function (): void {
             $multi = new CurlMultiHandle();
             $multi->close();
-            expect(fn () => $multi->select())
+
+            expect(fn (): int => $multi->select())
                 ->toThrow(CurlMultiException::class, 'CURL Multi handle is closed');
         });
     });
@@ -91,6 +95,7 @@ describe('CurlMultiHandle', function (): void {
             $multi = new CurlMultiHandle();
             $handle = new CurlHandle();
             $handle->setOption(CURLOPT_RETURNTRANSFER, true);
+
             $multi->addHandle($handle);
             $content = $multi->getContent($handle);
             expect($content)->toBe('');
@@ -99,8 +104,9 @@ describe('CurlMultiHandle', function (): void {
         it('throws on closed multi handle', function (): void {
             $multi = new CurlMultiHandle();
             $multi->close();
+
             $handle = new CurlHandle();
-            expect(fn () => $multi->getContent($handle))
+            expect(fn (): ?string => $multi->getContent($handle))
                 ->toThrow(CurlMultiException::class, 'CURL Multi handle is closed');
         });
     });
@@ -116,7 +122,8 @@ describe('CurlMultiHandle', function (): void {
         it('throws on closed handle', function (): void {
             $multi = new CurlMultiHandle();
             $multi->close();
-            expect(fn () => $multi->infoRead())
+
+            expect(fn (): array|false => $multi->infoRead())
                 ->toThrow(CurlMultiException::class, 'CURL Multi handle is closed');
         });
     });
@@ -131,7 +138,8 @@ describe('CurlMultiHandle', function (): void {
         it('throws on closed handle', function (): void {
             $multi = new CurlMultiHandle();
             $multi->close();
-            expect(fn () => $multi->setOption(CURLMOPT_MAXCONNECTS, 10))
+
+            expect(fn (): \PrettyPhp\Curl\CurlMultiHandle => $multi->setOption(CURLMOPT_MAXCONNECTS, 10))
                 ->toThrow(CurlMultiException::class, 'CURL Multi handle is closed');
         });
     });
@@ -150,7 +158,8 @@ describe('CurlMultiHandle', function (): void {
         it('throws getErrorNumber on closed handle', function (): void {
             $multi = new CurlMultiHandle();
             $multi->close();
-            expect(fn () => $multi->getErrorNumber())
+
+            expect(fn (): int => $multi->getErrorNumber())
                 ->toThrow(CurlMultiException::class, 'CURL Multi handle is closed');
         });
     });
@@ -197,7 +206,7 @@ describe('CurlMultiHandle', function (): void {
                 $results = $multi->executeAll();
                 expect($results)->toHaveCount(2);
 
-                $contents = array_map(fn ($r) => $r['content'], $results);
+                $contents = array_map(fn (array $r): ?string => $r['content'], $results);
                 sort($contents);
                 expect($contents)->toBe(['content1', 'content2']);
             } finally {
@@ -215,7 +224,8 @@ describe('CurlMultiHandle', function (): void {
         it('throws on closed handle', function (): void {
             $multi = new CurlMultiHandle();
             $multi->close();
-            expect(fn () => $multi->executeAll())
+
+            expect(fn (): array => $multi->executeAll())
                 ->toThrow(CurlMultiException::class, 'CURL Multi handle is closed');
         });
     });
@@ -224,7 +234,8 @@ describe('CurlMultiHandle', function (): void {
         it('can be closed', function (): void {
             $multi = new CurlMultiHandle();
             $multi->close();
-            expect(fn () => $multi->getHandle())
+
+            expect(fn (): \CurlMultiHandle => $multi->getHandle())
                 ->toThrow(CurlMultiException::class, 'CURL Multi handle is closed');
         });
 
@@ -233,8 +244,9 @@ describe('CurlMultiHandle', function (): void {
             $handle = new CurlHandle();
             $multi->addHandle($handle);
             $multi->close();
-            $multi->close(); // should not throw
-            expect(fn () => $multi->getHandle())
+            $multi->close();
+             // should not throw
+            expect(fn (): \CurlMultiHandle => $multi->getHandle())
                 ->toThrow(CurlMultiException::class);
         });
     });

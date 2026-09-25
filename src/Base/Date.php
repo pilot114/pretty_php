@@ -234,7 +234,19 @@ final class Date
      * Get local time
      * PHP: localtime()
      *
-     * @return ($associative is true ? array{tm_sec: int, tm_min: int, tm_hour: int, tm_mday: int, tm_mon: int, tm_year: int, tm_wday: int, tm_yday: int, tm_isdst: int} : array<int>)
+     * @return ($associative is true
+     *     ? array{
+     *         tm_sec: int,
+     *         tm_min: int,
+     *         tm_hour: int,
+     *         tm_mday: int,
+     *         tm_mon: int,
+     *         tm_year: int,
+     *         tm_wday: int,
+     *         tm_yday: int,
+     *         tm_isdst: int
+     *     }
+     *     : array<int>)
      */
     public static function localtime(?int $timestamp = null, bool $associative = false): array
     {
@@ -272,57 +284,25 @@ final class Date
     }
 
     // ==================== Sun Times ====================
-    /**
-     * Get sunrise time for a date and location
-     * PHP: date_sunrise() (deprecated - use date_sun_info() instead)
-     */
-    #[\Deprecated(message: 'Use sunInfo() instead')]
-    public static function sunrise(
-        int $timestamp,
-        int $returnFormat = 1,
-        ?float $latitude = null,
-        ?float $longitude = null,
-        ?float $zenith = null,
-        ?float $utcOffset = null
-    ): string|int|float|false {
-        return date_sunrise($timestamp, $returnFormat, $latitude, $longitude, $zenith, $utcOffset);
-    }
-
-    /**
-     * Get sunset time for a date and location
-     * PHP: date_sunset() (deprecated - use date_sun_info() instead)
-     */
-    #[\Deprecated(message: 'Use sunInfo() instead')]
-    public static function sunset(
-        int $timestamp,
-        int $returnFormat = 1,
-        ?float $latitude = null,
-        ?float $longitude = null,
-        ?float $zenith = null,
-        ?float $utcOffset = null
-    ): string|int|float|false {
-        return date_sunset($timestamp, $returnFormat, $latitude, $longitude, $zenith, $utcOffset);
-    }
 
     /**
      * Get sun information for a date and location
      * PHP: date_sun_info()
      *
      * @return array{
-     *     sunrise: int,
-     *     sunset: int,
-     *     transit: int,
-     *     civil_twilight_begin: int,
-     *     civil_twilight_end: int,
-     *     nautical_twilight_begin: int,
-     *     nautical_twilight_end: int,
-     *     astronomical_twilight_begin: int,
-     *     astronomical_twilight_end: int
+     *     sunrise: int|bool,
+     *     sunset: int|bool,
+     *     transit: int|bool,
+     *     civil_twilight_begin: int|bool,
+     *     civil_twilight_end: int|bool,
+     *     nautical_twilight_begin: int|bool,
+     *     nautical_twilight_end: int|bool,
+     *     astronomical_twilight_begin: int|bool,
+     *     astronomical_twilight_end: int|bool
      * }
      */
     public static function sunInfo(int $timestamp, float $latitude, float $longitude): array
     {
-        /** @var array{sunrise: int, sunset: int, transit: int, civil_twilight_begin: int, civil_twilight_end: int, nautical_twilight_begin: int, nautical_twilight_end: int, astronomical_twilight_begin: int, astronomical_twilight_end: int} */
         return date_sun_info($timestamp, $latitude, $longitude);
     }
 
@@ -461,7 +441,8 @@ final class Date
 
     public const string RFC3339_EXTENDED = \DateTimeInterface::RFC3339_EXTENDED;
 
-    public const string RFC7231 = \DateTimeInterface::RFC7231;
+    #[\Deprecated(message: 'ignores the timezone and always uses GMT, like DateTimeInterface::RFC7231', since: '8.5')]
+    public const string RFC7231 = 'D, d M Y H:i:s \G\M\T';
 
     public const string RSS = \DateTimeInterface::RSS;
 

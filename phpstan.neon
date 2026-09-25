@@ -29,7 +29,7 @@ parameters:
             - RuntimeException
     
     # PHP version and features
-    phpVersion: 80400
+    phpVersion: 80500
     
     # Parallel processing
     parallel:

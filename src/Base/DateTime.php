@@ -442,12 +442,7 @@ readonly class DateTime implements \Stringable
     public function modify(string $modifier): self
     {
         try {
-            $result = $this->value->modify($modifier);
-            if ($result === false) {
-                throw new \InvalidArgumentException('Invalid modifier: ' . $modifier);
-            }
-
-            return new self($result);
+            return new self($this->value->modify($modifier));
         } catch (\DateMalformedStringException $dateMalformedStringException) {
             throw new \InvalidArgumentException('Invalid modifier: ' . $modifier, 0, $dateMalformedStringException);
         }
@@ -919,20 +914,13 @@ readonly class DateTime implements \Stringable
      */
     public function sunrise(float $latitude, float $longitude): ?self
     {
-        $timestamp = date_sunrise(
-            $this->value->getTimestamp(),
-            \SUNFUNCS_RET_TIMESTAMP,
-            $latitude,
-            $longitude,
-            90.833333,
-            $this->timezoneOffset() / 3600
-        );
+        $timestamp = $this->sunInfo($latitude, $longitude)['sunrise'];
 
-        if ($timestamp === false) {
+        if (!is_int($timestamp)) {
             return null;
         }
 
-        return new self((int) $timestamp, $this->value->getTimezone());
+        return new self($timestamp, $this->value->getTimezone());
     }
 
     /**
@@ -943,20 +931,13 @@ readonly class DateTime implements \Stringable
      */
     public function sunset(float $latitude, float $longitude): ?self
     {
-        $timestamp = date_sunset(
-            $this->value->getTimestamp(),
-            \SUNFUNCS_RET_TIMESTAMP,
-            $latitude,
-            $longitude,
-            90.833333,
-            $this->timezoneOffset() / 3600
-        );
+        $timestamp = $this->sunInfo($latitude, $longitude)['sunset'];
 
-        if ($timestamp === false) {
+        if (!is_int($timestamp)) {
             return null;
         }
 
-        return new self((int) $timestamp, $this->value->getTimezone());
+        return new self($timestamp, $this->value->getTimezone());
     }
 
     /**
@@ -965,15 +946,15 @@ readonly class DateTime implements \Stringable
      * @param float $latitude Latitude in degrees
      * @param float $longitude Longitude in degrees
      * @return array{
-     *     sunrise: int,
-     *     sunset: int,
-     *     transit: int,
-     *     civil_twilight_begin: int,
-     *     civil_twilight_end: int,
-     *     nautical_twilight_begin: int,
-     *     nautical_twilight_end: int,
-     *     astronomical_twilight_begin: int,
-     *     astronomical_twilight_end: int
+     *     sunrise: int|bool,
+     *     sunset: int|bool,
+     *     transit: int|bool,
+     *     civil_twilight_begin: int|bool,
+     *     civil_twilight_end: int|bool,
+     *     nautical_twilight_begin: int|bool,
+     *     nautical_twilight_end: int|bool,
+     *     astronomical_twilight_begin: int|bool,
+     *     astronomical_twilight_end: int|bool
      * }
      */
     public function sunInfo(float $latitude, float $longitude): array

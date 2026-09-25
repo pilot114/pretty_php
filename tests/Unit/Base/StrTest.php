@@ -265,3 +265,13 @@ describe('Str', function (): void {
         expect($similarity)->toBeLessThan(50.0);
     });
 });
+
+describe('Str edge cases', function (): void {
+    it('throws when normalizing invalid UTF-8', function (): void {
+        expect(fn (): Str => new Str("\xff")->normalizeUnicode())->toThrow(\InvalidArgumentException::class);
+    });
+
+    it('returns empty PascalCase for empty string', function (): void {
+        expect(new Str('')->toPascalCase()->get())->toBe('');
+    });
+});

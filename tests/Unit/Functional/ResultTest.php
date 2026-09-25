@@ -55,7 +55,7 @@ describe('Result', function (): void {
 
         it('does not map Err values', function (): void {
             $result = Result::err('error');
-            $mapped = $result->map(fn($x) => $x * 2);
+            $mapped = $result->map(fn($x): int|float => $x * 2);
 
             expect($mapped->isErr())->toBeTrue();
             expect($mapped->unwrapErr())->toBe('error');
@@ -74,7 +74,7 @@ describe('Result', function (): void {
     describe('mapErr', function (): void {
         it('maps Err values', function (): void {
             $result = Result::err('error');
-            $mapped = $result->mapErr(fn($e) => strtoupper($e));
+            $mapped = $result->mapErr(fn($e): string => strtoupper($e));
 
             expect($mapped->isErr())->toBeTrue();
             expect($mapped->unwrapErr())->toBe('ERROR');
@@ -82,7 +82,7 @@ describe('Result', function (): void {
 
         it('does not map Ok values', function (): void {
             $result = Result::ok(42);
-            $mapped = $result->mapErr(fn($e) => strtoupper($e));
+            $mapped = $result->mapErr(fn($e): string => strtoupper($e));
 
             expect($mapped->isOk())->toBeTrue();
             expect($mapped->unwrap())->toBe(42);
@@ -266,7 +266,7 @@ describe('Result', function (): void {
 
         it('returns default for Err', function (): void {
             $result = Result::err('error');
-            $value = $result->mapOr(0, fn($x) => $x * 2);
+            $value = $result->mapOr(0, fn($x): int|float => $x * 2);
 
             expect($value)->toBe(0);
         });
@@ -282,7 +282,7 @@ describe('Result', function (): void {
 
         it('computes default from error for Err', function (): void {
             $result = Result::err('error');
-            $value = $result->mapOrElse(fn($e): int => strlen($e), fn($x) => $x * 2);
+            $value = $result->mapOrElse(fn($e): int => strlen($e), fn($x): int|float => $x * 2);
 
             expect($value)->toBe(5);
         });
@@ -488,5 +488,17 @@ describe('Result', function (): void {
             expect($error['type'])->toBe(\InvalidArgumentException::class);
             expect($error['message'])->toBe('bad arg');
         });
+    });
+});
+
+describe('Result unwrap messages', function (): void {
+    it('uses throwable message', function (): void {
+        expect(fn (): mixed => Result::err(new \LogicException('boom'))->unwrap())
+            ->toThrow(\RuntimeException::class, 'Called unwrap on an Err value: boom');
+    });
+
+    it('exports non-string errors', function (): void {
+        expect(fn (): mixed => Result::err(42)->unwrap())
+            ->toThrow(\RuntimeException::class, 'Called unwrap on an Err value: 42');
     });
 });

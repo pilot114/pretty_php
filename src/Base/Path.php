@@ -264,7 +264,7 @@ readonly class Path implements \Stringable
 
         $target = readlink($this->path);
         if ($target === false) {
-            throw new PathException('Unable to read symbolic link: ' . $this->path);
+            throw new PathException('Unable to read symbolic link: ' . $this->path); // @codeCoverageIgnore
         }
 
         return new self($target);
@@ -313,6 +313,7 @@ readonly class Path implements \Stringable
         }
 
         // Check for invalid characters (Windows)
+        // @codeCoverageIgnoreStart
         if (DIRECTORY_SEPARATOR === '\\') {
             $invalidChars = ['<', '>', '"', '|', '?', '*'];
             foreach ($invalidChars as $char) {
@@ -321,6 +322,8 @@ readonly class Path implements \Stringable
                 }
             }
         }
+
+        // @codeCoverageIgnoreEnd
 
         return true;
     }
@@ -349,7 +352,7 @@ readonly class Path implements \Stringable
     public function urlEncode(): Str
     {
         $parts = explode('/', $this->toUrlPath()->get());
-        $encoded = array_map('rawurlencode', $parts);
+        $encoded = array_map(rawurlencode(...), $parts);
         return new Str(implode('/', $encoded));
     }
 
@@ -423,13 +426,9 @@ readonly class Path implements \Stringable
     {
         $otherPath = $other instanceof self ? $other->path : $other;
 
-        try {
-            $thisReal = $this->exists() ? $this->realPath()->get() : $this->path;
-            $otherReal = file_exists($otherPath) ? new self($otherPath)->realPath()->get() : $otherPath;
+        $thisReal = realpath($this->path);
+        $otherReal = realpath($otherPath);
 
-            return $thisReal === $otherReal;
-        } catch (PathException) {
-            return $this->path === $otherPath;
-        }
+        return ($thisReal === false ? $this->path : $thisReal) === ($otherReal === false ? $otherPath : $otherReal);
     }
 }

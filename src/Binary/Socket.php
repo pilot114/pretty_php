@@ -16,7 +16,7 @@ use PrettyPhp\Binary\Security\RateLimiter;
  */
 class Socket
 {
-    private ?PhpSocket $socket = null;
+    private PhpSocket $socket;
 
     private bool $closed = false;
 
@@ -78,7 +78,7 @@ class Socket
             );
         }
 
-        return new self(AF_INET, SOCK_RAW, $protocol);
+        return new self(AF_INET, SOCK_RAW, $protocol); // @codeCoverageIgnore
     }
 
     /**
@@ -88,7 +88,6 @@ class Socket
     public function bind(string $address, int $port = 0): self
     {
         $this->ensureOpen();
-        assert($this->socket instanceof PhpSocket);
 
         if (socket_bind($this->socket, $address, $port) === false) {
             throw new RuntimeException(
@@ -106,7 +105,6 @@ class Socket
     public function connect(string $address, int $port): self
     {
         $this->ensureOpen();
-        assert($this->socket instanceof PhpSocket);
 
         if (socket_connect($this->socket, $address, $port) === false) {
             throw new RuntimeException(
@@ -124,7 +122,6 @@ class Socket
     public function listen(int $backlog = 0): self
     {
         $this->ensureOpen();
-        assert($this->socket instanceof PhpSocket);
 
         if (socket_listen($this->socket, $backlog) === false) {
             throw new RuntimeException(
@@ -142,7 +139,6 @@ class Socket
     public function accept(): self
     {
         $this->ensureOpen();
-        assert($this->socket instanceof PhpSocket);
 
         $clientSocket = socket_accept($this->socket);
         if ($clientSocket === false) {
@@ -153,10 +149,7 @@ class Socket
 
         // Create a new Socket instance wrapping the client socket
         $socket = new self($this->domain, $this->type, $this->protocol);
-        if ($socket->socket instanceof PhpSocket) {
-            socket_close($socket->socket);
-        }
-
+        socket_close($socket->socket);
         $socket->socket = $clientSocket;
 
         return $socket;
@@ -186,7 +179,6 @@ class Socket
     public function send(string $data, int $flags = 0): int
     {
         $this->ensureOpen();
-        assert($this->socket instanceof PhpSocket);
 
         // Apply rate limiting if configured
         if ($this->rateLimiter instanceof \PrettyPhp\Binary\Security\RateLimiter) {
@@ -210,7 +202,6 @@ class Socket
     public function sendTo(string $data, string $address, int $port, int $flags = 0): int
     {
         $this->ensureOpen();
-        assert($this->socket instanceof PhpSocket);
 
         // Apply rate limiting if configured
         if ($this->rateLimiter instanceof \PrettyPhp\Binary\Security\RateLimiter) {
@@ -234,7 +225,6 @@ class Socket
     public function receive(int $length, int $flags = 0): string
     {
         $this->ensureOpen();
-        assert($this->socket instanceof PhpSocket);
 
         // Apply rate limiting if configured
         if ($this->rateLimiter instanceof \PrettyPhp\Binary\Security\RateLimiter) {
@@ -262,7 +252,6 @@ class Socket
     public function receiveFrom(int $length, int $flags = 0): array
     {
         $this->ensureOpen();
-        assert($this->socket instanceof PhpSocket);
 
         // Apply rate limiting if configured
         if ($this->rateLimiter instanceof \PrettyPhp\Binary\Security\RateLimiter) {
@@ -298,7 +287,6 @@ class Socket
     public function setOption(int $level, int $option, mixed $value): self
     {
         $this->ensureOpen();
-        assert($this->socket instanceof PhpSocket);
 
         // Ensure $value is valid for socket_set_option
         if (!is_int($value) && !is_string($value) && !is_array($value)) {
@@ -321,7 +309,6 @@ class Socket
     public function getOption(int $level, int $option): mixed
     {
         $this->ensureOpen();
-        assert($this->socket instanceof PhpSocket);
 
         $result = socket_get_option($this->socket, $level, $option);
         if ($result === false) {
@@ -364,16 +351,17 @@ class Socket
     public function setBlocking(bool $blocking): self
     {
         $this->ensureOpen();
-        assert($this->socket instanceof PhpSocket);
 
         $result = $blocking
             ? socket_set_block($this->socket)
             : socket_set_nonblock($this->socket);
 
         if ($result === false) {
+            // @codeCoverageIgnoreStart
             throw new RuntimeException(
                 'Failed to set blocking mode: ' . $this->getLastError()
             );
+            // @codeCoverageIgnoreEnd
         }
 
         return $this;
@@ -388,15 +376,16 @@ class Socket
     public function getName(): array
     {
         $this->ensureOpen();
-        assert($this->socket instanceof PhpSocket);
 
         $address = '';
         $port = 0;
 
         if (socket_getsockname($this->socket, $address, $port) === false) {
+            // @codeCoverageIgnoreStart
             throw new RuntimeException(
                 'Failed to get socket name: ' . $this->getLastError()
             );
+            // @codeCoverageIgnoreEnd
         }
 
         assert(is_string($address));
@@ -417,7 +406,6 @@ class Socket
     public function getPeerName(): array
     {
         $this->ensureOpen();
-        assert($this->socket instanceof PhpSocket);
 
         $address = '';
         $port = 0;
@@ -442,7 +430,7 @@ class Socket
      */
     public function close(): void
     {
-        if (!$this->closed && $this->socket instanceof \Socket) {
+        if (!$this->closed) {
             socket_close($this->socket);
             $this->closed = true;
         }
@@ -463,7 +451,6 @@ class Socket
     public function getResource(): PhpSocket
     {
         $this->ensureOpen();
-        assert($this->socket instanceof PhpSocket);
         return $this->socket;
     }
 
@@ -483,10 +470,6 @@ class Socket
     {
         if ($this->closed) {
             throw new RuntimeException('Socket is closed');
-        }
-
-        if (!$this->socket instanceof \Socket) {
-            throw new RuntimeException('Socket is not initialized');
         }
     }
 

@@ -151,16 +151,6 @@ describe('Date', function (): void {
     // ==================== Sun Times ====================
 
     describe('sun times', function (): void {
-        it('can get sunrise', function (): void {
-            $sunrise = Date::sunrise(1705324200, \SUNFUNCS_RET_TIMESTAMP, 40.7128, -74.0060);
-            expect($sunrise)->not->toBeFalse();
-        });
-
-        it('can get sunset', function (): void {
-            $sunset = Date::sunset(1705324200, \SUNFUNCS_RET_TIMESTAMP, 40.7128, -74.0060);
-            expect($sunset)->not->toBeFalse();
-        });
-
         it('can get sun info', function (): void {
             $info = Date::sunInfo(1705324200, 40.7128, -74.0060);
             expect($info)->toBeArray();
@@ -264,5 +254,23 @@ describe('Date', function (): void {
             expect(Date::RFC3339)->toBe(\DateTimeInterface::RFC3339);
             expect(Date::W3C)->toBe(\DateTimeInterface::W3C);
         });
+    });
+});
+
+describe('Date edge cases', function (): void {
+    it('has a private constructor that can be invoked via reflection', function (): void {
+        $reflection = new \ReflectionClass(Date::class);
+        $instance = $reflection->newInstanceWithoutConstructor();
+        $reflection->getConstructor()?->invoke($instance);
+        expect($instance)->toBeInstanceOf(Date::class);
+    });
+
+    it('throws on invalid idate format', function (): void {
+        expect(fn (): int => @Date::idate('Q', 0))->toThrow(\RuntimeException::class);
+    });
+
+    it('returns last parse errors', function (): void {
+        Date::create('2024-01-15');
+        expect(Date::getLastErrors())->toBeFalse();
     });
 });

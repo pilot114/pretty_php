@@ -60,11 +60,29 @@ class Binary
         $totalSize = 0;
         $reflectionClass = new ReflectionClass($className);
 
+        // Bytes occupied by the current group of consecutive bit fields
+        $bitFieldBytes = 0;
+
         foreach ($reflectionClass->getProperties() as $property) {
-            $attributes = $property->getAttributes(Binary::class);
-            if ($attributes === []) {
+            // Fields skipped by a condition take no space
+            $conditionalAttrs = $property->getAttributes(Conditional::class);
+            if ($conditionalAttrs !== [] && !$conditionalAttrs[0]->newInstance()->evaluate($object)) {
                 continue;
             }
+
+            $attributes = $property->getAttributes(Binary::class);
+            if ($attributes === []) {
+                $bitFieldAttrs = $property->getAttributes(BitField::class);
+                if ($bitFieldAttrs !== []) {
+                    $bitField = $bitFieldAttrs[0]->newInstance();
+                    $bitFieldBytes = max($bitFieldBytes, (int) ceil(($bitField->offset + $bitField->bits) / 8));
+                }
+
+                continue;
+            }
+
+            $totalSize += $bitFieldBytes;
+            $bitFieldBytes = 0;
 
             $binaryAttr = $attributes[0]->newInstance();
             $originalFormat = $binaryAttr->format;
@@ -81,7 +99,7 @@ class Binary
             }
         }
 
-        return $totalSize;
+        return $totalSize + $bitFieldBytes;
     }
 
     public static function pack(object $object): string
@@ -265,6 +283,8 @@ class Binary
                 }
 
                 $unpacked = unpack($format, substr($binaryData, $offset));
+                // Size was validated above, so unpack() cannot fail or return an empty array here
+                // @codeCoverageIgnoreStart
                 if ($unpacked === false) {
                     $message = sprintf("Failed to unpack binary data for property '%s'.", $property->getName());
                     throw new Exception($message);
@@ -274,6 +294,8 @@ class Binary
                 if ($values === []) {
                     throw new Exception(sprintf("No values found when unpacking property '%s'.", $property->getName()));
                 }
+
+                // @codeCoverageIgnoreEnd
 
                 $value = $values[0];
                 $size = self::getFormatSize($originalFormat, $binaryAttr->endian, is_string($value) ? $value : null);
@@ -560,20 +582,18 @@ class Binary
         // Generate diagram
         $currentRow = [];
         $currentBits = 0;
-        $firstRow = true;
 
         foreach ($fields as $field) {
             if ($field['type'] === 'nested') {
                 // Flush current row
                 if ($currentRow !== []) {
                     $doc .= self::renderAsciiRow($currentRow, $currentBits);
-                    $firstRow = false;
                     $currentRow = [];
                     $currentBits = 0;
                 }
 
                 $doc .= "+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+\n";
-                $doc .= "|                    " . str_pad($field['name'] . " (nested structure)", 42, " ", STR_PAD_BOTH) . "|\n";
+                $doc .= "|" . str_pad($field['name'] . " (nested structure)", 63, " ", STR_PAD_BOTH) . "|\n";
                 continue;
             }
 
@@ -581,24 +601,40 @@ class Binary
                 // Flush current row
                 if ($currentRow !== []) {
                     $doc .= self::renderAsciiRow($currentRow, $currentBits);
-                    $firstRow = false;
                     $currentRow = [];
                     $currentBits = 0;
                 }
 
                 $doc .= "+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+\n";
-                $doc .= "|                    " . str_pad($field['name'] . " (variable length)", 42, " ", STR_PAD_BOTH) . "|\n";
+                $doc .= "|" . str_pad($field['name'] . " (variable length)", 63, " ", STR_PAD_BOTH) . "|\n";
                 continue;
             }
 
             $fieldBits = (int) $field['bits'];
+
+            // Fields wider than a row (e.g. 64-bit integers, long fixed strings) span several full rows
+            if ($fieldBits > 32) {
+                if ($currentRow !== []) {
+                    $doc .= self::renderAsciiRow($currentRow, $currentBits);
+                    $currentRow = [];
+                    $currentBits = 0;
+                }
+
+                $name = $field['name'];
+                while ($fieldBits > 32) {
+                    $doc .= self::renderAsciiRow([['name' => $name, 'bits' => 32, 'type' => $field['type']]], 32);
+                    $name = $field['name'] . ' (cont.)';
+                    $fieldBits -= 32;
+                }
+
+                $field = ['name' => $name, 'bits' => $fieldBits, 'type' => $field['type']];
+            }
 
             // Check if field fits in current row
             if ($currentBits + $fieldBits > 32) {
                 // Render current row and start new one
                 if ($currentRow !== []) {
                     $doc .= self::renderAsciiRow($currentRow, $currentBits);
-                    $firstRow = false;
                 }
 
                 $currentRow = [$field];
@@ -611,7 +647,6 @@ class Binary
             // If current row is exactly 32 bits, render it
             if ($currentBits === 32) {
                 $doc .= self::renderAsciiRow($currentRow, $currentBits);
-                $firstRow = false;
                 $currentRow = [];
                 $currentBits = 0;
             }
@@ -642,7 +677,8 @@ class Binary
         $row .= "|";
         foreach ($fields as $field) {
             $fieldBits = (int) $field['bits'];
-            $width = $fieldBits * 2; // Each bit takes 2 characters (+-) in the row
+            // Each bit takes 2 characters ("+-"), one of them is used by the field separator
+            $width = $fieldBits * 2 - 1;
 
             $name = $field['name'];
             // Only truncate if name is significantly longer than width
@@ -656,7 +692,7 @@ class Binary
 
         // Add padding if needed
         if ($padding > 0) {
-            $paddingWidth = $padding * 2;
+            $paddingWidth = $padding * 2 - 1;
             $row .= str_pad("", $paddingWidth, " ");
             $row .= "|";
         }

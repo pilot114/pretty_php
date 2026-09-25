@@ -167,7 +167,8 @@ readonly class Timezone implements \Stringable
     /**
      * Get list of all timezone identifiers
      *
-     * @param int $timezoneGroup DateTimeZone constant (AFRICA, AMERICA, ANTARCTICA, ARCTIC, ASIA, ATLANTIC, AUSTRALIA, EUROPE, INDIAN, PACIFIC, UTC, ALL, ALL_WITH_BC, PER_COUNTRY)
+     * @param int $timezoneGroup DateTimeZone constant (AFRICA, AMERICA, ANTARCTICA, ARCTIC, ASIA, ATLANTIC,
+     *                           AUSTRALIA, EUROPE, INDIAN, PACIFIC, UTC, ALL, ALL_WITH_BC, PER_COUNTRY)
      * @param string|null $countryCode Two-letter ISO 3166-1 country code
      * @return Arr<string>
      */

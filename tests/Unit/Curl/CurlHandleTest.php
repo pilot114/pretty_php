@@ -27,7 +27,8 @@ describe('CurlHandle', function (): void {
         it('throws on closed handle', function (): void {
             $handle = new CurlHandle();
             $handle->close();
-            expect(fn () => $handle->setOption(CURLOPT_RETURNTRANSFER, true))
+
+            expect(fn (): \PrettyPhp\Curl\CurlHandle => $handle->setOption(CURLOPT_RETURNTRANSFER, true))
                 ->toThrow(CurlException::class, 'CURL handle is closed');
         });
     });
@@ -45,7 +46,8 @@ describe('CurlHandle', function (): void {
         it('throws on closed handle', function (): void {
             $handle = new CurlHandle();
             $handle->close();
-            expect(fn () => $handle->setOptions([CURLOPT_RETURNTRANSFER => true]))
+
+            expect(fn (): \PrettyPhp\Curl\CurlHandle => $handle->setOptions([CURLOPT_RETURNTRANSFER => true]))
                 ->toThrow(CurlException::class, 'CURL handle is closed');
         });
     });
@@ -70,14 +72,15 @@ describe('CurlHandle', function (): void {
             $handle->setOption(CURLOPT_RETURNTRANSFER, true);
             $handle->setOption(CURLOPT_CONNECTTIMEOUT_MS, 1);
 
-            expect(fn () => $handle->execute())
+            expect(fn (): string|bool => $handle->execute())
                 ->toThrow(CurlException::class);
         });
 
         it('throws on closed handle', function (): void {
             $handle = new CurlHandle();
             $handle->close();
-            expect(fn () => $handle->execute())
+
+            expect(fn (): string|bool => $handle->execute())
                 ->toThrow(CurlException::class, 'CURL handle is closed');
         });
     });
@@ -99,7 +102,8 @@ describe('CurlHandle', function (): void {
         it('throws on closed handle', function (): void {
             $handle = new CurlHandle();
             $handle->close();
-            expect(fn () => $handle->getInfo())
+
+            expect(fn (): mixed => $handle->getInfo())
                 ->toThrow(CurlException::class, 'CURL handle is closed');
         });
     });
@@ -124,14 +128,16 @@ describe('CurlHandle', function (): void {
         it('throws on closed handle for getErrorNumber', function (): void {
             $handle = new CurlHandle();
             $handle->close();
-            expect(fn () => $handle->getErrorNumber())
+
+            expect(fn (): int => $handle->getErrorNumber())
                 ->toThrow(CurlException::class, 'CURL handle is closed');
         });
 
         it('throws on closed handle for getErrorMessage', function (): void {
             $handle = new CurlHandle();
             $handle->close();
-            expect(fn () => $handle->getErrorMessage())
+
+            expect(fn (): string => $handle->getErrorMessage())
                 ->toThrow(CurlException::class, 'CURL handle is closed');
         });
     });
@@ -160,14 +166,16 @@ describe('CurlHandle', function (): void {
         it('throws on closed handle for escape', function (): void {
             $handle = new CurlHandle();
             $handle->close();
-            expect(fn () => $handle->escape('test'))
+
+            expect(fn (): string => $handle->escape('test'))
                 ->toThrow(CurlException::class, 'CURL handle is closed');
         });
 
         it('throws on closed handle for unescape', function (): void {
             $handle = new CurlHandle();
             $handle->close();
-            expect(fn () => $handle->unescape('test'))
+
+            expect(fn (): string => $handle->unescape('test'))
                 ->toThrow(CurlException::class, 'CURL handle is closed');
         });
     });
@@ -176,6 +184,7 @@ describe('CurlHandle', function (): void {
         it('creates a copy of the handle', function (): void {
             $handle = new CurlHandle('https://example.com');
             $handle->setOption(CURLOPT_RETURNTRANSFER, true);
+
             $copy = $handle->copy();
 
             expect($copy)->toBeInstanceOf(CurlHandle::class);
@@ -186,7 +195,8 @@ describe('CurlHandle', function (): void {
         it('throws on closed handle', function (): void {
             $handle = new CurlHandle();
             $handle->close();
-            expect(fn () => $handle->copy())
+
+            expect(fn (): \PrettyPhp\Curl\CurlHandle => $handle->copy())
                 ->toThrow(CurlException::class, 'CURL handle is closed');
         });
     });
@@ -195,6 +205,7 @@ describe('CurlHandle', function (): void {
         it('resets all options', function (): void {
             $handle = new CurlHandle('https://example.com');
             $handle->setOption(CURLOPT_RETURNTRANSFER, true);
+
             $result = $handle->reset();
 
             expect($result)->toBe($handle); // chainable
@@ -204,7 +215,8 @@ describe('CurlHandle', function (): void {
         it('throws on closed handle', function (): void {
             $handle = new CurlHandle();
             $handle->close();
-            expect(fn () => $handle->reset())
+
+            expect(fn (): \PrettyPhp\Curl\CurlHandle => $handle->reset())
                 ->toThrow(CurlException::class, 'CURL handle is closed');
         });
     });
@@ -213,15 +225,17 @@ describe('CurlHandle', function (): void {
         it('can be closed', function (): void {
             $handle = new CurlHandle();
             $handle->close();
-            expect(fn () => $handle->getHandle())
+
+            expect(fn (): \CurlHandle => $handle->getHandle())
                 ->toThrow(CurlException::class, 'CURL handle is closed');
         });
 
         it('can be closed multiple times safely', function (): void {
             $handle = new CurlHandle();
             $handle->close();
-            $handle->close(); // should not throw
-            expect(fn () => $handle->getHandle())
+            $handle->close();
+             // should not throw
+            expect(fn (): \CurlHandle => $handle->getHandle())
                 ->toThrow(CurlException::class);
         });
     });
@@ -274,7 +288,8 @@ describe('CurlHandle', function (): void {
         it('throws on closed handle', function (): void {
             $handle = new CurlHandle();
             $handle->close();
-            expect(fn () => $handle->getHandle())
+
+            expect(fn (): \CurlHandle => $handle->getHandle())
                 ->toThrow(CurlException::class, 'CURL handle is closed');
         });
     });

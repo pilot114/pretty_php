@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace PrettyPhp\Binary;
 
 class HexPrint
@@ -41,14 +43,7 @@ class HexPrint
             throw new \InvalidArgumentException('Hexadecimal string must have even length');
         }
 
-        $binary = '';
-        $length = strlen($hex);
-
-        for ($i = 0; $i < $length; $i += 2) {
-            $binary .= chr((int) hexdec(substr($hex, $i, 2)));
-        }
-
-        return $binary;
+        return pack('H*', $hex);
     }
 
     /**

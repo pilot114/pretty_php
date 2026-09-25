@@ -106,7 +106,7 @@ Protect the `main` branch:
 ### CI Workflow (`ci.yml`)
 - **Triggers:** Push to `main`/`develop`, Pull Requests
 - **Jobs:**
-  - Tests on PHP 8.4
+  - Tests on PHP 8.5
   - Code quality checks (PHPStan, Rector, CodeSniffer)
   - Performance benchmarks (on PRs)
 - **Duration:** ~2-3 minutes

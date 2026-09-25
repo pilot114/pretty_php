@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 function removeDirectory(string $dir): void
 {
     if (!is_dir($dir)) {

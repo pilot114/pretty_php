@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use PrettyPhp\Binary\Security\BufferOverflowException;
 use PrettyPhp\Binary\Security\RateLimitException;
 use PrettyPhp\Binary\Security\SecurityException;

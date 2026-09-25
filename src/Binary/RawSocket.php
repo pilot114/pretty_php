@@ -23,6 +23,18 @@ if (!defined('IP_RECVTOS')) {
     define('IP_RECVTOS', 13);
 }
 
+if (!defined('IP_HDRINCL')) {
+    define('IP_HDRINCL', PHP_OS_FAMILY === 'Linux' ? 3 : 2);
+}
+
+// @codeCoverageIgnoreStart
+// Provided by ext-sockets on Linux; fallback for other platforms
+if (!defined('SO_BINDTODEVICE')) {
+    define('SO_BINDTODEVICE', 25);
+}
+
+// @codeCoverageIgnoreEnd
+
 /**
  * RawSocket - Enhanced raw socket handling
  *
@@ -40,7 +52,8 @@ class RawSocket extends Socket
     public static function icmp(): self
     {
         self::checkRootPrivileges();
-        return new self(AF_INET, SOCK_RAW, 1); // ICMP protocol is 1
+        // ICMP protocol is 1
+        return new self(AF_INET, SOCK_RAW, 1); // @codeCoverageIgnore
     }
 
     /**
@@ -51,7 +64,8 @@ class RawSocket extends Socket
     public static function tcp(): self
     {
         self::checkRootPrivileges();
-        return new self(AF_INET, SOCK_RAW, 6); // TCP protocol is 6
+        // TCP protocol is 6
+        return new self(AF_INET, SOCK_RAW, 6); // @codeCoverageIgnore
     }
 
     /**
@@ -62,7 +76,8 @@ class RawSocket extends Socket
     public static function udp(): self
     {
         self::checkRootPrivileges();
-        return new self(AF_INET, SOCK_RAW, 17); // UDP protocol is 17
+        // UDP protocol is 17
+        return new self(AF_INET, SOCK_RAW, 17); // @codeCoverageIgnore
     }
 
     /**
@@ -72,7 +87,7 @@ class RawSocket extends Socket
     public static function protocol(int $protocol): self
     {
         self::checkRootPrivileges();
-        return new self(AF_INET, SOCK_RAW, $protocol);
+        return new self(AF_INET, SOCK_RAW, $protocol); // @codeCoverageIgnore
     }
 
     /**
@@ -97,16 +112,14 @@ class RawSocket extends Socket
      */
     public function enableIpHeaderInclude(): self
     {
-        if (!defined('IP_HDRINCL')) {
-            define('IP_HDRINCL', 2);
-        }
+        $this->setOption(IPPROTO_IP, IP_HDRINCL, 1);
 
-        $hdrincl = IP_HDRINCL;
-        assert(is_int($hdrincl));
-        $this->setOption(IPPROTO_IP, $hdrincl, 1);
+        // IP_HDRINCL is accepted only by raw sockets, which require root privileges
+        // @codeCoverageIgnoreStart
         $this->includeIpHeader = true;
 
         return $this;
+        // @codeCoverageIgnoreEnd
     }
 
     /**
@@ -115,16 +128,14 @@ class RawSocket extends Socket
      */
     public function disableIpHeaderInclude(): self
     {
-        if (!defined('IP_HDRINCL')) {
-            define('IP_HDRINCL', 2);
-        }
+        $this->setOption(IPPROTO_IP, IP_HDRINCL, 0);
 
-        $hdrincl = IP_HDRINCL;
-        assert(is_int($hdrincl));
-        $this->setOption(IPPROTO_IP, $hdrincl, 0);
+        // IP_HDRINCL is accepted only by raw sockets, which require root privileges
+        // @codeCoverageIgnoreStart
         $this->includeIpHeader = false;
 
         return $this;
+        // @codeCoverageIgnoreEnd
     }
 
     /**
@@ -294,10 +305,6 @@ class RawSocket extends Socket
      */
     public function bindToInterface(string $interfaceName): self
     {
-        if (!defined('SO_BINDTODEVICE')) {
-            define('SO_BINDTODEVICE', 25);
-        }
-
         $this->setOption(SOL_SOCKET, SO_BINDTODEVICE, $interfaceName);
         return $this;
     }

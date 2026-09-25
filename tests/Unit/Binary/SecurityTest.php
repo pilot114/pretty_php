@@ -51,7 +51,7 @@ class DeepNestedPacket
     }
 }
 
-class SecurityTest extends TestCase
+final class SecurityTest extends TestCase
 {
     protected function setUp(): void
     {
@@ -281,7 +281,7 @@ class SecurityTest extends TestCase
 
         $this->assertIsArray($findings);
         $this->assertNotEmpty($findings);
-        $hasWarning = array_any($findings, fn($finding): bool => $finding['severity'] === 'warning' &&
+        $hasWarning = array_any($findings, fn(array $finding): bool => $finding['severity'] === 'warning' &&
             str_contains($finding['message'], 'rate limiting'));
         $this->assertTrue($hasWarning);
     }

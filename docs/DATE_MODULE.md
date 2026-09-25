@@ -12,7 +12,6 @@ Comprehensive date/time module covering all 48 PHP date functions with elegant o
 ## Quick Start
 
 ```php
-use function PrettyPhp\{datetime, interval, timezone};
 use PrettyPhp\Base\Date;
 
 // DateTime operations
@@ -338,9 +337,12 @@ $version = Date::timezoneVersion();     // timezone_version_get()
 ### Sun Times
 
 ```php
-$sunrise = Date::sunrise($timestamp, \SUNFUNCS_RET_TIMESTAMP, $lat, $lon);
-$sunset = Date::sunset($timestamp, \SUNFUNCS_RET_TIMESTAMP, $lat, $lon);
-$sunInfo = Date::sunInfo($timestamp, $lat, $lon);
+$sunInfo = Date::sunInfo($timestamp, $lat, $lon);  // date_sun_info()
+$sunrise = $sunInfo['sunrise'];                     // int, or bool during polar day/night
+
+// Or via DateTime (returns null during polar day/night)
+$sunrise = DateTime::now()->sunrise($lat, $lon);
+$sunset = DateTime::now()->sunset($lat, $lon);
 ```
 
 ### Factory Methods
@@ -392,8 +394,8 @@ All 48 PHP date functions are covered:
 | `date_parse_from_format()` | `Date::parseFromFormat()` |
 | `date_sub()` | `DateTime::sub()` |
 | `date_sun_info()` | `DateTime::sunInfo()`, `Date::sunInfo()` |
-| `date_sunrise()` | `DateTime::sunrise()`, `Date::sunrise()` |
-| `date_sunset()` | `DateTime::sunset()`, `Date::sunset()` |
+| `date_sunrise()` | `DateTime::sunrise()`, `Date::sunInfo()` |
+| `date_sunset()` | `DateTime::sunset()`, `Date::sunInfo()` |
 | `date_time_set()` | `DateTime::setTime()` |
 | `date_timestamp_get()` | `DateTime::timestamp()` |
 | `date_timestamp_set()` | `DateTime::fromTimestamp()` |

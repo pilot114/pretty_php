@@ -232,7 +232,7 @@ class Arr
      */
     public function unique(): self
     {
-        return new self(array_unique($this->value));
+        return new self(array_unique($this->value, SORT_REGULAR));
     }
 
     /**
@@ -268,8 +268,7 @@ class Arr
         if (!$callback instanceof \Closure) {
             return new self(array_filter(
                 $this->value,
-                fn($value): bool => $value !== null && $value !== false && $value !== '' &&
-                    $value !== 0 && $value !== [],
+                fn($value): bool => !in_array($value, [null, false, '', 0, []], true),
                 ARRAY_FILTER_USE_BOTH
             ));
         }
@@ -409,9 +408,20 @@ class Arr
         return new self($chunked);
     }
 
+    /**
+     * @throws ArrException If an element cannot be converted to string
+     */
     public function join(string $glue = ''): Str
     {
-        return new Str(implode($glue, $this->value));
+        $strings = array_map(static function (mixed $item): string {
+            if (is_scalar($item) || $item === null || $item instanceof \Stringable) {
+                return (string) $item;
+            }
+
+            throw new ArrException('Cannot join value of type ' . get_debug_type($item));
+        }, $this->value);
+
+        return new Str(implode($glue, $strings));
     }
 
     /**
@@ -423,9 +433,7 @@ class Arr
         $groups = [];
         foreach ($this->value as $key => $value) {
             $groupKey = $callback($value, $key);
-            if (!isset($groups[$groupKey])) {
-                $groups[$groupKey] = [];
-            }
+            $groups[$groupKey] ??= [];
 
             $groups[$groupKey][] = $value;
         }
@@ -533,7 +541,7 @@ class Arr
             $allArrays[] = is_array($array) ? $array : iterator_to_array($array);
         }
 
-        $maxLength = max(array_map('count', $allArrays));
+        $maxLength = max(array_map(count(...), $allArrays));
         $result = [];
 
         for ($i = 0; $i < $maxLength; $i++) {
@@ -566,9 +574,7 @@ class Arr
             }
 
             foreach ($tuple as $index => $value) {
-                if (!isset($result[$index])) {
-                    $result[$index] = [];
-                }
+                $result[$index] ??= [];
 
                 $result[$index][] = $value;
             }
@@ -590,7 +596,7 @@ class Arr
             $phpArrays[] = is_array($array) ? $array : iterator_to_array($array);
         }
 
-        return new self(array_diff($this->value, ...$phpArrays));
+        return new self(array_udiff($this->value, ...$phpArrays, ...[$this->compareValues(...)]));
     }
 
     /**
@@ -605,7 +611,7 @@ class Arr
             $phpArrays[] = is_array($array) ? $array : iterator_to_array($array);
         }
 
-        return new self(array_intersect($this->value, ...$phpArrays));
+        return new self(array_uintersect($this->value, ...$phpArrays, ...[$this->compareValues(...)]));
     }
 
     /**
@@ -622,7 +628,7 @@ class Arr
             $result = array_merge($result, $phpArray);
         }
 
-        return new self(array_unique($result));
+        return new self(array_unique($result, SORT_REGULAR));
     }
 
     /**
@@ -685,5 +691,10 @@ class Arr
 
         /** @var array<int|string, mixed> $result */
         return new self($result);
+    }
+
+    private function compareValues(mixed $a, mixed $b): int
+    {
+        return $a <=> $b;
     }
 }

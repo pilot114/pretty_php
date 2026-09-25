@@ -14,13 +14,12 @@ return RectorConfig::configure()
     ])
     ->withSets([
         // PHP version sets - use the latest
-        LevelSetList::UP_TO_PHP_84,
+        LevelSetList::UP_TO_PHP_85,
 
         // Code quality sets
         SetList::CODE_QUALITY,
         SetList::CODING_STYLE,
         SetList::DEAD_CODE,
-        SetList::STRICT_BOOLEANS,
         SetList::PRIVATIZATION,
         SetList::TYPE_DECLARATION,
         SetList::EARLY_RETURN,
@@ -28,12 +27,14 @@ return RectorConfig::configure()
 
         // PHPUnit improvements
         PHPUnitSetList::PHPUNIT_CODE_QUALITY,
-        PHPUnitSetList::PHPUNIT_110,
     ])
     ->withSkip([
         // Skip RemoveNonExistingVarAnnotationRector to preserve PHPStan type hints
         \Rector\DeadCode\Rector\Node\RemoveNonExistingVarAnnotationRector::class,
+        // Buggy with promoted properties: removes constructors that declare public readonly props
+        \Rector\DeadCode\Rector\ClassMethod\RemoveParentDelegatingConstructorRector::class,
     ])
+    ->withComposerBased(phpunit: true)
     ->withPhpSets(
-        php84: true
+        php85: true
     );

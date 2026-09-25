@@ -41,9 +41,9 @@ describe('CurlException', function (): void {
 
         try {
             $handle->execute();
-        } catch (CurlException $e) {
-            expect($e->curlCode)->toBeGreaterThan(0);
-            expect($e->getMessage())->not->toBe('');
+        } catch (CurlException $curlException) {
+            expect($curlException->curlCode)->toBeGreaterThan(0);
+            expect($curlException->getMessage())->not->toBe('');
         }
     });
 });

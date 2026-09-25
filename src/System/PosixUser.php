@@ -180,7 +180,7 @@ readonly class PosixUser
     {
         $groups = posix_getgroups();
         if ($groups === false) {
-            throw new \RuntimeException("Failed to get supplementary groups");
+            throw new \RuntimeException("Failed to get supplementary groups"); // @codeCoverageIgnore
         }
 
         /** @var Arr<int> */
@@ -198,7 +198,7 @@ readonly class PosixUser
             throw new \RuntimeException('Failed to initialize groups for user ' . $username);
         }
 
-        return true;
+        return true; // @codeCoverageIgnore
     }
 
     /**
@@ -209,7 +209,7 @@ readonly class PosixUser
     {
         $login = posix_getlogin();
         if ($login === false) {
-            throw new \RuntimeException("Failed to get login name");
+            throw new \RuntimeException("Failed to get login name"); // @codeCoverageIgnore
         }
 
         return $login;

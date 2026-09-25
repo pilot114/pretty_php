@@ -16,7 +16,6 @@ final class Curl
      * Create a new CURL handle
      *
      * @param string|null $url Optional URL to initialize with
-     * @return CurlHandle
      */
     public static function init(?string $url = null): CurlHandle
     {
@@ -25,8 +24,6 @@ final class Curl
 
     /**
      * Create a new CURL Multi handle for parallel requests
-     *
-     * @return CurlMultiHandle
      */
     public static function multi(): CurlMultiHandle
     {
@@ -35,8 +32,6 @@ final class Curl
 
     /**
      * Create a new CURL Share handle for sharing data between handles
-     *
-     * @return CurlShareHandle
      */
     public static function share(): CurlShareHandle
     {
@@ -170,7 +165,17 @@ final class Curl
     /**
      * Get CURL version information
      *
-     * @return array{version_number: int, age: int, features: int, ssl_version_number: int, version: string, host: string, ssl_version: string, libz_version: string, protocols: array<int, string>}
+     * @return array{
+     *     version_number: int,
+     *     age: int,
+     *     features: int,
+     *     ssl_version_number: int,
+     *     version: string,
+     *     host: string,
+     *     ssl_version: string,
+     *     libz_version: string,
+     *     protocols: array<int, string>
+     * }
      */
     public static function version(): array
     {

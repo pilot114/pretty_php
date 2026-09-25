@@ -11,6 +11,8 @@ use RuntimeException;
  *
  * Provides functionality to capture network packets from an interface.
  * Requires root/administrator privileges.
+ *
+ * @phpstan-consistent-constructor
  */
 class PacketCapture
 {
@@ -39,7 +41,15 @@ class PacketCapture
         private readonly int $protocol = 0,
         private readonly int $bufferSize = 65535
     ) {
-        // Check privileges
+        $this->checkPrivileges();
+    }
+
+    /**
+     * Ensure the process is allowed to open raw sockets
+     * @throws RuntimeException
+     */
+    protected function checkPrivileges(): void
+    {
         if (posix_geteuid() !== 0) {
             throw new RuntimeException(
                 'Packet capture requires superuser (root) privileges'
@@ -48,12 +58,21 @@ class PacketCapture
     }
 
     /**
+     * Create the socket used for capturing
+     * @throws RuntimeException
+     */
+    protected function createSocket(int $protocol): RawSocket
+    {
+        return RawSocket::protocol($protocol); // @codeCoverageIgnore
+    }
+
+    /**
      * Create a packet capture for all protocols
      * @throws RuntimeException
      */
     public static function all(string $interface = ''): self
     {
-        return new self($interface, 0);
+        return new static($interface, 0);
     }
 
     /**
@@ -62,7 +81,7 @@ class PacketCapture
      */
     public static function icmp(string $interface = ''): self
     {
-        return new self($interface, 1);
+        return new static($interface, 1);
     }
 
     /**
@@ -71,7 +90,7 @@ class PacketCapture
      */
     public static function tcp(string $interface = ''): self
     {
-        return new self($interface, 6);
+        return new static($interface, 6);
     }
 
     /**
@@ -80,7 +99,7 @@ class PacketCapture
      */
     public static function udp(string $interface = ''): self
     {
-        return new self($interface, 17);
+        return new static($interface, 17);
     }
 
     /**
@@ -97,13 +116,15 @@ class PacketCapture
         // Use ETH_P_ALL (0x0003) to capture all protocols
         $protocol = $this->protocol === 0 ? 0x0003 : $this->protocol;
 
-        $this->socket = RawSocket::protocol($protocol);
-        $this->socket->setBlocking(false);
+        $socket = $this->createSocket($protocol);
+        $socket->setBlocking(false);
 
         // Bind to specific interface if specified
         if ($this->interface !== '') {
-            $this->socket->bindToInterface($this->interface);
+            $socket->bindToInterface($this->interface);
         }
+
+        $this->socket = $socket;
 
         $this->capturing = true;
         $this->capturedPackets = 0;
@@ -170,9 +191,7 @@ class PacketCapture
      */
     public function capture(int $count = 0, float $timeout = 0): array
     {
-        if (!$this->capturing) {
-            throw new RuntimeException('Packet capture is not started');
-        }
+        $socket = $this->activeSocket();
 
         $packets = [];
         $startTime = microtime(true);
@@ -190,11 +209,7 @@ class PacketCapture
 
             // Try to receive a packet
             try {
-                if (!$this->socket instanceof \PrettyPhp\Binary\RawSocket) {
-                    break;
-                }
-
-                $result = $this->socket->receiveFrom($this->bufferSize);
+                $result = $socket->receiveFrom($this->bufferSize);
 
                 // Apply filters
                 if (!$this->matchesFilters($result['data'])) {
@@ -236,9 +251,7 @@ class PacketCapture
      */
     public function captureStream(callable $callback, float $timeout = 0): int
     {
-        if (!$this->capturing) {
-            throw new RuntimeException('Packet capture is not started');
-        }
+        $socket = $this->activeSocket();
 
         $startTime = microtime(true);
         $count = 0;
@@ -251,11 +264,7 @@ class PacketCapture
 
             // Try to receive a packet
             try {
-                if (!$this->socket instanceof \PrettyPhp\Binary\RawSocket) {
-                    break;
-                }
-
-                $result = $this->socket->receiveFrom($this->bufferSize);
+                $result = $socket->receiveFrom($this->bufferSize);
 
                 // Apply filters
                 if (!$this->matchesFilters($result['data'])) {
@@ -308,6 +317,19 @@ class PacketCapture
     public function isCapturing(): bool
     {
         return $this->capturing;
+    }
+
+    /**
+     * Get the socket of a running capture
+     * @throws RuntimeException If capture is not started
+     */
+    private function activeSocket(): RawSocket
+    {
+        if (!$this->capturing || !$this->socket instanceof RawSocket) {
+            throw new RuntimeException('Packet capture is not started');
+        }
+
+        return $this->socket;
     }
 
     /**

@@ -53,7 +53,7 @@ readonly class NetworkInterface implements \Stringable
     {
         $interfaces = net_get_interfaces();
         if ($interfaces === false) {
-            throw new RuntimeException('Failed to get network interfaces');
+            throw new RuntimeException('Failed to get network interfaces'); // @codeCoverageIgnore
         }
 
         /** @var array<string, self> $result */

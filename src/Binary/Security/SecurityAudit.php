@@ -107,11 +107,11 @@ class SecurityAudit
     /**
      * Validate security configuration
      *
-     * @return array<int, array{severity: string, message: string, recommendation: string|null}>
+     * @return array<int, array{severity: 'warning'|'info'|'success', message: string, recommendation: string|null}>
      */
     public static function validateConfiguration(): array
     {
-        /** @var array<int, array{severity: string, message: string, recommendation: string|null}> $findings */
+        /** @var array<int, array{severity: 'warning'|'info'|'success', message: string, recommendation: string|null}> $findings */
         $findings = [];
 
         $maxBufferSize = SecurityConfig::getMaxBufferSize();
@@ -174,11 +174,9 @@ class SecurityAudit
             $recommendation = $finding['recommendation'];
 
             $emoji = match ($severity) {
-                'critical' => '🔴',
                 'warning' => '⚠️',
                 'info' => 'ℹ️',
                 'success' => '✅',
-                default => '•',
             };
 
             $report .= "{$emoji} **{$message}**\n";

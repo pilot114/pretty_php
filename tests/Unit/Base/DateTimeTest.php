@@ -690,3 +690,62 @@ describe('DateTime', function (): void {
         });
     });
 });
+
+describe('DateTime extra coverage', function (): void {
+    it('accepts DateTimeZone objects', function (): void {
+        $tz = new \DateTimeZone('Asia/Tokyo');
+        expect(new DateTime('2024-01-15 10:00:00', $tz)->timezoneName()->get())->toBe('Asia/Tokyo');
+        expect(DateTime::fromFormat('Y-m-d', '2024-01-15', 'Asia/Tokyo')->timezoneName()->get())->toBe('Asia/Tokyo');
+        expect(DateTime::fromFormat('Y-m-d', '2024-01-15', $tz)->timezoneName()->get())->toBe('Asia/Tokyo');
+    });
+
+    it('checks relative day predicates', function (): void {
+        $now = new \DateTimeImmutable();
+        expect(DateTime::fromImmutable($now->modify('+1 hour'))->isFuture())->toBeTrue();
+        expect(DateTime::fromImmutable($now)->isToday())->toBeTrue();
+        expect(DateTime::fromImmutable($now->modify('-1 day'))->isYesterday())->toBeTrue();
+        expect(DateTime::fromImmutable($now->modify('+1 day'))->isTomorrow())->toBeTrue();
+    });
+
+    it('exposes timezone object and offset', function (): void {
+        $dt = new DateTime('2024-01-15 10:00:00', 'UTC');
+        expect($dt->tz())->toBeInstanceOf(\PrettyPhp\Base\Timezone::class);
+        expect($dt->timezoneOffset())->toBe(0);
+    });
+
+    it('formats until for long periods', function (string $modifier, string $expected): void {
+        $dt = DateTime::fromImmutable(new \DateTimeImmutable()->modify($modifier));
+        expect($dt->until()->get())->toBe($expected);
+    })->with([
+        ['+1 year +1 hour', 'in 1 year'],
+        ['+3 years +1 hour', 'in 3 years'],
+        ['+1 month +1 hour', 'in 1 month'],
+        ['+4 months +1 hour', 'in 4 months'],
+        ['+7 days +1 hour', 'in 1 week'],
+        ['+15 days +1 hour', 'in 2 weeks'],
+    ]);
+
+    it('sets ISO date', function (): void {
+        expect(new DateTime('2024-01-01')->setISODate(2024, 10, 3)->format('Y-m-d')->get())->toBe('2024-03-06');
+    });
+
+    it('calculates sun times', function (): void {
+        $dt = new DateTime('2024-01-15 12:00:00', 'UTC');
+        expect($dt->sunrise(51.5, 0.0))->toBeInstanceOf(DateTime::class);
+        expect($dt->sunset(51.5, 0.0))->toBeInstanceOf(DateTime::class);
+        expect($dt->sunInfo(51.5, 0.0))->toHaveKeys(['sunrise', 'sunset', 'transit']);
+    });
+
+    it('returns null for sun times during polar day or night', function (): void {
+        $dt = new DateTime('2024-06-21 12:00:00', 'UTC');
+        expect($dt->sunrise(89.0, 0.0))->toBeNull();
+        expect($dt->sunset(89.0, 0.0))->toBeNull();
+    });
+
+    it('detects leap years', function (): void {
+        expect(new DateTime('2024-01-01')->isLeapYear())->toBeTrue();
+        expect(new DateTime('2023-01-01')->isLeapYear())->toBeFalse();
+        expect(new DateTime('2000-01-01')->isLeapYear())->toBeTrue();
+        expect(new DateTime('1900-01-01')->isLeapYear())->toBeFalse();
+    });
+});

@@ -207,3 +207,24 @@ describe('DateInterval', function (): void {
         });
     });
 });
+
+describe('DateInterval edge cases', function (): void {
+    it('formats every unit in human readable form', function (): void {
+        expect(DateInterval::fromSpec('P1Y1M1DT1H1M1S')->toHumanReadable()->get())
+            ->toBe('1 year, 1 month, 1 day, 1 hour, 1 minute, 1 second');
+        expect(DateInterval::fromSpec('P2Y2M2DT2H2M2S')->toHumanReadable()->get())
+            ->toBe('2 years, 2 months, 2 days, 2 hours, 2 minutes, 2 seconds');
+        expect(DateInterval::fromSpec('PT0S')->toHumanReadable()->get())->toBe('0 seconds');
+    });
+
+    it('exposes microseconds, total days and inversion', function (): void {
+        $interval = DateInterval::fromSpec('P1D');
+        expect($interval->microseconds())->toBe(0.0);
+        expect($interval->totalDays())->toBeFalse();
+        expect($interval->isInverted())->toBeFalse();
+    });
+
+    it('compares with native DateInterval', function (): void {
+        expect(DateInterval::fromSpec('P1D')->equals(new \DateInterval('P1D')))->toBeTrue();
+    });
+});

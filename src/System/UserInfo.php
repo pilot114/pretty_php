@@ -33,19 +33,12 @@ readonly class UserInfo
             throw new \RuntimeException('User not found: ' . $username);
         }
 
-        /** @var string $name */
         $name = $info['name'];
-        /** @var string $passwd */
         $passwd = $info['passwd'];
-        /** @var int $uid */
         $uid = $info['uid'];
-        /** @var int $gid */
         $gid = $info['gid'];
-        /** @var string $gecos */
         $gecos = $info['gecos'];
-        /** @var string $dir */
         $dir = $info['dir'];
-        /** @var string $shell */
         $shell = $info['shell'];
 
         return new self($name, $passwd, $uid, $gid, $gecos, $dir, $shell);
@@ -62,19 +55,12 @@ readonly class UserInfo
             throw new \RuntimeException(sprintf('User with UID %d not found', $uid));
         }
 
-        /** @var string $name */
         $name = $info['name'];
-        /** @var string $passwd */
         $passwd = $info['passwd'];
-        /** @var int $uidValue */
         $uidValue = $info['uid'];
-        /** @var int $gid */
         $gid = $info['gid'];
-        /** @var string $gecos */
         $gecos = $info['gecos'];
-        /** @var string $dir */
         $dir = $info['dir'];
-        /** @var string $shell */
         $shell = $info['shell'];
 
         return new self($name, $passwd, $uidValue, $gid, $gecos, $dir, $shell);

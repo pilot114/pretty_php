@@ -86,10 +86,12 @@ final class CurlMultiHandle
         $result = curl_multi_remove_handle($this->handle, $curlHandle->getHandle());
 
         if ($result !== CURLM_OK) {
+            // @codeCoverageIgnoreStart
             throw new CurlMultiException(
                 "Failed to remove handle: " . curl_multi_strerror($result),
                 $result
             );
+            // @codeCoverageIgnoreEnd
         }
 
         unset($this->handles[spl_object_id($curlHandle)]);
@@ -109,13 +111,16 @@ final class CurlMultiHandle
     {
         $this->ensureHandleExists();
 
-        $result = curl_multi_exec($this->handle, $stillRunning);
+        $result = curl_multi_exec($this->handle, $running);
+        $stillRunning = is_int($running) ? $running : 0;
 
         if ($result !== CURLM_OK && $result !== CURLM_CALL_MULTI_PERFORM) {
+            // @codeCoverageIgnoreStart
             throw new CurlMultiException(
                 "Multi exec failed: " . curl_multi_strerror($result),
                 $result
             );
+            // @codeCoverageIgnoreEnd
         }
 
         return $result;
@@ -161,8 +166,11 @@ final class CurlMultiHandle
     public function infoRead(int &$messagesInQueue = 0): array|false
     {
         $this->ensureHandleExists();
-        /** @var array{msg: int, result: int, handle: \CurlHandle}|false */
-        return curl_multi_info_read($this->handle, $messagesInQueue);
+        /** @var array{msg: int, result: int, handle: \CurlHandle}|false $info */
+        $info = curl_multi_info_read($this->handle, $queued);
+        $messagesInQueue = is_int($queued) ? $queued : 0;
+
+        return $info;
     }
 
     /**

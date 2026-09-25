@@ -348,3 +348,80 @@ describe('Path', function (): void {
         rmdir($tempDir);
     });
 });
+
+describe('Path extra coverage', function (): void {
+    beforeEach(function (): void {
+        $this->dir = sys_get_temp_dir() . '/pretty_php_path_extra_' . uniqid();
+        mkdir($this->dir . '/sub/deep', 0755, true);
+        touch($this->dir . '/sub/a.txt');
+        touch($this->dir . '/sub/deep/b.txt');
+    });
+
+    afterEach(function (): void {
+        foreach (['readonly', 'noread'] as $name) {
+            if (is_dir($this->dir . '/' . $name)) {
+                chmod($this->dir . '/' . $name, 0755);
+            }
+        }
+
+        removeDirectory($this->dir);
+    });
+
+    it('throws when current working directory is gone', function (): void {
+        $cwd = getcwd();
+        $gone = $this->dir . '/gone';
+        mkdir($gone);
+        chdir($gone);
+        rmdir($gone);
+
+        try {
+            expect(fn (): Path => new Path('relative')->resolve())
+                ->toThrow(\PrettyPhp\Exception\PathException::class, 'Unable to get current working directory');
+        } finally {
+            chdir($cwd);
+        }
+    });
+
+    it('removes extension from bare filename', function (): void {
+        expect(new Path('file.txt')->withoutExtension()->get())->toBe('file');
+    });
+
+    it('throws when directory cannot be created or listed', function (): void {
+        mkdir($this->dir . '/readonly', 0555);
+        expect(fn (): Path => @new Path($this->dir . '/readonly/new')->mkdir())
+            ->toThrow(\PrettyPhp\Exception\PathException::class, 'Unable to create directory');
+
+        mkdir($this->dir . '/noread', 0311);
+        expect(fn (): Arr => @new Path($this->dir . '/noread')->listFiles())
+            ->toThrow(\PrettyPhp\Exception\PathException::class, 'Unable to list directory');
+    })->skip(fn (): bool => posix_geteuid() === 0, 'root ignores directory permissions');
+
+    it('works with symbolic links', function (): void {
+        $link = new Path($this->dir . '/link');
+        expect($link->symlink($this->dir . '/sub'))->toBe($link);
+        expect($link->isLink())->toBeTrue();
+        expect($link->readLink()->get())->toBe($this->dir . '/sub');
+        expect($link->isSameAs($this->dir . '/sub'))->toBeTrue();
+
+        expect(fn (): Path => new Path($this->dir . '/sub')->readLink())
+            ->toThrow(\PrettyPhp\Exception\PathException::class, 'Path is not a symbolic link');
+        expect(fn (): Path => @$link->symlink($this->dir))
+            ->toThrow(\PrettyPhp\Exception\PathException::class, 'Unable to create symbolic link');
+    });
+
+    it('matches recursive glob patterns', function (): void {
+        $all = new Path($this->dir)->globRecursive('**')->get();
+        expect($all)->toContain($this->dir . '/sub/deep/b.txt');
+
+        $txt = new Path($this->dir)->globRecursive('**/*.txt')->get();
+        expect($txt)->toContain($this->dir . '/sub/a.txt')
+            ->toContain($this->dir . '/sub/deep/b.txt');
+
+        expect(new Path($this->dir . '/missing')->globRecursive('**')->get())->toBe([]);
+    });
+
+    it('compares non-existent paths literally', function (): void {
+        expect(new Path('/no/such/path')->isSameAs(new Path('/no/such/path')))->toBeTrue();
+        expect(new Path('/no/such/a')->isSameAs('/no/such/b'))->toBeFalse();
+    });
+});

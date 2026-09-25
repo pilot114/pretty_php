@@ -29,7 +29,7 @@ readonly class SystemInfo
     {
         $info = posix_uname();
         if ($info === false) {
-            throw new \RuntimeException("Failed to get system information");
+            throw new \RuntimeException("Failed to get system information"); // @codeCoverageIgnore
         }
 
         /** @var string $sysname */

@@ -1,11 +1,12 @@
-# Pretty PHP - Complete API Documentation
+# Pretty PHP — Agent Guide & API Documentation
 
-> For project overview, installation, and quick start guide, see [README.md](README.md)
-
-This document provides comprehensive API documentation and detailed usage examples for Pretty PHP.
+This file provides guidance to AI coding agents (Claude Code, Codex, etc.) working in this repository,
+followed by the complete API documentation. For project overview, installation and quick start,
+see [README.md](README.md).
 
 ## Table of Contents
 
+- [Agent Guide](#agent-guide)
 - [Usage Examples](#usage-examples)
   - [String Manipulation](#string-manipulation)
   - [Array Manipulation](#array-manipulation)
@@ -22,13 +23,81 @@ This document provides comprehensive API documentation and detailed usage exampl
 
 ---
 
+## Agent Guide
+
+### Project Overview
+
+Pretty PHP is a modern, object-oriented wrapper library for PHP's standard library (PHP 8.5+). It provides
+immutable data structures with fluent/chainable APIs and zero runtime dependencies. Package: `prettyph/pretty-php`.
+
+### Commands
+
+```bash
+composer test      # Run tests (Pest 4)
+composer coverage  # Run tests with coverage (requires Xdebug)
+composer check     # PHPStan + Rector dry-run + PHPCS
+composer fix       # Auto-fix code style (Rector + PHPCBF)
+composer bench     # Run PHPBench benchmarks (tests/benchmarks)
+
+vendor/bin/pest tests/Unit/Base/StrTest.php  # Run a single test file
+vendor/bin/pest --filter="test name"         # Run a specific test by name
+```
+
+### Module Structure
+
+- **`src/Base/`** — Core type wrappers: `Str`, `Arr`, `File`, `Path`, `Num`, `Json`, `DateTime`, `Date`,
+  `DateInterval`, `Timezone`. They are `readonly` classes returning new instances on mutation.
+  `Session` is a static facade with pluggable storage (`NativeSessionStorage`, `ArraySessionStorage`).
+- **`src/Binary/`** — Attribute-based binary packing/unpacking: `#[Binary(...)]`, `#[BitField(...)]`,
+  `#[Conditional(...)]`, `#[Validate(...)]` on properties, serialized via reflection. Includes protocol packets
+  (IP, ICMP, TCP, UDP, ARP, DNS, HTTP), sockets (`Socket`, `RawSocket`, `PacketCapture`, `NetworkInterface`)
+  and security utilities in `Binary/Security/` (`SecurityConfig`, `RateLimiter`, `SecurityAudit`).
+- **`src/Functional/`** — Railway-oriented types: `Result<T,E>` (Ok/Err), `Option<T>` (Some/None), `TryResult`.
+- **`src/Curl/`** — OOP wrapper for ext-curl: `Curl`, `CurlHandle`, `CurlMultiHandle`, `CurlShareHandle`
+  with enum-based HTTP methods/versions.
+- **`src/System/`** — POSIX wrappers: `Posix` facade, `PosixUser`, `PosixProcess`, `PosixSystem`, `PosixFile`.
+- **`src/Exception/`** — `PrettyPhpException` hierarchy (`ArrException`, `FileException`, `NumException`, `PathException`).
+- **`src/functions.php`** — Global (non-namespaced) helper functions auto-loaded via Composer:
+  `str()`, `arr()`, `file()`, `path()`, `num()`, `json()`, `datetime()`, `interval()`, `timezone()`,
+  `session()`, `ok()`, `err()`, `some()`, `none()`, `tryCall()`.
+
+### Key Patterns
+
+- **Immutability**: wrapper classes are `readonly`; operations return new instances.
+- **Fluent API**: methods return `self`/`static` for chaining.
+- **Generic types**: full PHPDoc `@template` generics for PHPStan type safety.
+- **Static factory methods**: `Result::ok()`, `Result::err()`, `Result::from()`, `Option::some()`,
+  `Option::none()`, `Option::from()`.
+
+### Quality Standards
+
+- **PHPStan**: level `max` with strict rules, checked exception tracking (`RuntimeException` is checked, so
+  document it with `@throws`) and `checkImplicitMixed: true`. Fix types instead of adding `@phpstan-ignore`.
+- **Code style**: PSR-12 via PHPCS (120 char warning, 150 char hard limit).
+- **Rector**: PHP 8.5 level, code quality, dead code, type declarations, early return, privatization.
+  `RemoveParentDelegatingConstructorRector` is skipped: it deletes constructors with promoted properties.
+- **Namespaces**: `PrettyPhp\` for source, `Tests\Support\` for test helpers, `PrettyPhp\Tests\benchmarks` for benchmarks.
+
+### Testing
+
+- Tests use **Pest 4** functional syntax (`describe()`, `it()`, `expect()`). Test files mirror the source
+  structure under `tests/Unit/`; helper classes live in `tests/Support/`.
+- Do not mix Pest functions into class-based `TestCase` files (e.g. `tests/Unit/Binary/SecurityTest.php`):
+  Pest then silently skips the class tests.
+- Line coverage is **100%** and enforced in CI (`--min=100`). New code needs tests.
+- Tests must not need network access or root: use `file://` URLs, the built-in PHP server
+  (`tests/Support/http-echo.php`), UDP sockets on `127.0.0.1`, and permission tricks for filesystem failures.
+- Code that cannot run in the test process (root-only syscalls, failure branches the OS never triggers)
+  is marked with `// @codeCoverageIgnore` (exact comment text, nothing after it) or
+  `// @codeCoverageIgnoreStart` / `// @codeCoverageIgnoreEnd`, with a comment explaining why.
+
+---
+
 ## Usage Examples
 
 ### String Manipulation
 
 ```php
-use function PrettyPhp\str;
-
 // Create a string wrapper
 $text = str('  Hello World  ');
 
@@ -56,8 +125,6 @@ echo $fruits->join(' | '); // "apple | banana | cherry"
 ### Array Manipulation
 
 ```php
-use function PrettyPhp\arr;
-
 // Create array wrapper
 $numbers = arr([1, 2, 3, 4, 5]);
 
@@ -83,8 +150,6 @@ echo $scores->max();     // 96
 ### File Operations
 
 ```php
-use function PrettyPhp\file;
-
 // File reading and writing
 $file = file('/path/to/file.txt');
 
@@ -109,8 +174,6 @@ $file->move('/path/to/new/location.txt');
 ### Path Manipulation
 
 ```php
-use function PrettyPhp\path;
-
 // Path operations
 $path = path('/home/user/documents');
 
@@ -135,8 +198,6 @@ echo $backupPath; // "config.backup.json"
 ### Method Chaining Examples
 
 ```php
-use function PrettyPhp\{str, arr};
-
 // Complex string processing
 $result = str('  HELLO,WORLD,HOW,ARE,YOU  ')
     ->trim()
@@ -167,8 +228,6 @@ echo $names; // "Jane, John"
 ### Integration with Existing Code
 
 ```php
-use function PrettyPhp\{str, arr};
-
 // Pretty PHP objects can be easily converted back to native PHP types
 $prettyArray = arr([1, 2, 3, 4]);
 $nativeArray = $prettyArray->get(); // Returns native PHP array
@@ -734,5 +793,4 @@ $packet = new ICMPPacket(
 
 - [README.md](README.md) - Project overview and quick start
 - [CONTRIBUTING.md](CONTRIBUTING.md) - Contribution guidelines
-- [CHANGELOG.md](CHANGELOG.md) - Version history
 - [ROADMAP.md](ROADMAP.md) - Future development plans

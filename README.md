@@ -1,7 +1,7 @@
 # Pretty PHP
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![PHP Version](https://img.shields.io/badge/php-%3E%3D8.4-8892BF.svg)](https://www.php.net/)
+[![PHP Version](https://img.shields.io/badge/php-%3E%3D8.5-8892BF.svg)](https://www.php.net/)
 [![Latest Version](https://img.shields.io/packagist/v/pilot114/pretty_php.svg)](https://packagist.org/packages/pilot114/pretty_php)
 [![Total Downloads](https://img.shields.io/packagist/dt/pilot114/pretty_php.svg)](https://packagist.org/packages/pilot114/pretty_php)
 [![CI Status](https://github.com/pilot114/pretty_php/actions/workflows/ci.yml/badge.svg)](https://github.com/pilot114/pretty_php/actions/workflows/ci.yml)
@@ -12,7 +12,7 @@ A modern, object-oriented wrapper for PHP's standard library with consistent API
 ## Features
 
 - 🔗 **Chainable API** - Fluent interface for all operations
-- 🛡️ **Type-safe** - Full PHP 8.4+ type declarations with PHPStan max level
+- 🛡️ **Type-safe** - Full PHP 8.5+ type declarations with PHPStan max level
 - 🔒 **Immutable** - All operations return new instances
 - 📦 **Zero dependencies** - Pure PHP implementation
 - ⚡ **High performance** - Optimized for speed
@@ -30,8 +30,6 @@ composer require prettyph/pretty-php
 ## Quick Start
 
 ```php
-use function PrettyPhp\{str, arr, file, path, num, json, datetime};
-
 // String manipulation
 $result = str('  Hello World  ')
     ->trim()
@@ -132,7 +130,6 @@ Railway-oriented programming with type-safe error handling:
 
 ```php
 use PrettyPhp\Functional\{Result, Option};
-use function PrettyPhp\{json};
 
 // Result type for error handling
 $result = json('{"name": "John"}')->fromString()->decode();
@@ -163,11 +160,13 @@ For security concerns, please see [SECURITY.md](SECURITY.md).
 - 📖 [Full Documentation](AGENTS.md)
 - 🗺️ [Roadmap](ROADMAP.md)
 - 🔐 [Security Policy](SECURITY.md)
+- 🤝 [Contributing](CONTRIBUTING.md)
+- 📜 [Code of Conduct](CODE_OF_CONDUCT.md)
 
 ## Requirements
 
-- PHP 8.4+
-- Extensions: `ext-ctype`, `ext-fileinfo`, `ext-sockets`, `ext-posix`
+- PHP 8.5+
+- Extensions: `ext-ctype`, `ext-curl`, `ext-fileinfo`, `ext-sockets`, `ext-posix`
 
 ## Development
 

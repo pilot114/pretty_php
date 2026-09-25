@@ -26,7 +26,7 @@ readonly class ProcessTimes
     {
         $times = posix_times();
         if ($times === false) {
-            throw new \RuntimeException("Failed to get process times");
+            throw new \RuntimeException("Failed to get process times"); // @codeCoverageIgnore
         }
 
         /** @var int $ticks */

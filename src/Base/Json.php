@@ -133,12 +133,12 @@ readonly class Json implements \Stringable
             return json_last_error() === JSON_ERROR_NONE;
         }
 
-        if (!is_string($this->value)) {
+        try {
+            $this->data();
+            return true;
+        } catch (\JsonException) {
             return false;
         }
-
-        json_decode($this->value);
-        return json_last_error() === JSON_ERROR_NONE;
     }
 
     /**
@@ -150,16 +150,15 @@ readonly class Json implements \Stringable
     {
         if (!$this->isEncoded) {
             json_encode($this->value);
-        } else {
-            if (!is_string($this->value)) {
-                return Result::err('Invalid JSON: value is not a string');
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                return Result::err(json_last_error_msg());
             }
-
-            json_decode($this->value);
-        }
-
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            return Result::err(json_last_error_msg());
+        } else {
+            try {
+                $this->data();
+            } catch (\JsonException $jsonException) {
+                return Result::err($jsonException->getMessage());
+            }
         }
 
         /** @phpstan-ignore return.type (invariant template: $this vs self) */
@@ -173,20 +172,10 @@ readonly class Json implements \Stringable
      */
     public function pretty(int $flags = JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE): self
     {
-        if ($this->isEncoded) {
-            if (!is_string($this->value)) {
-                return $this;
-            }
-
-            // Decode and re-encode with pretty print
-            $decoded = json_decode($this->value, true);
-            if (json_last_error() !== JSON_ERROR_NONE) {
-                return $this;
-            }
-
-            $pretty = json_encode($decoded, $flags);
-        } else {
-            $pretty = json_encode($this->value, $flags);
+        try {
+            $pretty = json_encode($this->data(), $flags);
+        } catch (\JsonException) {
+            return $this;
         }
 
         if ($pretty === false) {
@@ -201,20 +190,10 @@ readonly class Json implements \Stringable
      */
     public function minify(): self
     {
-        if ($this->isEncoded) {
-            if (!is_string($this->value)) {
-                return $this;
-            }
-
-            // Decode and re-encode without pretty print
-            $decoded = json_decode($this->value, true);
-            if (json_last_error() !== JSON_ERROR_NONE) {
-                return $this;
-            }
-
-            $minified = json_encode($decoded);
-        } else {
-            $minified = json_encode($this->value);
+        try {
+            $minified = json_encode($this->data());
+        } catch (\JsonException) {
+            return $this;
         }
 
         if ($minified === false) {
@@ -233,18 +212,10 @@ readonly class Json implements \Stringable
      */
     public function path(string $path): Result
     {
-        // Decode if needed
-        if ($this->isEncoded) {
-            if (!is_string($this->value)) {
-                return Result::err("Invalid JSON: value is not a string");
-            }
-
-            $decoded = json_decode($this->value, true);
-            if (json_last_error() !== JSON_ERROR_NONE) {
-                return Result::err(json_last_error_msg());
-            }
-        } else {
-            $decoded = $this->value;
+        try {
+            $decoded = $this->data();
+        } catch (\JsonException $jsonException) {
+            return Result::err($jsonException->getMessage());
         }
 
         // Split path by dots
@@ -276,11 +247,25 @@ readonly class Json implements \Stringable
     // ==================== Manipulation ====================
 
     /**
+     * Get the value as PHP data, decoding it (as associative arrays) if it is a JSON string
+     *
+     * @throws \JsonException If the JSON string is invalid
+     */
+    private function data(): mixed
+    {
+        if (!$this->isEncoded || !is_string($this->value)) {
+            return $this->value;
+        }
+
+        return json_decode($this->value, true, 512, JSON_THROW_ON_ERROR);
+    }
+
+    /**
      * Create a typed error Result for this class.
      *
      * @return Result<self, string>
      */
-    private static function error(string $message): Result
+    private function error(string $message): Result
     {
         return Result::err($message);
     }
@@ -292,36 +277,21 @@ readonly class Json implements \Stringable
      */
     public function merge(self $other): Result
     {
-        // Decode both
-        if ($this->isEncoded) {
-            if (!is_string($this->value)) {
-                return self::error('Failed to decode this JSON: value is not a string');
-            }
-
-            $thisDecoded = json_decode($this->value, true);
-            if (json_last_error() !== JSON_ERROR_NONE) {
-                return self::error('Failed to decode this JSON: ' . json_last_error_msg());
-            }
-        } else {
-            $thisDecoded = $this->value;
+        try {
+            $thisDecoded = $this->data();
+        } catch (\JsonException $jsonException) {
+            return $this->error('Failed to decode this JSON: ' . $jsonException->getMessage());
         }
 
-        if ($other->isEncoded) {
-            if (!is_string($other->value)) {
-                return self::error('Failed to decode other JSON: value is not a string');
-            }
-
-            $otherDecoded = json_decode($other->value, true);
-            if (json_last_error() !== JSON_ERROR_NONE) {
-                return self::error('Failed to decode other JSON: ' . json_last_error_msg());
-            }
-        } else {
-            $otherDecoded = $other->value;
+        try {
+            $otherDecoded = $other->data();
+        } catch (\JsonException $jsonException) {
+            return $this->error('Failed to decode other JSON: ' . $jsonException->getMessage());
         }
 
         // Merge arrays recursively
         if (!is_array($thisDecoded) || !is_array($otherDecoded)) {
-            return self::error('Both values must be arrays/objects to merge');
+            return $this->error('Both values must be arrays/objects to merge');
         }
 
         $merged = array_merge_recursive($thisDecoded, $otherDecoded);
@@ -336,18 +306,10 @@ readonly class Json implements \Stringable
      */
     public function set(string $path, mixed $value): Result
     {
-        // Decode if needed
-        if ($this->isEncoded) {
-            if (!is_string($this->value)) {
-                return Result::err('Invalid JSON: value is not a string');
-            }
-
-            $decoded = json_decode($this->value, true);
-            if (json_last_error() !== JSON_ERROR_NONE) {
-                return Result::err(json_last_error_msg());
-            }
-        } else {
-            $decoded = $this->value;
+        try {
+            $decoded = $this->data();
+        } catch (\JsonException $jsonException) {
+            return Result::err($jsonException->getMessage());
         }
 
         if (!is_array($decoded)) {
@@ -382,22 +344,14 @@ readonly class Json implements \Stringable
      */
     public function remove(string $path): Result
     {
-        // Decode if needed
-        if ($this->isEncoded) {
-            if (!is_string($this->value)) {
-                return self::error('Invalid JSON: value is not a string');
-            }
-
-            $decoded = json_decode($this->value, true);
-            if (json_last_error() !== JSON_ERROR_NONE) {
-                return self::error(json_last_error_msg());
-            }
-        } else {
-            $decoded = $this->value;
+        try {
+            $decoded = $this->data();
+        } catch (\JsonException $jsonException) {
+            return $this->error($jsonException->getMessage());
         }
 
         if (!is_array($decoded)) {
-            return self::error('Cannot remove path from non-array/object');
+            return $this->error('Cannot remove path from non-array/object');
         }
 
         // Split path and navigate to remove the value
@@ -410,12 +364,12 @@ readonly class Json implements \Stringable
                 if (array_key_exists($key, $current)) {
                     unset($current[$key]);
                 } else {
-                    return self::error('Path not found: ' . $path);
+                    return $this->error('Path not found: ' . $path);
                 }
             } else {
                 // Navigate deeper
                 if (!isset($current[$key]) || !is_array($current[$key])) {
-                    return self::error('Path not found: ' . $path);
+                    return $this->error('Path not found: ' . $path);
                 }
 
                 $current = &$current[$key];
@@ -432,24 +386,13 @@ readonly class Json implements \Stringable
      */
     public function size(): int
     {
-        if ($this->isEncoded) {
-            if (!is_string($this->value)) {
-                return 0;
-            }
-
-            $decoded = json_decode($this->value, true);
-            if (json_last_error() !== JSON_ERROR_NONE) {
-                return 0;
-            }
-        } else {
-            $decoded = $this->value;
+        try {
+            $decoded = $this->data();
+        } catch (\JsonException) {
+            return 0;
         }
 
-        if (is_array($decoded)) {
-            return count($decoded);
-        }
-
-        return 0;
+        return is_array($decoded) ? count($decoded) : 0;
     }
 
     /**

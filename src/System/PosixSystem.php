@@ -26,14 +26,7 @@ readonly class PosixSystem
      */
     public static function sysconf(int $name): int
     {
-        $result = posix_sysconf($name);
-        // posix_sysconf returns int on success, false on failure
-        // @phpstan-ignore identical.alwaysFalse
-        if ($result === false) {
-            throw new \RuntimeException("Failed to get system configuration");
-        }
-
-        return $result;
+        return posix_sysconf($name);
     }
 
     /**
@@ -58,7 +51,7 @@ readonly class PosixSystem
     {
         $term = posix_ctermid();
         if ($term === false) {
-            throw new \RuntimeException("Failed to get controlling terminal name");
+            throw new \RuntimeException("Failed to get controlling terminal name"); // @codeCoverageIgnore
         }
 
         return new Str($term);

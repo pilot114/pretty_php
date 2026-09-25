@@ -192,7 +192,7 @@ readonly class Str implements \Stringable
     public function toArray(): Arr
     {
         $parts = mb_str_split($this->value);
-        return new Arr(array_map('strval', $parts));
+        return new Arr(array_map(strval(...), $parts));
     }
 
     /**
@@ -241,9 +241,7 @@ readonly class Str implements \Stringable
 
         // Normalize unicode characters
         $normalized = \Normalizer::normalize($slug, \Normalizer::FORM_D);
-        if ($normalized === false) {
-            $normalized = $slug;
-        }
+        $normalized = $normalized === false ? $slug : $normalized;
 
         // Remove diacritics
         $slug = (string) preg_replace('/\p{Mn}/u', '', $normalized);

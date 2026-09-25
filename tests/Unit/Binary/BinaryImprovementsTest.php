@@ -466,7 +466,7 @@ describe('Binary Improvements', function (): void {
             $diagram = Binary::generateAsciiDiagram($className::class);
 
             expect($diagram)->toContain('version');
-            expect($diagram)->toContain('headerL'); // Name is truncated due to 4-bit width
+            expect($diagram)->toContain('|header |'); // Name is truncated due to 4-bit width
             expect($diagram)->toContain('totalLength');
         });
 
@@ -538,5 +538,127 @@ describe('Binary Improvements', function (): void {
             expect($obj->version)->toBe(5);
             expect($obj->headerLength)->toBe(4);
         });
+    });
+});
+
+describe('Binary edge cases', function (): void {
+    it('unpacks deeply nested structures', function (): void {
+        $packet = new \Tests\Support\TestDeepPacket(new \Tests\Support\TestNestedPacket(new \Tests\Support\TestInnerPacket(5), 6), 7);
+        $unpacked = Binary::unpack(Binary::pack($packet), \Tests\Support\TestDeepPacket::class);
+        expect($unpacked->nested->inner->innerValue)->toBe(5);
+        expect($unpacked->nested->outerValue)->toBe(6);
+        expect($unpacked->tail)->toBe(7);
+    });
+
+    it('counts bit field bytes when sizing nested structures', function (): void {
+        $data = pack('CCC', 0x0A, 0x14, 0x1E);
+        $unpacked = Binary::unpack($data, \Tests\Support\TestBitFieldOuterPacket::class);
+        expect($unpacked->inner->flags)->toBe(0x0A);
+        expect($unpacked->inner->value)->toBe(0x14);
+        expect($unpacked->tail)->toBe(0x1E);
+    });
+
+    it('accounts for trailing bit fields when sizing nested structures', function (): void {
+        $unpacked = Binary::unpack(pack('CCC', 0x01, 0xAB, 0x2F), \Tests\Support\TestTrailingBitFieldOuterPacket::class);
+        expect($unpacked->inner->value)->toBe(0x01);
+        expect($unpacked->inner->low)->toBe(0x0B);
+        expect($unpacked->inner->high)->toBe(0x0A);
+        expect($unpacked->tail)->toBe(0x2F);
+    });
+
+    it('ignores skipped conditional fields when sizing nested structures', function (): void {
+        $skipped = Binary::unpack(pack('CC', 2, 0x33), \Tests\Support\TestConditionalOuterPacket::class);
+        expect($skipped->tail)->toBe(0x33);
+
+        $present = Binary::unpack(pack('CnC', 1, 0x1234, 0x44), \Tests\Support\TestConditionalOuterPacket::class);
+        expect($present->inner->extra)->toBe(0x1234);
+        expect($present->tail)->toBe(0x44);
+    });
+
+    it('skips conditional fields when unpacking', function (): void {
+        $packet = new class () {
+            #[Binary('8')]
+            public int $type = 2;
+
+            #[Conditional(field: 'type', operator: '==', value: 1)]
+            #[Binary('8')]
+            public int $optional = 0;
+        };
+
+        $unpacked = Binary::unpack(pack('C', 2), $packet::class);
+        expect($unpacked->type)->toBe(2);
+    });
+
+    it('throws for properties without format when unpacking', function (): void {
+        $packet = new class () {
+            public int $plain = 0;
+        };
+
+        expect(fn (): object => Binary::unpack("\x00", $packet::class))
+            ->toThrow(\Exception::class, "Format for property 'plain' is not defined.");
+    });
+
+    it('throws when bit field data is exhausted', function (): void {
+        $packet = new class () {
+            #[BitField(bits: 4)]
+            public int $flags = 0;
+        };
+
+        expect(fn (): object => @Binary::unpack('', $packet::class))
+            ->toThrow(\Exception::class, "Failed to read byte for bit field 'flags'.");
+    });
+
+    it('packs and unpacks 64-bit values', function (): void {
+        $packet = new class () {
+            #[Binary('64')]
+            public int $value = 0x0102030405060708;
+        };
+
+        $packed = Binary::pack($packet);
+        expect(strlen($packed))->toBe(8);
+        expect(Binary::unpack($packed, $packet::class)->value)->toBe(0x0102030405060708);
+    });
+
+    it('documents all field kinds', function (): void {
+        $doc = Binary::generateDocumentation(\Tests\Support\TestDocumentedPacket::class);
+        expect($doc)
+            ->toContain('in=[1,2,3]')
+            ->toContain('high[4bits], low[4bits] | BitField')
+            ->toContain('64-bit')
+            ->toContain('| A4 |')
+            ->toContain('(nested) | inner')
+            ->toContain('trailing[3bits]')
+            ->not->toContain('ignored');
+    });
+
+    it('draws ASCII diagram for all field kinds', function (): void {
+        $diagram = Binary::generateAsciiDiagram(\Tests\Support\TestDocumentedPacket::class);
+        expect($diagram)
+            ->toContain('inner (nested structure)')
+            ->toContain('|trai |')
+            ->toContain('huge')
+            ->toContain('huge (cont.)')
+            ->not->toContain('ignored');
+
+        $rowWidths = array_values(array_unique(array_map(
+            strlen(...),
+            array_filter(explode("\n", $diagram), fn (string $line): bool => str_starts_with($line, '|')))
+        ));
+        expect($rowWidths)->toBe([strlen('+' . str_repeat('-+', 32))]);
+    });
+});
+
+describe('Binary ASCII diagram row flushing', function (): void {
+    it('flushes partial row before nested structure', function (): void {
+        $packet = new class () {
+            #[Binary('8')]
+            public int $head = 0;
+
+            #[Binary(\Tests\Support\TestInnerPacket::class)]
+            public ?\Tests\Support\TestInnerPacket $inner = null;
+        };
+
+        $diagram = Binary::generateAsciiDiagram($packet::class);
+        expect(strpos($diagram, 'head'))->toBeLessThan(strpos($diagram, 'inner (nested structure)'));
     });
 });

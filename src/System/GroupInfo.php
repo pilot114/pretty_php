@@ -34,11 +34,8 @@ readonly class GroupInfo
             throw new \RuntimeException('Group not found: ' . $groupname);
         }
 
-        /** @var string $name */
         $name = $info['name'];
-        /** @var string $passwd */
         $passwd = $info['passwd'];
-        /** @var int $gid */
         $gid = $info['gid'];
         /** @var array<string> $members */
         $members = $info['members'];
@@ -57,11 +54,8 @@ readonly class GroupInfo
             throw new \RuntimeException(sprintf('Group with GID %d not found', $gid));
         }
 
-        /** @var string $name */
         $name = $info['name'];
-        /** @var string $passwd */
         $passwd = $info['passwd'];
-        /** @var int $gidValue */
         $gidValue = $info['gid'];
         /** @var array<string> $members */
         $members = $info['members'];

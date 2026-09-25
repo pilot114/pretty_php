@@ -364,3 +364,188 @@ describe('Session with ArraySessionStorage', function (): void {
         expect(Session::isNotEmpty())->toBeTrue();
     });
 });
+
+describe('Session lifecycle and configuration', function (): void {
+    beforeEach(function (): void {
+        if (Session::isActive()) {
+            Session::clear();
+            Session::close();
+        }
+    });
+
+    afterEach(function (): void {
+        if (Session::isActive()) {
+            Session::clear();
+            Session::close();
+        }
+    });
+
+    it('reports disabled state', function (): void {
+        expect(Session::isDisabled())->toBeFalse();
+    });
+
+    it('returns false for operations on inactive session', function (): void {
+        expect(Session::destroy())->toBeFalse();
+        expect(Session::abort())->toBeFalse();
+        expect(Session::reset())->toBeFalse();
+        expect(Session::regenerateId())->toBeFalse();
+        expect(Session::encode())->toBeFalse();
+        expect(Session::decode('a|i:1;'))->toBeFalse();
+    });
+
+    it('destroys, unsets, aborts, resets and commits active session', function (): void {
+        Session::start();
+        Session::set('a', 1);
+        Session::unset();
+        expect(Session::all())->toBe([]);
+        expect(Session::reset())->toBeTrue();
+        expect(Session::abort())->toBeTrue();
+
+        Session::start();
+        Session::commit();
+        expect(Session::isActive())->toBeFalse();
+
+        Session::start();
+        expect(Session::destroy())->toBeTrue();
+    });
+
+    it('creates ids and changes id and name while inactive', function (): void {
+        expect(Session::createId('pfx'))->toStartWith('pfx');
+
+        $oldName = Session::name();
+        expect(Session::name('CUSTOMSESS'))->toBe($oldName);
+        expect(Session::name())->toBe('CUSTOMSESS');
+        Session::name((string) $oldName);
+
+        Session::id('abc123');
+        expect(Session::id())->toBe('abc123');
+        Session::id('');
+    });
+
+    it('gets and sets save path, module, cache limiter and cache expire', function (): void {
+        $path = Session::savePath();
+        expect(Session::savePath(sys_get_temp_dir()))->toBe($path);
+        Session::savePath((string) $path);
+
+        expect(Session::moduleName())->toBe('files');
+        expect(Session::moduleName('files'))->toBe('files');
+
+        $limiter = Session::cacheLimiter();
+        expect(Session::cacheLimiter('private'))->toBe($limiter);
+        expect(Session::cacheLimiter())->toBe('private');
+        Session::cacheLimiter((string) $limiter);
+
+        $expire = Session::cacheExpire();
+        expect(Session::cacheExpire(60))->toBe($expire);
+        expect(Session::cacheExpire())->toBe(60);
+        Session::cacheExpire((int) $expire);
+    });
+
+    it('sets cookie params from scalars and options array', function (): void {
+        $original = Session::getCookieParams();
+
+        expect(Session::setCookieParams(100, '/app', 'example.com', true, true))->toBeTrue();
+        expect(Session::getCookieParams())->toMatchArray([
+            'lifetime' => 100, 'path' => '/app', 'domain' => 'example.com', 'secure' => true, 'httponly' => true,
+        ]);
+
+        expect(Session::setCookieParams(['lifetime' => 50, 'samesite' => 'Strict']))->toBeTrue();
+        expect(Session::getCookieParams()['samesite'])->toBe('Strict');
+
+        expect(Session::setCookieParams(0))->toBeTrue();
+        Session::setCookieParams($original);
+    });
+
+    it('registers save handler and shutdown function', function (): void {
+        $handler = new \SessionHandler();
+        expect(Session::setSaveHandler($handler, false))->toBeTrue();
+        Session::registerShutdown();
+        Session::moduleName('files');
+        expect(Session::moduleName())->toBe('files');
+    });
+
+    it('runs garbage collection on active session', function (): void {
+        Session::start();
+        expect(Session::gc())->toBeInt();
+    });
+
+    it('manages timeout and expiration', function (): void {
+        $original = Session::getTimeout();
+        Session::setTimeout(1234);
+        expect(Session::getTimeout())->toBe(1234);
+        Session::setTimeout($original);
+
+        expect(Session::hasExpired())->toBeFalse();
+        expect(Session::hasExpired())->toBeFalse();
+
+        Session::set('_last_activity', time() - 100);
+        expect(Session::hasExpired(10))->toBeTrue();
+
+        Session::set('_last_activity', 'invalid');
+        expect(Session::hasExpired(10))->toBeTrue();
+    });
+});
+
+describe('Session auto-start and malformed data', function (): void {
+    beforeEach(function (): void {
+        if (Session::isActive()) {
+            Session::clear();
+            Session::close();
+        }
+    });
+
+    afterEach(function (): void {
+        if (Session::isActive()) {
+            Session::clear();
+            Session::close();
+        }
+    });
+
+    it('starts session automatically on access', function (string $method, array $args): void {
+        expect(Session::isActive())->toBeFalse();
+        Session::$method(...$args);
+        expect(Session::isActive())->toBeTrue();
+    })->with([
+        ['get', ['key']],
+        ['set', ['key', 1]],
+        ['has', ['key']],
+        ['remove', ['key']],
+        ['all', []],
+        ['replace', [[]]],
+        ['clear', []],
+        ['flash', ['key', 1]],
+        ['getFlash', ['key']],
+        ['hasFlash', ['key']],
+        ['keepFlash', ['key']],
+        ['ageFlashData', []],
+    ]);
+
+    it('recovers from non-array flash data', function (): void {
+        Session::set('_flash', 'broken');
+        expect(Session::getFlash('key', 'default'))->toBe('default');
+        expect(Session::hasFlash('key'))->toBeFalse();
+
+        Session::flash('key', 'value');
+        expect(Session::get('_flash'))->toBe(['key' => 'value']);
+
+        Session::set('_old_flash', ['key' => 'old']);
+        Session::set('_flash', 'broken');
+        Session::keepFlash('key');
+        expect(Session::get('_flash'))->toBe(['key' => 'old']);
+
+        Session::set('_old_flash', 'broken');
+        Session::keepFlash(['key']);
+        expect(Session::get('_old_flash'))->toBe('broken');
+    });
+
+    it('handles non-numeric and non-array values', function (): void {
+        Session::set('counter', 'abc');
+        expect(Session::increment('counter'))->toBe(1);
+
+        Session::set('list', 'scalar');
+        Session::push('list', 'new');
+        expect(Session::get('list'))->toBe(['scalar', 'new']);
+
+        expect(Session::pop('missing'))->toBeNull();
+    });
+});

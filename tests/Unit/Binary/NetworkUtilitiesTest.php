@@ -127,7 +127,7 @@ describe('NetworkInterface', function (): void {
 
     it('can check if interface is up', function (): void {
         $interfaces = NetworkInterface::all();
-        $anyUp = array_any($interfaces, fn($interface): bool => $interface->isUp());
+        $anyUp = array_any($interfaces, fn(\PrettyPhp\Binary\NetworkInterface $interface): bool => $interface->isUp());
 
         expect($anyUp)->toBe(true);
     });

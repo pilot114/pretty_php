@@ -60,13 +60,11 @@ readonly class ResourceLimit
         // posix_getrlimit can return different formats:
         // - numeric indices: [0 => soft, 1 => hard]
         // - named keys: ['soft limit' => soft, 'hard limit' => hard] or ['soft' => soft, 'hard' => hard]
-        /** @var int|string|null $soft */
         $soft = $limit['soft limit'] ?? $limit['soft'] ?? $limit[0] ?? null;
-        /** @var int|string|null $hard */
         $hard = $limit['hard limit'] ?? $limit['hard'] ?? $limit[1] ?? null;
 
         if ($soft === null || $hard === null) {
-            throw new \RuntimeException('Invalid resource limit data for resource ' . $resource);
+            throw new \RuntimeException('Invalid resource limit data for resource ' . $resource); // @codeCoverageIgnore
         }
 
         return new self($soft, $hard);

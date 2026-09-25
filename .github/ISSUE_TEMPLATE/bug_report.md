@@ -46,7 +46,7 @@ $str = str('example');
 
 ## Environment
 
-- **PHP Version:** <!-- e.g., 8.4.1 -->
+- **PHP Version:** <!-- e.g., 8.5.1 -->
 - **Pretty PHP Version:** <!-- e.g., 0.1.0 -->
 - **Operating System:** <!-- e.g., Ubuntu 22.04, macOS 14.0, Windows 11 -->
 - **Installation Method:** <!-- e.g., Composer -->

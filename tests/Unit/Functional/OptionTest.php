@@ -50,7 +50,7 @@ describe('Option', function (): void {
 
         it('does not map None values', function (): void {
             $option = Option::none();
-            $result = $option->map(fn($x) => $x * 2);
+            $result = $option->map(fn($x): int|float => $x * 2);
 
             expect($result->isNone())->toBeTrue();
         });
@@ -205,7 +205,7 @@ describe('Option', function (): void {
 
         it('returns default for None', function (): void {
             $option = Option::none();
-            $result = $option->mapOr(0, fn($x) => $x * 2);
+            $result = $option->mapOr(0, fn($x): int|float => $x * 2);
 
             expect($result)->toBe(0);
         });
@@ -221,7 +221,7 @@ describe('Option', function (): void {
 
         it('computes default for None', function (): void {
             $option = Option::none();
-            $result = $option->mapOrElse(fn(): int => 99, fn($x) => $x * 2);
+            $result = $option->mapOrElse(fn(): int => 99, fn($x): int|float => $x * 2);
 
             expect($result)->toBe(99);
         });

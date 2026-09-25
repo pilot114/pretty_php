@@ -151,14 +151,14 @@ final class CurlShareHandle
     }
 
     /**
-     * Close the share handle and free resources
+     * Close the share handle
+     *
+     * The native handle is freed automatically once it is no longer referenced
+     * (curl_share_close() is a no-op since PHP 8.0)
      */
     public function close(): void
     {
-        if (!$this->closed) {
-            curl_share_close($this->handle);
-            $this->closed = true;
-        }
+        $this->closed = true;
     }
 
     /**

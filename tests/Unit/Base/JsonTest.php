@@ -497,3 +497,55 @@ describe('Json', function (): void {
         });
     });
 });
+
+describe('Json error handling', function (): void {
+    it('reports decodeObject errors', function (): void {
+        expect(Json::fromString('{bad')->decodeObject()->unwrapErr())->toBe('Syntax error');
+    });
+
+    it('validates invalid input', function (): void {
+        expect(Json::fromString('{bad')->isValid())->toBeFalse();
+        expect(Json::fromString('{bad')->validate()->unwrapErr())->toBe('Syntax error');
+        expect(Json::fromData(INF)->validate()->isErr())->toBeTrue();
+    });
+
+    it('returns itself when formatting fails', function (): void {
+        $invalid = Json::fromString('{bad');
+        expect($invalid->pretty())->toBe($invalid);
+        expect($invalid->minify())->toBe($invalid);
+
+        $unencodable = Json::fromData(INF);
+        expect($unencodable->pretty())->toBe($unencodable);
+        expect($unencodable->minify())->toBe($unencodable);
+    });
+
+    it('reads object properties by path', function (): void {
+        $data = new \stdClass();
+        $data->user = new \stdClass();
+        $data->user->name = 'John';
+
+        expect(Json::fromData($data)->path('user.name')->unwrap())->toBe('John');
+    });
+
+    it('reports decode errors from manipulation methods', function (): void {
+        $invalid = Json::fromString('{bad');
+        $valid = Json::fromString('{"a":1}');
+
+        expect($invalid->path('a')->unwrapErr())->toBe('Syntax error');
+        expect($invalid->merge($valid)->unwrapErr())->toBe('Failed to decode this JSON: Syntax error');
+        expect($valid->merge($invalid)->unwrapErr())->toBe('Failed to decode other JSON: Syntax error');
+        expect($invalid->set('a', 1)->unwrapErr())->toBe('Syntax error');
+        expect($invalid->remove('a')->unwrapErr())->toBe('Syntax error');
+        expect($invalid->size())->toBe(0);
+    });
+
+    it('rejects set and remove on scalars', function (): void {
+        expect(Json::fromData(5)->set('a', 1)->unwrapErr())->toBe('Cannot set path on non-array/object');
+        expect(Json::fromData(5)->remove('a')->unwrapErr())->toBe('Cannot remove path from non-array/object');
+        expect(Json::fromData(5)->size())->toBe(0);
+    });
+
+    it('reports missing intermediate path on remove', function (): void {
+        expect(Json::fromData(['a' => 1])->remove('x.y')->unwrapErr())->toBe('Path not found: x.y');
+    });
+});
