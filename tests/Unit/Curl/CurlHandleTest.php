@@ -3,6 +3,8 @@
 use PrettyPhp\Curl\CurlException;
 use PrettyPhp\Curl\CurlHandle;
 
+mutates(\PrettyPhp\Curl\CurlHandle::class, \PrettyPhp\Curl\CurlException::class);
+
 describe('CurlHandle', function (): void {
     describe('construction', function (): void {
         it('can be created without url', function (): void {

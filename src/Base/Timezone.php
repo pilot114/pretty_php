@@ -15,13 +15,14 @@ readonly class Timezone implements \Stringable
     {
         $this->value = match (true) {
             $value instanceof \DateTimeZone => $value,
-            default => new \DateTimeZone($value),
+            default => TimezoneCache::get($value),
         };
     }
 
     /**
      * Create from DateTimeZone
      */
+    #[\NoDiscard]
     public static function fromTimezone(\DateTimeZone $timezone): self
     {
         return new self($timezone);
@@ -30,6 +31,7 @@ readonly class Timezone implements \Stringable
     /**
      * Create from timezone identifier
      */
+    #[\NoDiscard]
     public static function fromIdentifier(string $identifier): self
     {
         return new self($identifier);
@@ -38,6 +40,7 @@ readonly class Timezone implements \Stringable
     /**
      * Create from timezone abbreviation
      */
+    #[\NoDiscard]
     public static function fromAbbreviation(string $abbr, ?int $utcOffset = null, ?bool $isDst = null): ?self
     {
         $identifier = timezone_name_from_abbr($abbr, $utcOffset ?? -1, $isDst === null ? -1 : ($isDst ? 1 : 0));
@@ -51,6 +54,7 @@ readonly class Timezone implements \Stringable
     /**
      * Get UTC timezone
      */
+    #[\NoDiscard]
     public static function utc(): self
     {
         return new self('UTC');
@@ -75,6 +79,7 @@ readonly class Timezone implements \Stringable
     /**
      * Get timezone name/identifier
      */
+    #[\NoDiscard]
     public function name(): Str
     {
         return new Str($this->value->getName());
@@ -115,14 +120,12 @@ readonly class Timezone implements \Stringable
     /**
      * Get offset as formatted string (e.g., '+03:00', '-05:00')
      */
+    #[\NoDiscard]
     public function offsetString(\DateTimeInterface|null $datetime = null): Str
     {
-        $offset = $this->offset($datetime);
-        $hours = abs((int) floor($offset / 3600));
-        $minutes = abs((int) floor(($offset % 3600) / 60));
-        $sign = $offset >= 0 ? '+' : '-';
+        $moment = \DateTimeImmutable::createFromInterface($datetime ?? new \DateTimeImmutable());
 
-        return new Str(sprintf('%s%02d:%02d', $sign, $hours, $minutes));
+        return new Str($moment->setTimezone($this->value)->format('P'));
     }
 
     /**
@@ -172,6 +175,7 @@ readonly class Timezone implements \Stringable
      * @param string|null $countryCode Two-letter ISO 3166-1 country code
      * @return Arr<string>
      */
+    #[\NoDiscard]
     public static function identifiers(int $timezoneGroup = \DateTimeZone::ALL, ?string $countryCode = null): Arr
     {
         return new Arr(
@@ -200,6 +204,7 @@ readonly class Timezone implements \Stringable
      *
      * @return Arr<string>
      */
+    #[\NoDiscard]
     public static function africa(): Arr
     {
         return self::identifiers(\DateTimeZone::AFRICA);
@@ -210,6 +215,7 @@ readonly class Timezone implements \Stringable
      *
      * @return Arr<string>
      */
+    #[\NoDiscard]
     public static function america(): Arr
     {
         return self::identifiers(\DateTimeZone::AMERICA);
@@ -220,6 +226,7 @@ readonly class Timezone implements \Stringable
      *
      * @return Arr<string>
      */
+    #[\NoDiscard]
     public static function antarctica(): Arr
     {
         return self::identifiers(\DateTimeZone::ANTARCTICA);
@@ -230,6 +237,7 @@ readonly class Timezone implements \Stringable
      *
      * @return Arr<string>
      */
+    #[\NoDiscard]
     public static function arctic(): Arr
     {
         return self::identifiers(\DateTimeZone::ARCTIC);
@@ -240,6 +248,7 @@ readonly class Timezone implements \Stringable
      *
      * @return Arr<string>
      */
+    #[\NoDiscard]
     public static function asia(): Arr
     {
         return self::identifiers(\DateTimeZone::ASIA);
@@ -250,6 +259,7 @@ readonly class Timezone implements \Stringable
      *
      * @return Arr<string>
      */
+    #[\NoDiscard]
     public static function atlantic(): Arr
     {
         return self::identifiers(\DateTimeZone::ATLANTIC);
@@ -260,6 +270,7 @@ readonly class Timezone implements \Stringable
      *
      * @return Arr<string>
      */
+    #[\NoDiscard]
     public static function australia(): Arr
     {
         return self::identifiers(\DateTimeZone::AUSTRALIA);
@@ -270,6 +281,7 @@ readonly class Timezone implements \Stringable
      *
      * @return Arr<string>
      */
+    #[\NoDiscard]
     public static function europe(): Arr
     {
         return self::identifiers(\DateTimeZone::EUROPE);
@@ -280,6 +292,7 @@ readonly class Timezone implements \Stringable
      *
      * @return Arr<string>
      */
+    #[\NoDiscard]
     public static function indian(): Arr
     {
         return self::identifiers(\DateTimeZone::INDIAN);
@@ -290,6 +303,7 @@ readonly class Timezone implements \Stringable
      *
      * @return Arr<string>
      */
+    #[\NoDiscard]
     public static function pacific(): Arr
     {
         return self::identifiers(\DateTimeZone::PACIFIC);
@@ -301,6 +315,7 @@ readonly class Timezone implements \Stringable
      * @param string $countryCode Two-letter ISO 3166-1 country code
      * @return Arr<string>
      */
+    #[\NoDiscard]
     public static function forCountry(string $countryCode): Arr
     {
         return self::identifiers(\DateTimeZone::PER_COUNTRY, $countryCode);
@@ -341,7 +356,7 @@ readonly class Timezone implements \Stringable
         return match (true) {
             $timezone instanceof self => $timezone->value,
             $timezone instanceof \DateTimeZone => $timezone,
-            default => new \DateTimeZone($timezone),
+            default => TimezoneCache::get($timezone),
         };
     }
 }

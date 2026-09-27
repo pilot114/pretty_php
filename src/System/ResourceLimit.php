@@ -9,36 +9,36 @@ namespace PrettyPhp\System;
  */
 readonly class ResourceLimit
 {
-    public const CORE = 4;
+    public const int CORE = 4;
 
           // RLIMIT_CORE
-    public const DATA = 2;
+    public const int DATA = 2;
 
           // RLIMIT_DATA
-    public const STACK = 3;
+    public const int STACK = 3;
 
          // RLIMIT_STACK
-    public const AS = 9;
+    public const int AS = 9;
 
             // RLIMIT_AS (address space)
-    public const RSS = 5;
+    public const int RSS = 5;
 
            // RLIMIT_RSS
-    public const NPROC = 7;
+    public const int NPROC = 7;
 
          // RLIMIT_NPROC
-    public const NOFILE = 8;
+    public const int NOFILE = 8;
 
         // RLIMIT_NOFILE
-    public const MEMLOCK = 6;
+    public const int MEMLOCK = 6;
 
        // RLIMIT_MEMLOCK
-    public const CPU = 0;
+    public const int CPU = 0;
 
            // RLIMIT_CPU
-    public const FSIZE = 1;     // RLIMIT_FSIZE
+    public const int FSIZE = 1;     // RLIMIT_FSIZE
 
-    public const UNLIMITED = 'unlimited';
+    public const string UNLIMITED = 'unlimited';
 
     public function __construct(
         public int|string $soft,
@@ -57,17 +57,8 @@ readonly class ResourceLimit
             throw new \RuntimeException('Failed to get resource limit for resource ' . $resource);
         }
 
-        // posix_getrlimit can return different formats:
-        // - numeric indices: [0 => soft, 1 => hard]
-        // - named keys: ['soft limit' => soft, 'hard limit' => hard] or ['soft' => soft, 'hard' => hard]
-        $soft = $limit['soft limit'] ?? $limit['soft'] ?? $limit[0] ?? null;
-        $hard = $limit['hard limit'] ?? $limit['hard'] ?? $limit[1] ?? null;
-
-        if ($soft === null || $hard === null) {
-            throw new \RuntimeException('Invalid resource limit data for resource ' . $resource); // @codeCoverageIgnore
-        }
-
-        return new self($soft, $hard);
+        // Since PHP 8.3 a single resource is returned as [0 => soft, 1 => hard]
+        return new self($limit[0], $limit[1]);
     }
 
     /**

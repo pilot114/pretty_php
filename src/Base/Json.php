@@ -6,8 +6,21 @@ namespace PrettyPhp\Base;
 
 use PrettyPhp\Functional\Result;
 
+// Imported so that the engine compiles them to dedicated opcodes instead of namespaced calls
+use function array_key_exists;
+use function count;
+use function is_array;
+use function is_object;
+use function is_string;
+
 readonly class Json implements \Stringable
 {
+    /**
+     * Decoded JSON string, filled on first use: path queries and manipulation of the same instance decode
+     * it only once. Null for data-backed instances, which have nothing to decode.
+     */
+    private ?JsonCache $cache;
+
     /**
      * @param mixed $value The JSON string or data to encode
      * @param bool $isEncoded Whether the value is already a JSON string
@@ -16,11 +29,13 @@ readonly class Json implements \Stringable
         private mixed $value,
         private bool $isEncoded = false
     ) {
+        $this->cache = $isEncoded ? new JsonCache() : null;
     }
 
     /**
      * Create from a JSON string
      */
+    #[\NoDiscard]
     public static function fromString(string $json): self
     {
         return new self($json, true);
@@ -29,6 +44,7 @@ readonly class Json implements \Stringable
     /**
      * Create from data to be encoded
      */
+    #[\NoDiscard]
     public static function fromData(mixed $data): self
     {
         return new self($data, false);
@@ -62,6 +78,7 @@ readonly class Json implements \Stringable
      * @param int<1, max> $depth
      * @return Result<Str, string> Ok with Str on success, Err with error message on failure
      */
+    #[\NoDiscard]
     public function encode(int $flags = 0, int $depth = 512): Result
     {
         if ($this->isEncoded && is_string($this->value)) {
@@ -83,6 +100,7 @@ readonly class Json implements \Stringable
      * @param int<1, max> $depth
      * @return Result<Arr<mixed>, string> Ok with Arr on success, Err with error message on failure
      */
+    #[\NoDiscard]
     public function decode(bool $associative = true, int $depth = 512, int $flags = 0): Result
     {
         if (!$this->isEncoded || !is_string($this->value)) {
@@ -104,6 +122,7 @@ readonly class Json implements \Stringable
      * @param int<1, max> $depth
      * @return Result<object, string> Ok with object on success, Err with error message on failure
      */
+    #[\NoDiscard]
     public function decodeObject(int $depth = 512, int $flags = 0): Result
     {
         if (!$this->isEncoded || !is_string($this->value)) {
@@ -146,6 +165,7 @@ readonly class Json implements \Stringable
      *
      * @return Result<self, string> Ok with self on success, Err with error message on failure
      */
+    #[\NoDiscard]
     public function validate(): Result
     {
         if (!$this->isEncoded) {
@@ -170,6 +190,7 @@ readonly class Json implements \Stringable
     /**
      * Pretty print JSON with indentation
      */
+    #[\NoDiscard]
     public function pretty(int $flags = JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE): self
     {
         try {
@@ -188,6 +209,7 @@ readonly class Json implements \Stringable
     /**
      * Minify JSON by removing whitespace
      */
+    #[\NoDiscard]
     public function minify(): self
     {
         try {
@@ -210,27 +232,18 @@ readonly class Json implements \Stringable
      *
      * @return Result<mixed, string> Ok with value on success, Err with error message on failure
      */
+    #[\NoDiscard]
     public function path(string $path): Result
     {
         try {
-            $decoded = $this->data();
+            $current = $this->data();
         } catch (\JsonException $jsonException) {
             return Result::err($jsonException->getMessage());
         }
 
-        // Split path by dots
-        $keys = explode('.', $path);
-        $current = $decoded;
-
-        foreach ($keys as $key) {
-            if (is_array($current) && array_key_exists($key, $current)) {
-                $current = $current[$key];
-            } elseif (is_object($current) && property_exists($current, $key)) {
-                $current = ((array) $current)[$key];
-            } else {
-                /** @phpstan-ignore return.type (invariant template: never vs mixed) */
-                return Result::err('Path not found: ' . $path);
-            }
+        if (!$this->find($current, $path)) {
+            /** @phpstan-ignore return.type (invariant template: never vs mixed) */
+            return Result::err('Path not found: ' . $path);
         }
 
         return Result::ok($current);
@@ -241,7 +254,31 @@ readonly class Json implements \Stringable
      */
     public function hasPath(string $path): bool
     {
-        return $this->path($path)->isOk();
+        try {
+            $current = $this->data();
+        } catch (\JsonException) {
+            return false;
+        }
+
+        return $this->find($current, $path);
+    }
+
+    /**
+     * Walk a dot-separated path, replacing $current with the value found at it
+     */
+    private function find(mixed &$current, string $path): bool
+    {
+        foreach (explode('.', $path) as $key) {
+            if (is_array($current) && array_key_exists($key, $current)) {
+                $current = $current[$key];
+            } elseif (is_object($current) && property_exists($current, $key)) {
+                $current = ((array) $current)[$key];
+            } else {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     // ==================== Manipulation ====================
@@ -253,11 +290,17 @@ readonly class Json implements \Stringable
      */
     private function data(): mixed
     {
-        if (!$this->isEncoded || !is_string($this->value)) {
+        $cache = $this->cache;
+        if (!$cache instanceof JsonCache || !is_string($this->value)) {
             return $this->value;
         }
 
-        return json_decode($this->value, true, 512, JSON_THROW_ON_ERROR);
+        if (!$cache->isDecoded) {
+            $cache->decoded = json_decode($this->value, true, 512, JSON_THROW_ON_ERROR);
+            $cache->isDecoded = true;
+        }
+
+        return $cache->decoded;
     }
 
     /**
@@ -275,6 +318,7 @@ readonly class Json implements \Stringable
      *
      * @return Result<self, string> Ok with merged JSON on success, Err with error message on failure
      */
+    #[\NoDiscard]
     public function merge(self $other): Result
     {
         try {
@@ -304,6 +348,7 @@ readonly class Json implements \Stringable
      *
      * @return Result<self, string> Ok with new JSON on success, Err with error message on failure
      */
+    #[\NoDiscard]
     public function set(string $path, mixed $value): Result
     {
         try {
@@ -342,6 +387,7 @@ readonly class Json implements \Stringable
      *
      * @return Result<self, string> Ok with new JSON on success, Err with error message on failure
      */
+    #[\NoDiscard]
     public function remove(string $path): Result
     {
         try {
@@ -400,12 +446,19 @@ readonly class Json implements \Stringable
      */
     public function isEmpty(): bool
     {
-        return $this->size() === 0;
+        try {
+            $decoded = $this->data();
+        } catch (\JsonException) {
+            return true;
+        }
+
+        return !is_array($decoded) || $decoded === [];
     }
 
     /**
      * Convert to Str
      */
+    #[\NoDiscard]
     public function toStr(): Str
     {
         return new Str($this->__toString());
@@ -416,6 +469,7 @@ readonly class Json implements \Stringable
      *
      * @return Result<Arr<mixed>, string> Ok with Arr on success, Err with error message on failure
      */
+    #[\NoDiscard]
     public function toArr(): Result
     {
         return $this->decode();

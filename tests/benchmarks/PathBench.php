@@ -35,7 +35,7 @@ class PathBench
     public function benchPathBasename(): void
     {
         foreach ($this->pathObjects as $pathObject) {
-            $pathObject->basename();
+            (void) $pathObject->basename();
         }
     }
 
@@ -53,13 +53,13 @@ class PathBench
     public function benchPathParent(): void
     {
         foreach ($this->pathObjects as $pathObject) {
-            $pathObject->parent();
+            (void) $pathObject->parent();
         }
     }
 
     #[Revs(10000)]
     #[Iterations(10)]
-    public function benchNativeDirname(): void
+    public function benchNativeParent(): void
     {
         foreach ($this->paths as $path) {
             dirname((string) $path);
@@ -71,7 +71,7 @@ class PathBench
     public function benchPathExtension(): void
     {
         foreach ($this->pathObjects as $pathObject) {
-            $pathObject->extension();
+            (void) $pathObject->extension();
         }
     }
 
@@ -89,7 +89,7 @@ class PathBench
     public function benchPathJoin(): void
     {
         foreach ($this->pathObjects as $pathObject) {
-            $pathObject->join('subfolder', 'file.txt');
+            (void) $pathObject->join('subfolder', 'file.txt');
         }
     }
 
@@ -97,6 +97,9 @@ class PathBench
     #[Iterations(10)]
     public function benchNativeJoin(): void
     {
+        foreach ($this->paths as $path) {
+            implode(DIRECTORY_SEPARATOR, [$path, 'subfolder', 'file.txt']);
+        }
     }
 
     #[Revs(10000)]
@@ -104,7 +107,7 @@ class PathBench
     public function benchPathAbsolute(): void
     {
         foreach ($this->pathObjects as $pathObject) {
-            $pathObject->isAbsolute();
+            (void) $pathObject->isAbsolute();
         }
     }
 

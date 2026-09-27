@@ -7,6 +7,8 @@ use PrettyPhp\Binary\IPPacket;
 use PrettyPhp\Binary\PacketPrinter;
 use PrettyPhp\Binary\PacketResponse;
 
+mutates(\PrettyPhp\Binary\PacketPrinter::class);
+
 function captureOutput(callable $callback): string
 {
     ob_start();
@@ -77,3 +79,48 @@ describe('PacketPrinter', function (): void {
         expect(captureOutput(fn () => PacketPrinter::printSuccess('good')))->toContain('SUCCESS')->toContain('│ good');
     });
 });
+
+describe('PacketPrinter exact output', function (): void {
+    it('matches snapshots for all printers', function (): void {
+        $ip = new IPPacket(
+            versionAndHeaderLength: 0x45,
+            typeOfService: 16,
+            totalLength: 48,
+            identification: 4660,
+            flagsAndFragmentOffset: 0,
+            ttl: 63,
+            protocol: 17,
+            sourceIp: 0xC0A80101,
+            destinationIp: 0x08080808,
+            data: 'payload',
+        );
+
+        $output = captureOutput(function () use ($ip): void {
+            PacketPrinter::printSection('Section');
+            PacketPrinter::printTransmission('send', "\x00\x01ABC", 'Label');
+            PacketPrinter::printTransmission('receive', 'xyz');
+            PacketPrinter::printICMPPacket(new ICMPPacket(type: 0, code: 3, identifier: 513, sequenceNumber: 9, data: 'abcd'), 'Reply');
+            PacketPrinter::printIPPacket($ip, 'Outer');
+            PacketPrinter::printResponseStats(new PacketResponse('req', 'resp', '10.0.0.1', 53, 3, 4, 12.345));
+            PacketPrinter::printError('bad things');
+            PacketPrinter::printSuccess('good things');
+        });
+
+        expect($output)->toMatchSnapshot();
+    });
+
+    it('prints low source ports and keeps long titles on one line', function (): void {
+        $stats = captureOutput(fn () => PacketPrinter::printResponseStats(
+            new PacketResponse('req', null, '10.0.0.1', 1, 3, 0)
+        ));
+        expect($stats)->toContain('Source:        10.0.0.1:1');
+
+        $title = str_repeat('T', 90);
+        $box = captureOutput(fn () => PacketPrinter::printICMPPacket(
+            new ICMPPacket(type: 8, code: 0, identifier: 1, sequenceNumber: 1),
+            $title
+        ));
+        expect($box)->toContain("┌─ {$title} ┐");
+    });
+});
+

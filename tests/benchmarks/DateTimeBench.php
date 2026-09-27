@@ -28,7 +28,7 @@ class DateTimeBench
     #[Iterations(10)]
     public function benchParse(): void
     {
-        DateTime::parse('2024-01-15 10:30:00', 'UTC');
+        (void) DateTime::parse('2024-01-15 10:30:00', 'UTC');
     }
 
     #[Revs(5000)]
@@ -44,14 +44,14 @@ class DateTimeBench
     #[Iterations(10)]
     public function benchFormat(): void
     {
-        $this->dateTime->format('Y-m-d H:i:s');
+        (void) $this->dateTime->format('Y-m-d H:i:s');
     }
 
     #[Revs(5000)]
     #[Iterations(10)]
     public function benchNativeFormat(): void
     {
-        $this->native->format('Y-m-d H:i:s');
+        (void) $this->native->format('Y-m-d H:i:s');
     }
 
     // ==================== Arithmetic ====================
@@ -60,13 +60,13 @@ class DateTimeBench
     #[Iterations(10)]
     public function benchAddDaysChain(): void
     {
-        $this->dateTime->addDays(1)->addHours(2)->startOfDay();
+        (void) $this->dateTime->addDays(1)->addHours(2)->startOfDay();
     }
 
     #[Revs(5000)]
     #[Iterations(10)]
-    public function benchNativeModifyChain(): void
+    public function benchNativeAddDaysChain(): void
     {
-        $this->native->modify('+1 day')->modify('+2 hours')->setTime(0, 0);
+        (void) $this->native->modify('+1 day')->modify('+2 hours')->setTime(0, 0);
     }
 }

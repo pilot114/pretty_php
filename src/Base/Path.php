@@ -45,16 +45,13 @@ readonly class Path implements \Stringable
         return !$this->isAbsolute();
     }
 
+    #[\NoDiscard]
     public function join(string ...$segments): self
     {
-        $parts = [$this->path];
-        foreach ($segments as $segment) {
-            $parts[] = $segment;
-        }
-
-        return new self(implode(DIRECTORY_SEPARATOR, $parts));
+        return new self(implode(DIRECTORY_SEPARATOR, [$this->path, ...$segments]));
     }
 
+    #[\NoDiscard]
     public function normalize(): self
     {
         $resolved = realpath($this->path);
@@ -64,6 +61,7 @@ readonly class Path implements \Stringable
     /**
      * @throws PathException
      */
+    #[\NoDiscard]
     public function resolve(): self
     {
         if ($this->isAbsolute()) {
@@ -81,6 +79,7 @@ readonly class Path implements \Stringable
     /**
      * @throws PathException
      */
+    #[\NoDiscard]
     public function relative(string $to): self
     {
         $from = $this->resolve()->get();
@@ -100,21 +99,25 @@ readonly class Path implements \Stringable
         return new self($relativePath !== '' ? $relativePath : '.');
     }
 
+    #[\NoDiscard]
     public function parent(): self
     {
         return new self(dirname($this->path));
     }
 
+    #[\NoDiscard]
     public function basename(): Str
     {
         return new Str(basename($this->path));
     }
 
+    #[\NoDiscard]
     public function extension(): Str
     {
         return new Str(pathinfo($this->path, PATHINFO_EXTENSION));
     }
 
+    #[\NoDiscard]
     public function withoutExtension(): self
     {
         $pathinfo = pathinfo($this->path);
@@ -124,16 +127,19 @@ readonly class Path implements \Stringable
         return new self($dir . $pathinfo['filename']);
     }
 
+    #[\NoDiscard]
     public function withExtension(string $extension): self
     {
         return $this->withoutExtension()->concat('.' . ltrim($extension, '.'));
     }
 
+    #[\NoDiscard]
     public function concat(string $suffix): self
     {
         return new self($this->path . $suffix);
     }
 
+    #[\NoDiscard]
     public function prepend(string $prefix): self
     {
         return new self($prefix . $this->path);
@@ -155,6 +161,7 @@ readonly class Path implements \Stringable
      * @throws PathException
      * @return Arr<string>
      */
+    #[\NoDiscard]
     public function listFiles(): Arr
     {
         if (!is_dir($this->path)) {
@@ -173,6 +180,7 @@ readonly class Path implements \Stringable
     /**
      * @return Arr<string>
      */
+    #[\NoDiscard]
     public function glob(string $pattern): Arr
     {
         $fullPattern = $this->join($pattern)->get();
@@ -222,6 +230,7 @@ readonly class Path implements \Stringable
         return $size;
     }
 
+    #[\NoDiscard]
     public function toFile(): File
     {
         return new File($this->path);
@@ -230,6 +239,7 @@ readonly class Path implements \Stringable
     /**
      * Improved Windows path support - normalize path separators
      */
+    #[\NoDiscard]
     public function normalizePathSeparators(): self
     {
         $normalized = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $this->path);
@@ -256,6 +266,7 @@ readonly class Path implements \Stringable
      * Get the target of a symbolic link
      * @throws PathException
      */
+    #[\NoDiscard]
     public function readLink(): self
     {
         if (!$this->isLink()) {
@@ -331,6 +342,7 @@ readonly class Path implements \Stringable
     /**
      * Convert to URL path (with forward slashes)
      */
+    #[\NoDiscard]
     public function toUrlPath(): self
     {
         $urlPath = str_replace('\\', '/', $this->path);
@@ -340,6 +352,7 @@ readonly class Path implements \Stringable
     /**
      * Convert from URL path (convert forward slashes to system separator)
      */
+    #[\NoDiscard]
     public static function fromUrlPath(string $urlPath): self
     {
         $systemPath = str_replace('/', DIRECTORY_SEPARATOR, $urlPath);
@@ -349,6 +362,7 @@ readonly class Path implements \Stringable
     /**
      * Encode path for URL use
      */
+    #[\NoDiscard]
     public function urlEncode(): Str
     {
         $parts = explode('/', $this->toUrlPath()->get());
@@ -361,54 +375,60 @@ readonly class Path implements \Stringable
      * @return Arr<string>
      * @throws \UnexpectedValueException
      */
+    #[\NoDiscard]
     public function globRecursive(string $pattern): Arr
     {
-        $results = [];
+        if (!str_contains($pattern, '**')) {
+            $matches = glob($this->join($pattern)->get());
 
-        // Handle ** in pattern for recursive matching
-        if (str_contains($pattern, '**')) {
-            $parts = explode('**', $pattern, 2);
-            $basePattern = rtrim($parts[0], '/');
-            $remainingPattern = ltrim($parts[1] ?? '', '/');
+            return new Arr($matches !== false ? $matches : []);
+        }
 
-            // Get all directories recursively
-            if (is_dir($this->path)) {
-                $iterator = new \RecursiveIteratorIterator(
-                    new \RecursiveDirectoryIterator($this->path, \FilesystemIterator::SKIP_DOTS),
-                    \RecursiveIteratorIterator::SELF_FIRST
-                );
+        // "**" matches zero or more directories below the literal prefix before it
+        [$prefix, $rest] = explode('**', $pattern, 2);
+        $prefix = trim($prefix, '/');
+        $rest = ltrim($rest, '/');
+        $root = $prefix === '' ? $this->path : $this->join($prefix)->get();
 
-                foreach ($iterator as $file) {
-                    /** @var \SplFileInfo $file */
-                    $filePath = $file->getPathname();
+        if (!is_dir($root)) {
+            return new Arr([]);
+        }
 
-                    if ($remainingPattern === '') {
-                        $results[] = $filePath;
-                    } else {
-                        $globPattern = $filePath . DIRECTORY_SEPARATOR . $remainingPattern;
-                        $matches = glob($globPattern);
-                        if ($matches !== false) {
-                            $results = array_merge($results, $matches);
-                        }
-                    }
-                }
-            }
-        } else {
-            // Standard glob
-            $fullPattern = $this->join($pattern)->get();
-            $matches = glob($fullPattern);
-            if ($matches !== false) {
-                $results = $matches;
+        $iterator = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($root, \FilesystemIterator::SKIP_DOTS),
+            \RecursiveIteratorIterator::SELF_FIRST
+        );
+
+        $entries = [];
+        $directories = [$root];
+        foreach ($iterator as $file) {
+            /** @var \SplFileInfo $file */
+            $entries[] = $file->getPathname();
+            if ($file->isDir()) {
+                $directories[] = $file->getPathname();
             }
         }
 
-        return new Arr(array_unique($results));
+        if ($rest === '') {
+            return new Arr($entries);
+        }
+
+        $results = [];
+        foreach ($directories as $directory) {
+            $matches = glob($directory . DIRECTORY_SEPARATOR . $rest);
+            if ($matches !== false) {
+                array_push($results, ...$matches);
+            }
+        }
+
+        return new Arr($results);
     }
 
     /**
      * Get real path, resolving all symbolic links
      * @throws PathException
      */
+    #[\NoDiscard]
     public function realPath(): self
     {
         $real = realpath($this->path);

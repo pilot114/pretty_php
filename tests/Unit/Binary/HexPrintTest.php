@@ -2,6 +2,8 @@
 
 use PrettyPhp\Binary\HexPrint;
 
+mutates(\PrettyPhp\Binary\HexPrint::class);
+
 describe('HexPrint', function (): void {
     it('can convert binary data to hex string with default separator', function (): void {
         $data = "\x01\x02\x03\x0A\xFF";

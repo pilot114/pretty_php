@@ -3,6 +3,8 @@
 use PrettyPhp\Functional\Option;
 use PrettyPhp\Functional\Result;
 
+mutates(\PrettyPhp\Functional\Option::class);
+
 describe('Option', function (): void {
     describe('construction', function (): void {
         it('can create Some value', function (): void {

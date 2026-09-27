@@ -49,7 +49,7 @@ class FileBench
     #[Iterations(10)]
     public function benchFileWrite(): void
     {
-        $this->file->write($this->testContent);
+        (void) $this->file->write($this->testContent);
         unlink($this->testFile); // Clean up for next iteration
     }
 
@@ -66,7 +66,7 @@ class FileBench
     public function benchFileRead(): void
     {
         file_put_contents($this->testFile, $this->testContent);
-        $this->file->read();
+        (void) $this->file->read();
         unlink($this->testFile); // Clean up for next iteration
     }
 
@@ -84,7 +84,7 @@ class FileBench
     public function benchFileExists(): void
     {
         file_put_contents($this->testFile, $this->testContent);
-        $this->file->exists();
+        (void) $this->file->exists();
         unlink($this->testFile); // Clean up for next iteration
     }
 
@@ -102,7 +102,7 @@ class FileBench
     public function benchFileSize(): void
     {
         file_put_contents($this->testFile, $this->testContent);
-        $this->file->size();
+        (void) $this->file->size();
         unlink($this->testFile); // Clean up for next iteration
     }
 

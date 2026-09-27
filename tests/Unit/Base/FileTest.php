@@ -5,6 +5,8 @@ use PrettyPhp\Base\File;
 use PrettyPhp\Base\Path;
 use PrettyPhp\Base\Str;
 
+mutates(\PrettyPhp\Base\File::class);
+
 describe('File', function (): void {
     beforeEach(function (): void {
         $this->testDir = sys_get_temp_dir() . '/pretty_php_tests';

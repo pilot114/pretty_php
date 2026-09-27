@@ -6,6 +6,8 @@ use PrettyPhp\Binary\NetworkInterface;
 use PrettyPhp\Binary\PacketCapture;
 use PrettyPhp\Binary\CapturedPacket;
 
+mutates(\PrettyPhp\Binary\Socket::class, \PrettyPhp\Binary\RawSocket::class, \PrettyPhp\Binary\NetworkInterface::class, \PrettyPhp\Binary\PacketCapture::class, \PrettyPhp\Binary\CapturedPacket::class);
+
 describe('Socket', function (): void {
     it('can create a TCP socket', function (): void {
         $socket = Socket::tcp();

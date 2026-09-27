@@ -5,6 +5,8 @@ declare(strict_types=1);
 use PrettyPhp\Curl\CurlShareException;
 use PrettyPhp\Curl\CurlShareHandle;
 
+mutates(\PrettyPhp\Curl\CurlShareHandle::class, \PrettyPhp\Curl\CurlShareException::class);
+
 describe('CurlShareHandle', function (): void {
     describe('construction', function (): void {
         it('can be created', function (): void {

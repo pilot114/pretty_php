@@ -5,6 +5,8 @@ use PrettyPhp\Curl\CurlHandle;
 use PrettyPhp\Curl\CurlMultiException;
 use PrettyPhp\Curl\CurlMultiHandle;
 
+mutates(\PrettyPhp\Curl\CurlMultiHandle::class, \PrettyPhp\Curl\CurlMultiException::class);
+
 describe('CurlMultiHandle', function (): void {
     describe('construction', function (): void {
         it('can be created', function (): void {

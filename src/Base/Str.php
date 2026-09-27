@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace PrettyPhp\Base;
 
+// Imported so that the engine compiles them to dedicated opcodes instead of namespaced calls
+use function strlen;
+
 readonly class Str implements \Stringable
 {
     public function __construct(
@@ -22,9 +25,17 @@ readonly class Str implements \Stringable
         return $this->value;
     }
 
+    /**
+     * An ASCII-only string has as many characters as bytes. The check costs ~45 ns when it fails, so it is
+     * done only from 256 bytes, where mb_strlen() gets slower than it (measured crossover: ~150 bytes).
+     */
     public function length(): int
     {
-        return mb_strlen($this->value);
+        $value = $this->value;
+
+        return strlen($value) >= 256 && preg_match('/[\x80-\xFF]/', $value) === 0
+            ? strlen($value)
+            : mb_strlen($value);
     }
 
     public function isEmpty(): bool
@@ -37,6 +48,7 @@ readonly class Str implements \Stringable
         return !$this->isEmpty();
     }
 
+    #[\NoDiscard]
     public function trim(?string $characters = null): self
     {
         $trimmed = $characters === null
@@ -46,6 +58,7 @@ readonly class Str implements \Stringable
         return new self($trimmed);
     }
 
+    #[\NoDiscard]
     public function ltrim(?string $characters = null): self
     {
         $trimmed = $characters === null
@@ -55,6 +68,7 @@ readonly class Str implements \Stringable
         return new self($trimmed);
     }
 
+    #[\NoDiscard]
     public function rtrim(?string $characters = null): self
     {
         $trimmed = $characters === null
@@ -64,16 +78,39 @@ readonly class Str implements \Stringable
         return new self($trimmed);
     }
 
+    /**
+     * Byte-wise strtoupper() is locale-independent and much faster than mb_strtoupper(), and gives the same
+     * result for ASCII-only strings. Strings shorter than 64 bytes skip the check: there the regex costs
+     * more than mb_* itself.
+     */
+    #[\NoDiscard]
     public function upper(): self
     {
-        return new self(mb_strtoupper($this->value));
+        $value = $this->value;
+
+        return new self(
+            strlen($value) >= 64 && preg_match('/[\x80-\xFF]/', $value) === 0
+                ? strtoupper($value)
+                : mb_strtoupper($value)
+        );
     }
 
+    /**
+     * @see upper() for the ASCII fast path
+     */
+    #[\NoDiscard]
     public function lower(): self
     {
-        return new self(mb_strtolower($this->value));
+        $value = $this->value;
+
+        return new self(
+            strlen($value) >= 64 && preg_match('/[\x80-\xFF]/', $value) === 0
+                ? strtolower($value)
+                : mb_strtolower($value)
+        );
     }
 
+    #[\NoDiscard]
     public function capitalize(): self
     {
         return new self(mb_convert_case($this->value, MB_CASE_TITLE));
@@ -94,6 +131,7 @@ readonly class Str implements \Stringable
         return str_ends_with($this->value, $needle);
     }
 
+    #[\NoDiscard]
     public function replace(string $search, string $replace): self
     {
         return new self(str_replace($search, $replace, $this->value));
@@ -102,19 +140,17 @@ readonly class Str implements \Stringable
     /**
      * @param array<string, string> $replacements
      */
+    #[\NoDiscard]
     public function replaceAll(array $replacements): self
     {
-        $result = $this->value;
-        foreach ($replacements as $search => $replace) {
-            $result = str_replace((string) $search, (string) $replace, $result);
-        }
-
-        return new self($result);
+        // Replacements are applied one after another, in array order
+        return new self(str_replace(array_keys($replacements), array_values($replacements), $this->value));
     }
 
     /**
      * @return Arr<string>
      */
+    #[\NoDiscard]
     public function split(string $delimiter, int $limit = PHP_INT_MAX): Arr
     {
         if ($delimiter === '') {
@@ -125,6 +161,7 @@ readonly class Str implements \Stringable
         return new Arr($parts);
     }
 
+    #[\NoDiscard]
     public function substring(int $start, ?int $length = null): self
     {
         $result = $length === null
@@ -146,26 +183,31 @@ readonly class Str implements \Stringable
         return $position === false ? -1 : $position;
     }
 
+    #[\NoDiscard]
     public function repeat(int $times): self
     {
         return new self(str_repeat($this->value, $times));
     }
 
+    #[\NoDiscard]
     public function reverse(): self
     {
         return new self(strrev($this->value));
     }
 
+    #[\NoDiscard]
     public function padLeft(int $length, string $padString = ' '): self
     {
         return new self(str_pad($this->value, $length, $padString, STR_PAD_LEFT));
     }
 
+    #[\NoDiscard]
     public function padRight(int $length, string $padString = ' '): self
     {
         return new self(str_pad($this->value, $length, $padString, STR_PAD_RIGHT));
     }
 
+    #[\NoDiscard]
     public function padBoth(int $length, string $padString = ' '): self
     {
         return new self(str_pad($this->value, $length, $padString, STR_PAD_BOTH));
@@ -178,7 +220,7 @@ readonly class Str implements \Stringable
 
     public function isNumeric(): bool
     {
-        return $this->value !== '' && is_numeric($this->value);
+        return is_numeric($this->value);
     }
 
     public function isAlphaNumeric(): bool
@@ -189,15 +231,16 @@ readonly class Str implements \Stringable
     /**
      * @return Arr<non-empty-string>
      */
+    #[\NoDiscard]
     public function toArray(): Arr
     {
-        $parts = mb_str_split($this->value);
-        return new Arr(array_map(strval(...), $parts));
+        return new Arr(mb_str_split($this->value));
     }
 
     /**
      * @return Arr<string>|null
      */
+    #[\NoDiscard]
     public function match(string $pattern): ?Arr
     {
         $result = preg_match($pattern, $this->value, $matches);
@@ -211,6 +254,7 @@ readonly class Str implements \Stringable
     /**
      * @return Arr<array<string>>
      */
+    #[\NoDiscard]
     public function matchAll(string $pattern): Arr
     {
         preg_match_all($pattern, $this->value, $matches, PREG_SET_ORDER);
@@ -221,6 +265,7 @@ readonly class Str implements \Stringable
      * Normalize Unicode string
      * @param int $form Normalization form (Normalizer::FORM_C, FORM_D, FORM_KC, FORM_KD)
      */
+    #[\NoDiscard]
     public function normalizeUnicode(int $form = \Normalizer::FORM_C): self
     {
         $normalized = \Normalizer::normalize($this->value, $form);
@@ -234,6 +279,7 @@ readonly class Str implements \Stringable
     /**
      * Generate URL-friendly slug
      */
+    #[\NoDiscard]
     public function slug(string $separator = '-'): self
     {
         // Convert to lowercase
@@ -258,6 +304,7 @@ readonly class Str implements \Stringable
     /**
      * Truncate string with ellipsis
      */
+    #[\NoDiscard]
     public function truncate(int $length, string $ellipsis = '...'): self
     {
         if ($this->length() <= $length) {
@@ -273,17 +320,15 @@ readonly class Str implements \Stringable
     /**
      * Convert to snake_case
      */
+    #[\NoDiscard]
     public function toSnakeCase(): self
     {
         // Insert underscore before uppercase letters and convert to lowercase
         $snake = (string) preg_replace('/(?<!^)[A-Z]/', '_$0', $this->value);
         $snake = mb_strtolower($snake);
 
-        // Replace spaces and hyphens with underscores
-        $snake = (string) preg_replace('/[\s-]+/', '_', $snake);
-
-        // Remove multiple underscores
-        $snake = (string) preg_replace('/_+/', '_', $snake);
+        // Replace runs of spaces, hyphens and underscores with a single underscore
+        $snake = (string) preg_replace('/[\s_-]+/', '_', $snake);
 
         return new self(trim($snake, '_'));
     }
@@ -291,57 +336,36 @@ readonly class Str implements \Stringable
     /**
      * Convert to camelCase
      */
+    #[\NoDiscard]
     public function toCamelCase(): self
     {
-        // Replace non-alphanumeric with spaces
-        $str = (string) preg_replace('/[^a-zA-Z0-9]+/', ' ', $this->value);
+        // Words are runs of ASCII letters and digits; the first one stays lowercase
+        $words = explode(' ', trim(strtolower((string) preg_replace('/[^a-zA-Z0-9]+/', ' ', $this->value))));
 
-        // Capitalize first letter of each word except the first
-        $str = mb_strtolower($str);
-
-        $words = explode(' ', $str);
-        $result = $words[0] ?? '';
-        $counter = count($words);
-
-        for ($i = 1; $i < $counter; $i++) {
-            if ($words[$i] !== '') {
-                $result .= mb_convert_case($words[$i], MB_CASE_TITLE);
-            }
-        }
-
-        return new self($result);
+        return new self(array_shift($words) . implode('', array_map(ucfirst(...), $words)));
     }
 
     /**
      * Convert to PascalCase
      */
+    #[\NoDiscard]
     public function toPascalCase(): self
     {
-        $camel = $this->toCamelCase()->get();
-        if ($camel === '') {
-            return new self('');
-        }
-
-        $first = mb_substr($camel, 0, 1);
-        $rest = mb_substr($camel, 1);
-
-        return new self(mb_strtoupper($first) . $rest);
+        return new self(ucfirst($this->toCamelCase()->get()));
     }
 
     /**
      * Convert to kebab-case
      */
+    #[\NoDiscard]
     public function toKebabCase(): self
     {
         // Insert hyphen before uppercase letters and convert to lowercase
         $kebab = (string) preg_replace('/(?<!^)[A-Z]/', '-$0', $this->value);
         $kebab = mb_strtolower($kebab);
 
-        // Replace spaces and underscores with hyphens
-        $kebab = (string) preg_replace('/[\s_]+/', '-', $kebab);
-
-        // Remove multiple hyphens
-        $kebab = (string) preg_replace('/-+/', '-', $kebab);
+        // Replace runs of spaces, underscores and hyphens with a single hyphen
+        $kebab = (string) preg_replace('/[\s_-]+/', '-', $kebab);
 
         return new self(trim($kebab, '-'));
     }

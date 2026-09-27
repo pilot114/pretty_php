@@ -1,0 +1,15 @@
+# Binary Structure: PrettyPhp\Binary\TCPPacket
+
+| Offset | Size | Field | Type | Endian | Constraints |
+|--------|------|-------|------|--------|-------------|
+| 0 | 2 | sourcePort | n | big |  |
+| 2 | 2 | destinationPort | n | big |  |
+| 4 | 4 | sequenceNumber | N | big |  |
+| 8 | 4 | acknowledgmentNumber | N | big |  |
+| 12 | 2 | dataOffsetAndFlags | n | big |  |
+| 14 | 2 | windowSize | n | big |  |
+| 16 | 2 | checksum | n | big |  |
+| 18 | 2 | urgentPointer | n | big |  |
+| 20 | 0 | data | A* | big |  |
+
+**Total Size**: ~20 bytes (excluding variable-length fields)

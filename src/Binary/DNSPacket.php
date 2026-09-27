@@ -14,29 +14,29 @@ namespace PrettyPhp\Binary;
 class DNSPacket
 {
     // DNS Header Flags
-    public const QR_QUERY = 0;
+    public const int QR_QUERY = 0;
 
-    public const QR_RESPONSE = 1;
+    public const int QR_RESPONSE = 1;
 
     // DNS Opcodes
-    public const OPCODE_QUERY = 0;
+    public const int OPCODE_QUERY = 0;
 
-    public const OPCODE_IQUERY = 1;
+    public const int OPCODE_IQUERY = 1;
 
-    public const OPCODE_STATUS = 2;
+    public const int OPCODE_STATUS = 2;
 
     // DNS Response Codes
-    public const RCODE_NO_ERROR = 0;
+    public const int RCODE_NO_ERROR = 0;
 
-    public const RCODE_FORMAT_ERROR = 1;
+    public const int RCODE_FORMAT_ERROR = 1;
 
-    public const RCODE_SERVER_FAILURE = 2;
+    public const int RCODE_SERVER_FAILURE = 2;
 
-    public const RCODE_NAME_ERROR = 3;
+    public const int RCODE_NAME_ERROR = 3;
 
-    public const RCODE_NOT_IMPLEMENTED = 4;
+    public const int RCODE_NOT_IMPLEMENTED = 4;
 
-    public const RCODE_REFUSED = 5;
+    public const int RCODE_REFUSED = 5;
 
     public function __construct(
         #[Binary('n')] // 2 bytes for transaction ID

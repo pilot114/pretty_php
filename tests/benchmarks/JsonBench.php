@@ -46,7 +46,7 @@ class JsonBench
     #[Iterations(10)]
     public function benchJsonEncode(): void
     {
-        $this->jsonFromData->encode();
+        (void) $this->jsonFromData->encode();
     }
 
     #[Revs(5000)]
@@ -60,7 +60,7 @@ class JsonBench
     #[Iterations(10)]
     public function benchJsonDecode(): void
     {
-        $this->jsonFromString->decode();
+        (void) $this->jsonFromString->decode();
     }
 
     #[Revs(5000)]
@@ -74,7 +74,7 @@ class JsonBench
     #[Iterations(10)]
     public function benchJsonDecodeObject(): void
     {
-        $this->jsonFromString->decodeObject();
+        (void) $this->jsonFromString->decodeObject();
     }
 
     #[Revs(5000)]
@@ -90,7 +90,8 @@ class JsonBench
     #[Iterations(10)]
     public function benchJsonIsValid(): void
     {
-        $this->jsonFromString->isValid();
+        // A fresh instance: a reused one would only measure the cached decoding
+        (void) Json::fromString($this->jsonString)->isValid();
     }
 
     #[Revs(5000)]
@@ -105,7 +106,15 @@ class JsonBench
     #[Iterations(10)]
     public function benchJsonValidate(): void
     {
-        $this->jsonFromString->validate();
+        // A fresh instance: a reused one would only measure the cached decoding
+        (void) Json::fromString($this->jsonString)->validate();
+    }
+
+    #[Revs(5000)]
+    #[Iterations(10)]
+    public function benchNativeValidate(): void
+    {
+        json_decode($this->jsonString, true, 512, JSON_THROW_ON_ERROR);
     }
 
     // ==================== Formatting ====================
@@ -114,7 +123,7 @@ class JsonBench
     #[Iterations(10)]
     public function benchJsonPretty(): void
     {
-        $this->jsonFromData->pretty();
+        (void) $this->jsonFromData->pretty();
     }
 
     #[Revs(5000)]
@@ -128,7 +137,8 @@ class JsonBench
     #[Iterations(10)]
     public function benchJsonMinify(): void
     {
-        $this->jsonFromString->minify();
+        // A fresh instance: a reused one would only measure the cached decoding
+        (void) Json::fromString($this->jsonString)->minify();
     }
 
     #[Revs(5000)]
@@ -145,41 +155,42 @@ class JsonBench
     #[Iterations(10)]
     public function benchJsonPathSimple(): void
     {
-        $this->jsonFromData->path('name');
+        (void) $this->jsonFromData->path('name');
     }
 
     #[Revs(5000)]
     #[Iterations(10)]
     public function benchNativePathSimple(): void
     {
-        $this->data['name'] ?? null;
+        (void) $this->data['name'] ?? null;
     }
 
     #[Revs(5000)]
     #[Iterations(10)]
     public function benchJsonPathNested(): void
     {
-        $this->jsonFromData->path('address.city');
+        (void) $this->jsonFromData->path('address.city');
     }
 
     #[Revs(5000)]
     #[Iterations(10)]
     public function benchNativePathNested(): void
     {
-        $this->data['address']['city'] ?? null;
+        (void) $this->data['address']['city'] ?? null;
     }
 
     #[Revs(5000)]
     #[Iterations(10)]
     public function benchJsonHasPath(): void
     {
-        $this->jsonFromData->hasPath('address.city');
+        (void) $this->jsonFromData->hasPath('address.city');
     }
 
     #[Revs(5000)]
     #[Iterations(10)]
     public function benchNativeHasPath(): void
     {
+        (void) (is_array($this->data['address'] ?? null) && array_key_exists('city', $this->data['address']));
     }
 
     // ==================== Manipulation ====================
@@ -189,7 +200,7 @@ class JsonBench
     public function benchJsonMerge(): void
     {
         $other = Json::fromData(['phone' => '555-1234']);
-        $this->jsonFromData->merge($other);
+        (void) $this->jsonFromData->merge($other);
     }
 
     #[Revs(3000)]
@@ -204,7 +215,7 @@ class JsonBench
     #[Iterations(10)]
     public function benchJsonSet(): void
     {
-        $this->jsonFromData->set('phone', '555-1234');
+        (void) $this->jsonFromData->set('phone', '555-1234');
     }
 
     #[Revs(5000)]
@@ -219,7 +230,7 @@ class JsonBench
     #[Iterations(10)]
     public function benchJsonRemove(): void
     {
-        $this->jsonFromData->remove('age');
+        (void) $this->jsonFromData->remove('age');
     }
 
     #[Revs(5000)]
@@ -236,7 +247,7 @@ class JsonBench
     #[Iterations(10)]
     public function benchJsonSize(): void
     {
-        $this->jsonFromData->size();
+        (void) $this->jsonFromData->size();
     }
 
     #[Revs(10000)]
@@ -250,19 +261,21 @@ class JsonBench
     #[Iterations(10)]
     public function benchJsonIsEmpty(): void
     {
-        $this->jsonFromData->isEmpty();
+        (void) $this->jsonFromData->isEmpty();
     }
 
     #[Revs(10000)]
     #[Iterations(10)]
     public function benchNativeIsEmpty(): void
     {
+        (void) ($this->data === []);
     }
 
     #[Revs(5000)]
     #[Iterations(10)]
     public function benchJsonToString(): void
     {
+        (void) (string) $this->jsonFromData;
     }
 
     #[Revs(5000)]

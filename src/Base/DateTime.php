@@ -16,15 +16,11 @@ readonly class DateTime implements \Stringable
         \DateTimeImmutable|string|int|null $value = null,
         \DateTimeZone|string|null $timezone = null
     ) {
-        $tz = match (true) {
-            $timezone === null => null,
-            is_string($timezone) => new \DateTimeZone($timezone),
-            default => $timezone,
-        };
+        $tz = is_string($timezone) ? TimezoneCache::get($timezone) : $timezone;
 
         $this->value = match (true) {
             $value instanceof \DateTimeImmutable => $tz instanceof \DateTimeZone ? $value->setTimezone($tz) : $value,
-            is_int($value) => new \DateTimeImmutable('@' . $value)->setTimezone($tz ?? new \DateTimeZone('UTC')),
+            is_int($value) => new \DateTimeImmutable('@' . $value)->setTimezone($tz ?? TimezoneCache::get('UTC')),
             is_string($value) => new \DateTimeImmutable($value, $tz),
             default => new \DateTimeImmutable('now', $tz),
         };
@@ -33,6 +29,7 @@ readonly class DateTime implements \Stringable
     /**
      * Create from DateTimeImmutable
      */
+    #[\NoDiscard]
     public static function fromImmutable(\DateTimeImmutable $dateTime): self
     {
         return new self($dateTime);
@@ -41,6 +38,7 @@ readonly class DateTime implements \Stringable
     /**
      * Create from DateTime
      */
+    #[\NoDiscard]
     public static function fromMutable(\DateTime $dateTime): self
     {
         return new self(\DateTimeImmutable::createFromMutable($dateTime));
@@ -49,6 +47,7 @@ readonly class DateTime implements \Stringable
     /**
      * Create from timestamp
      */
+    #[\NoDiscard]
     public static function fromTimestamp(int $timestamp, \DateTimeZone|string|null $timezone = null): self
     {
         return new self($timestamp, $timezone);
@@ -57,16 +56,13 @@ readonly class DateTime implements \Stringable
     /**
      * Create from format
      */
+    #[\NoDiscard]
     public static function fromFormat(
         string $format,
         string $datetime,
         \DateTimeZone|string|null $timezone = null
     ): self {
-        $tz = match (true) {
-            $timezone === null => null,
-            is_string($timezone) => new \DateTimeZone($timezone),
-            default => $timezone,
-        };
+        $tz = is_string($timezone) ? TimezoneCache::get($timezone) : $timezone;
 
         $dt = \DateTimeImmutable::createFromFormat($format, $datetime, $tz);
         if ($dt === false) {
@@ -79,6 +75,7 @@ readonly class DateTime implements \Stringable
     /**
      * Parse a datetime string
      */
+    #[\NoDiscard]
     public static function parse(string $datetime, \DateTimeZone|string|null $timezone = null): self
     {
         return new self($datetime, $timezone);
@@ -87,6 +84,7 @@ readonly class DateTime implements \Stringable
     /**
      * Create current datetime
      */
+    #[\NoDiscard]
     public static function now(\DateTimeZone|string|null $timezone = null): self
     {
         return new self(null, $timezone);
@@ -95,6 +93,7 @@ readonly class DateTime implements \Stringable
     /**
      * Create today at midnight
      */
+    #[\NoDiscard]
     public static function today(\DateTimeZone|string|null $timezone = null): self
     {
         return new self(null, $timezone)->startOfDay();
@@ -103,6 +102,7 @@ readonly class DateTime implements \Stringable
     /**
      * Create tomorrow at midnight
      */
+    #[\NoDiscard]
     public static function tomorrow(\DateTimeZone|string|null $timezone = null): self
     {
         return new self(null, $timezone)->addDays(1)->startOfDay();
@@ -111,6 +111,7 @@ readonly class DateTime implements \Stringable
     /**
      * Create yesterday at midnight
      */
+    #[\NoDiscard]
     public static function yesterday(\DateTimeZone|string|null $timezone = null): self
     {
         return new self(null, $timezone)->subDays(1)->startOfDay();
@@ -135,6 +136,7 @@ readonly class DateTime implements \Stringable
     /**
      * Format the datetime
      */
+    #[\NoDiscard]
     public function format(string $format): Str
     {
         return new Str($this->value->format($format));
@@ -143,6 +145,7 @@ readonly class DateTime implements \Stringable
     /**
      * Format as ISO 8601 (2024-01-15T14:30:00+00:00)
      */
+    #[\NoDiscard]
     public function toIso8601(): Str
     {
         return new Str($this->value->format(\DateTimeInterface::ATOM));
@@ -151,6 +154,7 @@ readonly class DateTime implements \Stringable
     /**
      * Format as RFC 2822 (Mon, 15 Jan 2024 14:30:00 +0000)
      */
+    #[\NoDiscard]
     public function toRfc2822(): Str
     {
         return new Str($this->value->format(\DateTimeInterface::RFC2822));
@@ -159,6 +163,7 @@ readonly class DateTime implements \Stringable
     /**
      * Format as RFC 3339 (2024-01-15T14:30:00+00:00)
      */
+    #[\NoDiscard]
     public function toRfc3339(): Str
     {
         return new Str($this->value->format(\DateTimeInterface::RFC3339));
@@ -167,6 +172,7 @@ readonly class DateTime implements \Stringable
     /**
      * Format as date only (Y-m-d)
      */
+    #[\NoDiscard]
     public function toDateString(): Str
     {
         return new Str($this->value->format('Y-m-d'));
@@ -175,6 +181,7 @@ readonly class DateTime implements \Stringable
     /**
      * Format as time only (H:i:s)
      */
+    #[\NoDiscard]
     public function toTimeString(): Str
     {
         return new Str($this->value->format('H:i:s'));
@@ -183,6 +190,7 @@ readonly class DateTime implements \Stringable
     /**
      * Format as datetime string (Y-m-d H:i:s)
      */
+    #[\NoDiscard]
     public function toDateTimeString(): Str
     {
         return new Str($this->value->format('Y-m-d H:i:s'));
@@ -325,6 +333,7 @@ readonly class DateTime implements \Stringable
     /**
      * Add years
      */
+    #[\NoDiscard]
     public function addYears(int $years): self
     {
         return new self($this->value->modify(sprintf('+%d years', $years)));
@@ -333,6 +342,7 @@ readonly class DateTime implements \Stringable
     /**
      * Add months
      */
+    #[\NoDiscard]
     public function addMonths(int $months): self
     {
         return new self($this->value->modify(sprintf('+%d months', $months)));
@@ -341,6 +351,7 @@ readonly class DateTime implements \Stringable
     /**
      * Add days
      */
+    #[\NoDiscard]
     public function addDays(int $days): self
     {
         return new self($this->value->modify(sprintf('+%d days', $days)));
@@ -349,6 +360,7 @@ readonly class DateTime implements \Stringable
     /**
      * Add hours
      */
+    #[\NoDiscard]
     public function addHours(int $hours): self
     {
         return new self($this->value->modify(sprintf('+%d hours', $hours)));
@@ -357,6 +369,7 @@ readonly class DateTime implements \Stringable
     /**
      * Add minutes
      */
+    #[\NoDiscard]
     public function addMinutes(int $minutes): self
     {
         return new self($this->value->modify(sprintf('+%d minutes', $minutes)));
@@ -365,6 +378,7 @@ readonly class DateTime implements \Stringable
     /**
      * Add seconds
      */
+    #[\NoDiscard]
     public function addSeconds(int $seconds): self
     {
         return new self($this->value->modify(sprintf('+%d seconds', $seconds)));
@@ -373,6 +387,7 @@ readonly class DateTime implements \Stringable
     /**
      * Subtract years
      */
+    #[\NoDiscard]
     public function subYears(int $years): self
     {
         return new self($this->value->modify(sprintf('-%d years', $years)));
@@ -381,6 +396,7 @@ readonly class DateTime implements \Stringable
     /**
      * Subtract months
      */
+    #[\NoDiscard]
     public function subMonths(int $months): self
     {
         return new self($this->value->modify(sprintf('-%d months', $months)));
@@ -389,6 +405,7 @@ readonly class DateTime implements \Stringable
     /**
      * Subtract days
      */
+    #[\NoDiscard]
     public function subDays(int $days): self
     {
         return new self($this->value->modify(sprintf('-%d days', $days)));
@@ -397,6 +414,7 @@ readonly class DateTime implements \Stringable
     /**
      * Subtract hours
      */
+    #[\NoDiscard]
     public function subHours(int $hours): self
     {
         return new self($this->value->modify(sprintf('-%d hours', $hours)));
@@ -405,6 +423,7 @@ readonly class DateTime implements \Stringable
     /**
      * Subtract minutes
      */
+    #[\NoDiscard]
     public function subMinutes(int $minutes): self
     {
         return new self($this->value->modify(sprintf('-%d minutes', $minutes)));
@@ -413,6 +432,7 @@ readonly class DateTime implements \Stringable
     /**
      * Subtract seconds
      */
+    #[\NoDiscard]
     public function subSeconds(int $seconds): self
     {
         return new self($this->value->modify(sprintf('-%d seconds', $seconds)));
@@ -421,6 +441,7 @@ readonly class DateTime implements \Stringable
     /**
      * Add interval
      */
+    #[\NoDiscard]
     public function add(\DateInterval|DateInterval $interval): self
     {
         $int = $interval instanceof DateInterval ? $interval->get() : $interval;
@@ -430,6 +451,7 @@ readonly class DateTime implements \Stringable
     /**
      * Subtract interval
      */
+    #[\NoDiscard]
     public function sub(\DateInterval|DateInterval $interval): self
     {
         $int = $interval instanceof DateInterval ? $interval->get() : $interval;
@@ -439,6 +461,7 @@ readonly class DateTime implements \Stringable
     /**
      * Modify using relative formats
      */
+    #[\NoDiscard]
     public function modify(string $modifier): self
     {
         try {
@@ -453,6 +476,7 @@ readonly class DateTime implements \Stringable
     /**
      * Set the year
      */
+    #[\NoDiscard]
     public function setYear(int $year): self
     {
         return new self($this->value->setDate($year, (int) $this->value->format('n'), (int) $this->value->format('j')));
@@ -461,6 +485,7 @@ readonly class DateTime implements \Stringable
     /**
      * Set the month
      */
+    #[\NoDiscard]
     public function setMonth(int $month): self
     {
         $year = (int) $this->value->format('Y');
@@ -471,6 +496,7 @@ readonly class DateTime implements \Stringable
     /**
      * Set the day
      */
+    #[\NoDiscard]
     public function setDay(int $day): self
     {
         return new self($this->value->setDate((int) $this->value->format('Y'), (int) $this->value->format('n'), $day));
@@ -479,6 +505,7 @@ readonly class DateTime implements \Stringable
     /**
      * Set the time
      */
+    #[\NoDiscard]
     public function setTime(int $hour, int $minute, int $second = 0, int $microsecond = 0): self
     {
         return new self($this->value->setTime($hour, $minute, $second, $microsecond));
@@ -487,6 +514,7 @@ readonly class DateTime implements \Stringable
     /**
      * Set the date
      */
+    #[\NoDiscard]
     public function setDate(int $year, int $month, int $day): self
     {
         return new self($this->value->setDate($year, $month, $day));
@@ -495,6 +523,7 @@ readonly class DateTime implements \Stringable
     /**
      * Set to start of day (00:00:00)
      */
+    #[\NoDiscard]
     public function startOfDay(): self
     {
         return new self($this->value->setTime(0, 0, 0, 0));
@@ -503,6 +532,7 @@ readonly class DateTime implements \Stringable
     /**
      * Set to end of day (23:59:59)
      */
+    #[\NoDiscard]
     public function endOfDay(): self
     {
         return new self($this->value->setTime(23, 59, 59, 999999));
@@ -511,6 +541,7 @@ readonly class DateTime implements \Stringable
     /**
      * Set to start of month
      */
+    #[\NoDiscard]
     public function startOfMonth(): self
     {
         return new self($this->value->modify('first day of this month')->setTime(0, 0, 0, 0));
@@ -519,6 +550,7 @@ readonly class DateTime implements \Stringable
     /**
      * Set to end of month
      */
+    #[\NoDiscard]
     public function endOfMonth(): self
     {
         return new self($this->value->modify('last day of this month')->setTime(23, 59, 59, 999999));
@@ -527,6 +559,7 @@ readonly class DateTime implements \Stringable
     /**
      * Set to start of year
      */
+    #[\NoDiscard]
     public function startOfYear(): self
     {
         return new self($this->value->setDate((int) $this->value->format('Y'), 1, 1)->setTime(0, 0, 0, 0));
@@ -535,6 +568,7 @@ readonly class DateTime implements \Stringable
     /**
      * Set to end of year
      */
+    #[\NoDiscard]
     public function endOfYear(): self
     {
         return new self($this->value->setDate((int) $this->value->format('Y'), 12, 31)->setTime(23, 59, 59, 999999));
@@ -543,6 +577,7 @@ readonly class DateTime implements \Stringable
     /**
      * Set to start of week (Monday)
      */
+    #[\NoDiscard]
     public function startOfWeek(): self
     {
         return new self($this->value->modify('monday this week')->setTime(0, 0, 0, 0));
@@ -551,6 +586,7 @@ readonly class DateTime implements \Stringable
     /**
      * Set to end of week (Sunday)
      */
+    #[\NoDiscard]
     public function endOfWeek(): self
     {
         return new self($this->value->modify('sunday this week')->setTime(23, 59, 59, 999999));
@@ -569,6 +605,7 @@ readonly class DateTime implements \Stringable
     /**
      * Get the timezone as Timezone object
      */
+    #[\NoDiscard]
     public function tz(): Timezone
     {
         return new Timezone($this->value->getTimezone());
@@ -577,6 +614,7 @@ readonly class DateTime implements \Stringable
     /**
      * Get the timezone name
      */
+    #[\NoDiscard]
     public function timezoneName(): Str
     {
         return new Str($this->value->getTimezone()->getName());
@@ -585,11 +623,12 @@ readonly class DateTime implements \Stringable
     /**
      * Convert to timezone
      */
+    #[\NoDiscard]
     public function toTimezone(\DateTimeZone|Timezone|string $timezone): self
     {
         $tz = match (true) {
             $timezone instanceof Timezone => $timezone->get(),
-            is_string($timezone) => new \DateTimeZone($timezone),
+            is_string($timezone) => TimezoneCache::get($timezone),
             default => $timezone,
         };
         return new self($this->value->setTimezone($tz));
@@ -598,9 +637,10 @@ readonly class DateTime implements \Stringable
     /**
      * Convert to UTC
      */
+    #[\NoDiscard]
     public function toUtc(): self
     {
-        return $this->toTimezone(new \DateTimeZone('UTC'));
+        return $this->toTimezone(TimezoneCache::get('UTC'));
     }
 
     /**
@@ -616,6 +656,7 @@ readonly class DateTime implements \Stringable
     /**
      * Get difference from another datetime
      */
+    #[\NoDiscard]
     public function diff(self|string|\DateTimeInterface $other, bool $absolute = false): DateInterval
     {
         $otherDt = $this->toDateTimeImmutable($other);
@@ -644,32 +685,23 @@ readonly class DateTime implements \Stringable
      */
     public function diffInDays(self|string|\DateTimeInterface $other, bool $absolute = true): int
     {
-        $otherDt = $this->toDateTimeImmutable($other);
-        $diff = $this->value->getTimestamp() - $otherDt->getTimestamp();
-        $days = (int) floor(abs($diff) / 86400);
-        return $absolute ? $days : ($diff >= 0 ? $days : -$days);
+        return intdiv($this->diffInSeconds($other, $absolute), 86400);
     }
 
     /**
-     * Get difference in hours
+     * Get difference in whole hours (truncated towards zero)
      */
     public function diffInHours(self|string|\DateTimeInterface $other, bool $absolute = true): int
     {
-        $otherDt = $this->toDateTimeImmutable($other);
-        $diff = $this->value->getTimestamp() - $otherDt->getTimestamp();
-        $diff = $absolute ? abs($diff) : $diff;
-        return (int) floor($diff / 3600);
+        return intdiv($this->diffInSeconds($other, $absolute), 3600);
     }
 
     /**
-     * Get difference in minutes
+     * Get difference in whole minutes (truncated towards zero)
      */
     public function diffInMinutes(self|string|\DateTimeInterface $other, bool $absolute = true): int
     {
-        $otherDt = $this->toDateTimeImmutable($other);
-        $diff = $this->value->getTimestamp() - $otherDt->getTimestamp();
-        $diff = $absolute ? abs($diff) : $diff;
-        return (int) floor($diff / 60);
+        return intdiv($this->diffInSeconds($other, $absolute), 60);
     }
 
     /**
@@ -677,8 +709,8 @@ readonly class DateTime implements \Stringable
      */
     public function diffInSeconds(self|string|\DateTimeInterface $other, bool $absolute = true): int
     {
-        $otherDt = $this->toDateTimeImmutable($other);
-        $diff = $this->value->getTimestamp() - $otherDt->getTimestamp();
+        $diff = $this->value->getTimestamp() - $this->toDateTimeImmutable($other)->getTimestamp();
+
         return $absolute ? abs($diff) : $diff;
     }
 
@@ -687,6 +719,7 @@ readonly class DateTime implements \Stringable
     /**
      * Get human-readable time ago (e.g., "2 hours ago", "3 days ago")
      */
+    #[\NoDiscard]
     public function ago(): Str
     {
         $now = new \DateTimeImmutable();
@@ -717,12 +750,17 @@ readonly class DateTime implements \Stringable
             return new Str($diff->i === 1 ? '1 minute ago' : $diff->i . ' minutes ago');
         }
 
-        return new Str($diff->s === 0 ? 'just now' : $diff->s . ' seconds ago');
+        return new Str(match ($diff->s) {
+            0 => 'just now',
+            1 => '1 second ago',
+            default => $diff->s . ' seconds ago',
+        });
     }
 
     /**
      * Get human-readable time until (e.g., "in 2 hours", "in 3 days")
      */
+    #[\NoDiscard]
     public function until(): Str
     {
         $now = new \DateTimeImmutable();
@@ -753,12 +791,17 @@ readonly class DateTime implements \Stringable
             return new Str($diff->i === 1 ? 'in 1 minute' : sprintf('in %d minutes', $diff->i));
         }
 
-        return new Str($diff->s === 0 ? 'just now' : sprintf('in %d seconds', $diff->s));
+        return new Str(match ($diff->s) {
+            0 => 'just now',
+            1 => 'in 1 second',
+            default => sprintf('in %d seconds', $diff->s),
+        });
     }
 
     /**
      * Get human-readable difference (automatically chooses ago or until)
      */
+    #[\NoDiscard]
     public function diffForHumans(): Str
     {
         return $this->isPast() ? $this->ago() : $this->until();
@@ -899,6 +942,7 @@ readonly class DateTime implements \Stringable
     /**
      * Set ISO date (year, week, day of week)
      */
+    #[\NoDiscard]
     public function setISODate(int $year, int $week, int $dayOfWeek = 1): self
     {
         return new self($this->value->setISODate($year, $week, $dayOfWeek));
@@ -912,6 +956,7 @@ readonly class DateTime implements \Stringable
      * @param float $latitude Latitude in degrees
      * @param float $longitude Longitude in degrees
      */
+    #[\NoDiscard]
     public function sunrise(float $latitude, float $longitude): ?self
     {
         $timestamp = $this->sunInfo($latitude, $longitude)['sunrise'];
@@ -929,6 +974,7 @@ readonly class DateTime implements \Stringable
      * @param float $latitude Latitude in degrees
      * @param float $longitude Longitude in degrees
      */
+    #[\NoDiscard]
     public function sunset(float $latitude, float $longitude): ?self
     {
         $timestamp = $this->sunInfo($latitude, $longitude)['sunset'];
@@ -982,8 +1028,7 @@ readonly class DateTime implements \Stringable
     {
         return match (true) {
             $datetime instanceof self => $datetime->value,
-            $datetime instanceof \DateTimeImmutable => $datetime,
-            $datetime instanceof \DateTime => \DateTimeImmutable::createFromMutable($datetime),
+            $datetime instanceof \DateTimeInterface => \DateTimeImmutable::createFromInterface($datetime),
             default => new \DateTimeImmutable($datetime),
         };
     }

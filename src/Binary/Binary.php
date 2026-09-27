@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace PrettyPhp\Binary;
 
 use Attribute;
@@ -9,12 +11,21 @@ use PrettyPhp\Binary\Security\BufferOverflowException;
 use PrettyPhp\Binary\Security\SecurityConfig;
 use PrettyPhp\Binary\Security\SecurityException;
 
+// Imported so that the engine compiles them to dedicated opcodes instead of namespaced calls
+use function array_key_exists;
+use function count;
+use function is_array;
+use function is_int;
+use function is_object;
+use function is_string;
+use function strlen;
+
 #[Attribute(Attribute::TARGET_PROPERTY)]
 class Binary
 {
-    public const ENDIAN_BIG = 'big';
+    public const string ENDIAN_BIG = 'big';
 
-    public const ENDIAN_LITTLE = 'little';
+    public const string ENDIAN_LITTLE = 'little';
 
     public function __construct(
         public string $format,
@@ -50,130 +61,221 @@ class Binary
         return class_exists($format);
     }
 
+    /** @var array<class-string, ReflectionClass<object>> */
+    private static array $classes = [];
+
+    /** @var array<class-string, list<BinaryField>> */
+    private static array $schemas = [];
+
+    /** @var array<class-string, FlatLayout|false> */
+    private static array $flatLayouts = [];
+
     /**
-     * Calculate the total size of an object in bytes
-     *
      * @param class-string $className
+     * @return ReflectionClass<object>
      */
-    private static function calculateObjectSize(object $object, string $className): int
+    private static function reflection(string $className): ReflectionClass
     {
-        $totalSize = 0;
-        $reflectionClass = new ReflectionClass($className);
-
-        // Bytes occupied by the current group of consecutive bit fields
-        $bitFieldBytes = 0;
-
-        foreach ($reflectionClass->getProperties() as $property) {
-            // Fields skipped by a condition take no space
-            $conditionalAttrs = $property->getAttributes(Conditional::class);
-            if ($conditionalAttrs !== [] && !$conditionalAttrs[0]->newInstance()->evaluate($object)) {
-                continue;
-            }
-
-            $attributes = $property->getAttributes(Binary::class);
-            if ($attributes === []) {
-                $bitFieldAttrs = $property->getAttributes(BitField::class);
-                if ($bitFieldAttrs !== []) {
-                    $bitField = $bitFieldAttrs[0]->newInstance();
-                    $bitFieldBytes = max($bitFieldBytes, (int) ceil(($bitField->offset + $bitField->bits) / 8));
-                }
-
-                continue;
-            }
-
-            $totalSize += $bitFieldBytes;
-            $bitFieldBytes = 0;
-
-            $binaryAttr = $attributes[0]->newInstance();
-            $originalFormat = $binaryAttr->format;
-
-            /** @var object $value */
-            $value = $property->getValue($object);
-
-            if (self::isNestedStructure($originalFormat)) {
-                /** @var class-string $originalFormat */
-                $totalSize += self::calculateObjectSize($value, $originalFormat);
-            } else {
-                $stringValue = is_string($value) ? $value : null;
-                $totalSize += self::getFormatSize($originalFormat, $binaryAttr->endian, $stringValue);
-            }
-        }
-
-        return $totalSize + $bitFieldBytes;
+        return self::$classes[$className] ??= new ReflectionClass($className);
     }
 
-    public static function pack(object $object): string
+    /**
+     * Get the cached field layout of a binary structure
+     *
+     * @param class-string $className
+     * @return list<BinaryField>
+     * @throws Exception
+     */
+    private static function schema(string $className): array
     {
-        $binaryData = '';
-        $bitFieldBuffer = 0;
-        $bitFieldSize = 0;
+        if (isset(self::$schemas[$className])) {
+            return self::$schemas[$className];
+        }
 
-        foreach (new ReflectionClass($object)->getProperties() as $property) {
-            // Check for conditional packing
+        $reflectionClass = self::reflection($className);
+        $fields = [];
+
+        foreach ($reflectionClass->getProperties() as $property) {
             $conditionalAttrs = $property->getAttributes(Conditional::class);
-            if ($conditionalAttrs !== []) {
-                $conditional = $conditionalAttrs[0]->newInstance();
-                if (!$conditional->evaluate($object)) {
-                    continue; // Skip this field
-                }
+            $conditional = $conditionalAttrs === [] ? null : $conditionalAttrs[0]->newInstance();
+            $conditionProperty = null;
+            if ($conditional instanceof Conditional && $reflectionClass->hasProperty($conditional->field)) {
+                $conditionProperty = $reflectionClass->getProperty($conditional->field);
             }
 
-            $attributes = $property->getAttributes(Binary::class);
-            if ($attributes === []) {
-                // Check if it's a bit field
+            $binaryAttrs = $property->getAttributes(Binary::class);
+            if ($binaryAttrs === []) {
                 $bitFieldAttrs = $property->getAttributes(BitField::class);
                 if ($bitFieldAttrs === []) {
                     throw new Exception(sprintf("Format for property '%s' is not defined.", $property->getName()));
                 }
 
-                // Handle bit field
-                $bitField = $bitFieldAttrs[0]->newInstance();
-                $value = $property->getValue($object);
-                assert(is_int($value));
-
-                // Create bit mask and add to buffer
-                $mask = (1 << $bitField->bits) - 1;
-                $bitFieldBuffer |= ($value & $mask) << $bitField->offset;
-                $bitFieldSize = max($bitFieldSize, $bitField->offset + $bitField->bits);
-
+                $fields[] = new BinaryField(
+                    $property,
+                    $conditional,
+                    $conditionProperty,
+                    $bitFieldAttrs[0]->newInstance(),
+                    null,
+                    null,
+                    null,
+                    [],
+                );
                 continue;
             }
 
-            // Flush bit field buffer if we have one and moving to regular field
+            $binaryAttr = $binaryAttrs[0]->newInstance();
+            $validators = array_map(
+                static fn (\ReflectionAttribute $attribute): Validate => $attribute->newInstance(),
+                $property->getAttributes(Validate::class)
+            );
+
+            if (self::isNestedStructure($binaryAttr->format)) {
+                /** @var class-string $nestedClass */
+                $nestedClass = $binaryAttr->format;
+                $fields[] = new BinaryField(
+                    $property,
+                    $conditional,
+                    $conditionProperty,
+                    null,
+                    $nestedClass,
+                    null,
+                    null,
+                    $validators,
+                );
+                continue;
+            }
+
+            $packFormat = self::convertBitFormatToPackFormat($binaryAttr->format, $binaryAttr->endian);
+            $fields[] = new BinaryField(
+                $property,
+                $conditional,
+                $conditionProperty,
+                null,
+                null,
+                $packFormat,
+                self::knownFormatSize($packFormat),
+                $validators,
+            );
+        }
+
+        return self::$schemas[$className] = $fields;
+    }
+
+    /**
+     * Build and cache the flat layout of a structure; false when it needs the generic field-by-field path.
+     * Hot paths read the cache directly: `self::$flatLayouts[$className] ?? self::flatLayout($className)`.
+     *
+     * @param class-string $className
+     * @throws Exception
+     */
+    private static function flatLayout(string $className): FlatLayout|false
+    {
+        return self::$flatLayouts[$className] = FlatLayout::tryCreate(
+            self::reflection($className),
+            self::schema($className)
+        ) ?? false;
+    }
+
+    /**
+     * Size in bytes of a pack() format, or null when it is variable or unknown
+     */
+    private static function knownFormatSize(string $packFormat): ?int
+    {
+        if (preg_match('/^A(\d+)$/', $packFormat, $matches) === 1) {
+            return (int) $matches[1];
+        }
+
+        return match ($packFormat) {
+            'C' => 1,
+            'n', 'v' => 2,
+            'N', 'V' => 4,
+            'J', 'P' => 8,
+            default => null,
+        };
+    }
+
+    /**
+     * @throws Exception
+     */
+    public static function pack(object $object): string
+    {
+        $layout = self::$flatLayouts[$object::class] ?? self::flatLayout($object::class);
+        if ($layout !== false) {
+            $values = (array) $object;
+            // An uninitialized or dynamic property changes the count: the generic path handles it
+            if (count($values) === count($layout->properties)) {
+                return pack($layout->packFormat, ...array_values($values));
+            }
+        }
+
+        return self::packFields($object);
+    }
+
+    /**
+     * Pack a structure field by field (bit fields, conditions, nested structures)
+     *
+     * @throws Exception
+     */
+    private static function packFields(object $object): string
+    {
+        $binaryData = '';
+        // Consecutive regular fields are packed with a single pack() call
+        $format = '';
+        $values = [];
+        $bitFieldBuffer = 0;
+        $bitFieldSize = 0;
+
+        foreach (self::schema($object::class) as $field) {
+            if ($field->conditional instanceof Conditional && !$field->isIncluded($field->conditional, $object)) {
+                continue;
+            }
+
+            $value = $field->property->getValue($object);
+
+            if ($field->bitField instanceof BitField) {
+                assert(is_int($value));
+                $mask = (1 << $field->bitField->bits) - 1;
+                $bitFieldBuffer |= ($value & $mask) << $field->bitField->offset;
+                $bitFieldSize = max($bitFieldSize, $field->bitField->offset + $field->bitField->bits);
+                continue;
+            }
+
+            // Flush bit field buffer when moving to a regular field
             if ($bitFieldSize > 0) {
                 $bytes = (int) ceil($bitFieldSize / 8);
                 for ($i = 0; $i < $bytes; $i++) {
-                    $binaryData .= pack('C', ($bitFieldBuffer >> ($i * 8)) & 0xFF);
+                    $format .= 'C';
+                    $values[] = ($bitFieldBuffer >> ($i * 8)) & 0xFF;
                 }
 
                 $bitFieldBuffer = 0;
                 $bitFieldSize = 0;
             }
 
-            $binaryAttr = $attributes[0]->newInstance();
-            $originalFormat = $binaryAttr->format;
-            $value = $property->getValue($object);
-
-            if (self::isNestedStructure($originalFormat)) {
-                // Handle nested structure
+            if ($field->nestedClass !== null) {
                 assert(is_object($value));
+                $binaryData .= pack($format, ...$values);
+                $format = '';
+                $values = [];
+
                 $binaryData .= self::pack($value);
-            } else {
-                // Handle regular format
-                $format = self::convertBitFormatToPackFormat($originalFormat, $binaryAttr->endian);
-                $binaryData .= pack($format, $value);
+                continue;
             }
+
+            $format .= $field->packFormat;
+            $values[] = $value;
         }
 
         // Flush any remaining bit field buffer
         if ($bitFieldSize > 0) {
             $bytes = (int) ceil($bitFieldSize / 8);
             for ($i = 0; $i < $bytes; $i++) {
-                $binaryData .= pack('C', ($bitFieldBuffer >> ($i * 8)) & 0xFF);
+                $format .= 'C';
+                $values[] = ($bitFieldBuffer >> ($i * 8)) & 0xFF;
             }
         }
 
-        return $binaryData;
+        return $binaryData . pack($format, ...$values);
     }
 
     /**
@@ -193,6 +295,28 @@ class Binary
             throw new BufferOverflowException($dataLength, $maxBufferSize);
         }
 
+        $offset = 0;
+
+        return self::unpackAt($binaryData, $dataLength, $className, $offset, $nestingDepth);
+    }
+
+    /**
+     * Unpack a structure starting at $offset and advance $offset past it
+     *
+     * @template T of object
+     * @param class-string<T> $className
+     * @return T
+     * @throws BufferOverflowException
+     * @throws SecurityException
+     * @throws Exception
+     */
+    private static function unpackAt(
+        string $binaryData,
+        int $dataLength,
+        string $className,
+        int &$offset,
+        int $nestingDepth
+    ): object {
         // Security: Check nesting depth to prevent stack overflow attacks
         $maxNestingDepth = SecurityConfig::getMaxNestingDepth();
         if ($nestingDepth > $maxNestingDepth) {
@@ -205,52 +329,60 @@ class Binary
             );
         }
 
-        $reflectionClass = new ReflectionClass($className);
-        $object = $reflectionClass->newInstanceWithoutConstructor();
-        $offset = 0;
+        /** @var T $object */
+        $object = (self::$classes[$className] ?? self::reflection($className))->newInstanceWithoutConstructor();
+
+        $layout = self::$flatLayouts[$className] ?? self::flatLayout($className);
+        // Too short data takes the generic path, which reports the first field that does not fit
+        if ($layout !== false && $offset + $layout->fixedSize <= $dataLength) {
+            $values = unpack($layout->unpackFormat, $binaryData, $offset);
+            if (is_array($values)) {
+                // setValue() coerces scalars like the generic path does
+                foreach ($values as $name => $value) {
+                    $layout->properties[$name]->setValue($object, $value);
+                }
+
+                $offset += $layout->fixedSize;
+                $tail = $layout->variableField === null ? null : $values[$layout->variableField];
+                if (is_string($tail)) {
+                    $offset += strlen($tail);
+                }
+
+                foreach ($layout->validators as [$name, $validators]) {
+                    foreach ($validators as $validator) {
+                        $validator->validate($name, $values[$name]);
+                    }
+                }
+
+                return $object;
+            }
+        }
+
         $bitFieldBuffer = 0;
         $bitFieldBytesRead = 0;
 
-        foreach ($reflectionClass->getProperties() as $property) {
-            // Check for conditional unpacking
-            $conditionalAttrs = $property->getAttributes(Conditional::class);
-            if ($conditionalAttrs !== []) {
-                $conditional = $conditionalAttrs[0]->newInstance();
-                if (!$conditional->evaluate($object)) {
-                    continue; // Skip this field
-                }
+        foreach (self::schema($className) as $field) {
+            if ($field->conditional instanceof Conditional && !$field->isIncluded($field->conditional, $object)) {
+                continue;
             }
 
-            $attributes = $property->getAttributes(Binary::class);
-            if ($attributes === []) {
-                // Check if it's a bit field
-                $bitFieldAttrs = $property->getAttributes(BitField::class);
-                if ($bitFieldAttrs === []) {
-                    throw new Exception(sprintf("Format for property '%s' is not defined.", $property->getName()));
-                }
-
-                // Handle bit field
-                $bitField = $bitFieldAttrs[0]->newInstance();
-
+            if ($field->bitField instanceof BitField) {
                 // Read bytes into buffer if needed
-                $neededBytes = (int) ceil(($bitField->offset + $bitField->bits) / 8);
+                $neededBytes = (int) ceil(($field->bitField->offset + $field->bitField->bits) / 8);
                 while ($bitFieldBytesRead < $neededBytes) {
-                    $byte = unpack('C', substr($binaryData, $offset, 1));
-                    if ($byte === false || !isset($byte[1]) || !is_int($byte[1])) {
-                        throw new Exception(sprintf("Failed to read byte for bit field '%s'.", $property->getName()));
+                    if ($offset >= $dataLength) {
+                        throw new Exception(
+                            sprintf("Failed to read byte for bit field '%s'.", $field->property->getName())
+                        );
                     }
 
-                    $byteValue = $byte[1];
-                    $bitFieldBuffer |= ($byteValue << ($bitFieldBytesRead * 8));
+                    $bitFieldBuffer |= ord($binaryData[$offset]) << ($bitFieldBytesRead * 8);
                     $bitFieldBytesRead++;
                     $offset++;
                 }
 
-                // Extract value from buffer
-                $mask = (1 << $bitField->bits) - 1;
-                $value = ($bitFieldBuffer >> $bitField->offset) & $mask;
-                $property->setValue($object, $value);
-
+                $mask = (1 << $field->bitField->bits) - 1;
+                $field->property->setValue($object, ($bitFieldBuffer >> $field->bitField->offset) & $mask);
                 continue;
             }
 
@@ -258,80 +390,58 @@ class Binary
             $bitFieldBuffer = 0;
             $bitFieldBytesRead = 0;
 
-            $binaryAttr = $attributes[0]->newInstance();
-            $originalFormat = $binaryAttr->format;
+            if ($field->nestedClass !== null) {
+                // Security: incremented nesting depth prevents infinite recursion
+                $nested = self::unpackAt($binaryData, $dataLength, $field->nestedClass, $offset, $nestingDepth + 1);
+                $field->property->setValue($object, $nested);
+                continue;
+            }
 
-            if (self::isNestedStructure($originalFormat)) {
-                // Handle nested structure
-                /** @var class-string $originalFormat */
-                // Security: Pass incremented nesting depth to prevent infinite recursion
-                $nestedObject = self::unpack(substr($binaryData, $offset), $originalFormat, $nestingDepth + 1);
-                $nestedSize = self::calculateObjectSize($nestedObject, $originalFormat);
-                $offset += $nestedSize;
-                $property->setValue($object, $nestedObject);
-            } else {
-                // Handle regular format
-                $format = self::convertBitFormatToPackFormat($originalFormat, $binaryAttr->endian);
+            $packFormat = $field->packFormat ?? throw new \LogicException('Regular field without pack format');
 
-                // Security: Validate we have enough data before unpacking
-                $expectedSize = self::getFormatSize($originalFormat, $binaryAttr->endian);
-                if ($offset + $expectedSize > $dataLength) {
-                    throw new BufferOverflowException(
-                        $offset + $expectedSize,
-                        $dataLength
-                    );
-                }
+            // Security: Validate we have enough data before unpacking
+            $expectedSize = $field->size ?? self::getFormatSize($packFormat);
+            if ($offset + $expectedSize > $dataLength) {
+                throw new BufferOverflowException($offset + $expectedSize, $dataLength);
+            }
 
-                $unpacked = unpack($format, substr($binaryData, $offset));
-                // Size was validated above, so unpack() cannot fail or return an empty array here
-                // @codeCoverageIgnoreStart
-                if ($unpacked === false) {
-                    $message = sprintf("Failed to unpack binary data for property '%s'.", $property->getName());
-                    throw new Exception($message);
-                }
+            $unpacked = unpack($packFormat, $binaryData, $offset);
 
-                $values = array_values($unpacked);
-                if ($values === []) {
-                    throw new Exception(sprintf("No values found when unpacking property '%s'.", $property->getName()));
-                }
+            // Size was validated above, so unpack() always yields the value here
+            // @codeCoverageIgnoreStart
+            if ($unpacked === false || !array_key_exists(1, $unpacked)) {
+                $name = $field->property->getName();
+                throw new Exception(sprintf("Failed to unpack binary data for property '%s'.", $name));
+            }
 
-                // @codeCoverageIgnoreEnd
+            // @codeCoverageIgnoreEnd
 
-                $value = $values[0];
-                $size = self::getFormatSize($originalFormat, $binaryAttr->endian, is_string($value) ? $value : null);
-                $offset += $size;
-                $property->setValue($object, $value);
+            $value = $unpacked[1];
+            $offset += $field->size ?? (is_string($value) ? strlen($value) : 0);
+            $field->property->setValue($object, $value);
 
-                // Run validation if present
-                $validateAttrs = $property->getAttributes(Validate::class);
-                foreach ($validateAttrs as $validateAttr) {
-                    $validator = $validateAttr->newInstance();
-                    $validator->validate($property->getName(), $value);
-                }
+            foreach ($field->validators as $validator) {
+                $validator->validate($field->property->getName(), $value);
             }
         }
 
         return $object;
     }
 
-    private static function getFormatSize(string $format, string $endian = self::ENDIAN_BIG, ?string $value = null): int
+    /**
+     * Size in bytes of a field format; variable-length strings (A*) count as 0
+     *
+     * @throws Exception For formats with unknown size
+     */
+    private static function getFormatSize(string $format, string $endian = self::ENDIAN_BIG): int
     {
-        // Convert bit format to standard format first
         $packFormat = self::convertBitFormatToPackFormat($format, $endian);
-
-        // Check for fixed-length string format (e.g., 'A6' for 6 bytes)
-        if (preg_match('/^A(\d+)$/', $packFormat, $matches) === 1) {
-            return (int) $matches[1];
+        if ($packFormat === 'A*') {
+            return 0;
         }
 
-        return match ($packFormat) {
-            'C' => 1,
-            'n', 'v' => 2,  // 16-bit (big/little endian)
-            'N', 'V' => 4,  // 32-bit (big/little endian)
-            'J', 'P' => 8,  // 64-bit (big/little endian)
-            'A*' => $value !== null ? strlen($value) : 0,
-            default => throw new Exception(sprintf("Unknown format size for '%s'.", $packFormat)),
-        };
+        return self::knownFormatSize($packFormat)
+            ?? throw new Exception(sprintf("Unknown format size for '%s'.", $packFormat));
     }
 
     /**
@@ -357,16 +467,14 @@ class Binary
             $conditionalAttrs = $property->getAttributes(Conditional::class);
             if ($conditionalAttrs !== []) {
                 $cond = $conditionalAttrs[0]->newInstance();
-                $valueStr = is_scalar($cond->value) ? (string) $cond->value : var_export($cond->value, true);
-                $conditional = sprintf(' (if %s %s %s)', $cond->field, $cond->operator, $valueStr);
+                $value = self::describeValue($cond->value);
+                $conditional = sprintf(' (if %s %s %s)', $cond->field, $cond->operator, $value);
             }
 
-            // Check for validation
-            $validation = '';
-            $validateAttrs = $property->getAttributes(Validate::class);
-            foreach ($validateAttrs as $validateAttr) {
+            // Check for validation (constraints of all validators)
+            $constraints = [];
+            foreach ($property->getAttributes(Validate::class) as $validateAttr) {
                 $val = $validateAttr->newInstance();
-                $constraints = [];
                 if ($val->min !== null) {
                     $constraints[] = 'min=' . $val->min;
                 }
@@ -378,11 +486,9 @@ class Binary
                 if ($val->in !== null) {
                     $constraints[] = "in=[" . implode(',', $val->in) . "]";
                 }
-
-                if ($validation === '' && $constraints !== []) {
-                    $validation = implode(', ', $constraints);
-                }
             }
+
+            $validation = implode(', ', $constraints);
 
             // Check for bit field
             $bitFieldAttrs = $property->getAttributes(BitField::class);
@@ -392,32 +498,13 @@ class Binary
                     'name' => $propertyName,
                     'bits' => $bitField->bits,
                     'offset' => $bitField->offset,
-                    'conditional' => $conditional,
                 ];
                 continue;
             }
 
             // Flush bit field group if any
             if ($bitFieldGroup !== []) {
-                $totalBits = 0;
-                foreach ($bitFieldGroup as $bf) {
-                    $totalBits = max($totalBits, $bf['offset'] + $bf['bits']);
-                }
-
-                $bytes = (int) ceil($totalBits / 8);
-
-                $bitFieldNames = array_map(
-                    fn(array $bf): string => sprintf('%s[%sbits]', $bf['name'], $bf['bits']),
-                    $bitFieldGroup
-                );
-                $doc .= sprintf(
-                    "| %d | %d | %s | BitField | - | %s |\n",
-                    $offset,
-                    $bytes,
-                    implode(', ', $bitFieldNames),
-                    ''
-                );
-                $offset += $bytes;
+                $doc .= self::documentBitFieldGroup($bitFieldGroup, $offset);
                 $bitFieldGroup = [];
             }
 
@@ -460,24 +547,7 @@ class Binary
 
         // Flush any remaining bit field group
         if ($bitFieldGroup !== []) {
-            $totalBits = 0;
-            foreach ($bitFieldGroup as $bf) {
-                $totalBits = max($totalBits, $bf['offset'] + $bf['bits']);
-            }
-
-            $bytes = (int) ceil($totalBits / 8);
-
-            $bitFieldNames = array_map(
-                fn(array $bf): string => sprintf('%s[%sbits]', $bf['name'], $bf['bits']),
-                $bitFieldGroup
-            );
-            $doc .= sprintf(
-                "| %d | %d | %s | BitField | - | %s |\n",
-                $offset,
-                $bytes,
-                implode(', ', $bitFieldNames),
-                ''
-            );
+            $doc .= self::documentBitFieldGroup($bitFieldGroup, $offset);
         }
 
         return $doc . "\n**Total Size**: ~{$offset} bytes (excluding variable-length fields)\n";
@@ -498,7 +568,6 @@ class Binary
         $doc .= " 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1\n";
 
         $fields = [];
-        $bitFieldGroup = [];
 
         foreach ($reflectionClass->getProperties() as $property) {
             $propertyName = $property->getName();
@@ -506,32 +575,12 @@ class Binary
             // Check for bit field
             $bitFieldAttrs = $property->getAttributes(BitField::class);
             if ($bitFieldAttrs !== []) {
-                $bitField = $bitFieldAttrs[0]->newInstance();
-                $bitFieldGroup[] = [
+                $fields[] = [
                     'name' => $propertyName,
-                    'bits' => $bitField->bits,
-                    'offset' => $bitField->offset,
+                    'bits' => $bitFieldAttrs[0]->newInstance()->bits,
+                    'type' => 'bitfield',
                 ];
                 continue;
-            }
-
-            // Flush bit field group if any
-            if ($bitFieldGroup !== []) {
-                $totalBits = 0;
-                foreach ($bitFieldGroup as $bf) {
-                    $totalBits = max($totalBits, $bf['offset'] + $bf['bits']);
-                }
-
-                // Create virtual field for bit field group
-                foreach ($bitFieldGroup as $bf) {
-                    $fields[] = [
-                        'name' => $bf['name'],
-                        'bits' => $bf['bits'],
-                        'type' => 'bitfield',
-                    ];
-                }
-
-                $bitFieldGroup = [];
             }
 
             $attributes = $property->getAttributes(Binary::class);
@@ -568,15 +617,6 @@ class Binary
                     ];
                 }
             }
-        }
-
-        // Flush any remaining bit field group
-        foreach ($bitFieldGroup as $bf) {
-            $fields[] = [
-                'name' => $bf['name'],
-                'bits' => $bf['bits'],
-                'type' => 'bitfield',
-            ];
         }
 
         // Generate diagram
@@ -698,5 +738,30 @@ class Binary
         }
 
         return $row . "\n";
+    }
+
+    /**
+     * Render a documentation row for a group of consecutive bit fields and advance the offset
+     *
+     * @param non-empty-list<array{name: string, bits: int, offset: int}> $group
+     */
+    private static function documentBitFieldGroup(array $group, int &$offset): string
+    {
+        $totalBits = max(array_map(static fn (array $bf): int => $bf['offset'] + $bf['bits'], $group));
+        $bytes = (int) ceil($totalBits / 8);
+        $names = array_map(static fn (array $bf): string => sprintf('%s[%dbits]', $bf['name'], $bf['bits']), $group);
+
+        $row = sprintf("| %d | %d | %s | BitField | - |  |\n", $offset, $bytes, implode(', ', $names));
+        $offset += $bytes;
+
+        return $row;
+    }
+
+    /**
+     * Single-line representation of a condition value for documentation
+     */
+    private static function describeValue(mixed $value): string
+    {
+        return is_scalar($value) ? (string) $value : (string) json_encode($value);
     }
 }

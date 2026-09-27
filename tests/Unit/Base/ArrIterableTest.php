@@ -2,6 +2,8 @@
 
 use PrettyPhp\Base\Arr;
 
+mutates(\PrettyPhp\Base\Arr::class);
+
 describe('Arr with Iterable', function (): void {
     it('can create Arr from array', function (): void {
         $arr = new Arr([1, 2, 3]);

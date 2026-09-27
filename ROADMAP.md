@@ -70,6 +70,7 @@ This document outlines the development roadmap for Pretty PHP.
 
 ### Quality Gates
 - [x] Enforce 100% coverage in CI (`pest --coverage --min=100`)
+- [x] Mutation testing with Pest (`composer mutate`, minimum score 85%, current 87.6%, weekly/PR CI job)
 - [ ] Root-only code paths (raw sockets, IP_HDRINCL, `initgroups`) are excluded from coverage with
   `@codeCoverageIgnore`; consider a privileged CI job to exercise them
 

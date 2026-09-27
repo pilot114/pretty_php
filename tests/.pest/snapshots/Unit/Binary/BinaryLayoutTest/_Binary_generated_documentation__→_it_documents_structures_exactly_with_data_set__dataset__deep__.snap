@@ -1,0 +1,8 @@
+# Binary Structure: Tests\Support\TestDeepPacket
+
+| Offset | Size | Field | Type | Endian | Constraints |
+|--------|------|-------|------|--------|-------------|
+| 0 | (nested) | nested | Tests\Support\TestNestedPacket | - |  |
+| 0 | 1 | tail | 8-bit | big |  |
+
+**Total Size**: ~1 bytes (excluding variable-length fields)

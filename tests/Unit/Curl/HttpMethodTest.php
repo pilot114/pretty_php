@@ -2,6 +2,8 @@
 
 use PrettyPhp\Curl\HttpMethod;
 
+mutates(\PrettyPhp\Curl\HttpMethod::class, \PrettyPhp\Curl\HttpVersion::class, \PrettyPhp\Curl\SslVersion::class);
+
 describe('HttpMethod', function (): void {
     it('has all standard HTTP methods', function (): void {
         $cases = HttpMethod::cases();

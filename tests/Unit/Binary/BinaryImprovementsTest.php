@@ -8,6 +8,8 @@ use PrettyPhp\Binary\ICMPPacket;
 use PrettyPhp\Binary\TCPPacket;
 use PrettyPhp\Binary\DNSPacket;
 
+mutates(\PrettyPhp\Binary\Binary::class, \PrettyPhp\Binary\BinaryField::class, \PrettyPhp\Binary\BitField::class, \PrettyPhp\Binary\Conditional::class, \PrettyPhp\Binary\Validate::class);
+
 describe('Binary Improvements', function (): void {
     describe('Endianness Support', function (): void {
         it('can pack little-endian 16-bit values', function (): void {
@@ -660,5 +662,21 @@ describe('Binary ASCII diagram row flushing', function (): void {
 
         $diagram = Binary::generateAsciiDiagram($packet::class);
         expect(strpos($diagram, 'head'))->toBeLessThan(strpos($diagram, 'inner (nested structure)'));
+    });
+});
+
+describe('Binary conditions on missing fields', function (): void {
+    it('skips fields whose condition refers to a missing property', function (): void {
+        $packet = new class () {
+            #[Binary('8')]
+            public int $head = 7;
+
+            #[Conditional(field: 'missing', operator: '==', value: 1)]
+            #[Binary('8')]
+            public int $optional = 9;
+        };
+
+        expect(Binary::pack($packet))->toBe(pack('C', 7));
+        expect(Binary::unpack(pack('C', 7), $packet::class)->head)->toBe(7);
     });
 });

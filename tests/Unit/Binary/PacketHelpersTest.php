@@ -16,6 +16,8 @@ use PrettyPhp\Binary\TCPPacket;
 use PrettyPhp\Binary\UDPPacket;
 use PrettyPhp\Binary\Validate;
 
+mutates(\PrettyPhp\Binary\ARPPacket::class, \PrettyPhp\Binary\CapturedPacket::class, \PrettyPhp\Binary\Conditional::class, \PrettyPhp\Binary\DNSPacket::class, \PrettyPhp\Binary\HTTPPacket::class, \PrettyPhp\Binary\PacketResponse::class, \PrettyPhp\Binary\Security\RateLimiter::class, \PrettyPhp\Binary\TCPPacket::class, \PrettyPhp\Binary\Validate::class);
+
 function ipHeader(): string
 {
     return Binary::pack(new IPPacket(

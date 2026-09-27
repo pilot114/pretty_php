@@ -5,6 +5,8 @@ declare(strict_types=1);
 use PrettyPhp\Base\Num;
 use PrettyPhp\Base\Str;
 
+mutates(\PrettyPhp\Base\Num::class);
+
 describe('Num', function (): void {
     it('can be constructed and get value', function (): void {
         $num = new Num(42);

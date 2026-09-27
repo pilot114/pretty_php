@@ -3,6 +3,8 @@
 use PrettyPhp\Functional\Option;
 use PrettyPhp\Functional\Result;
 
+mutates(\PrettyPhp\Functional\Result::class);
+
 describe('Result', function (): void {
     describe('construction', function (): void {
         it('can create Ok value', function (): void {
@@ -500,5 +502,21 @@ describe('Result unwrap messages', function (): void {
     it('exports non-string errors', function (): void {
         expect(fn (): mixed => Result::err(42)->unwrap())
             ->toThrow(\RuntimeException::class, 'Called unwrap on an Err value: 42');
+        expect(fn (): mixed => Result::err([1])->unwrap())
+            ->toThrow(\RuntimeException::class, "Called unwrap on an Err value: array (\n  0 => 1,\n)");
+    });
+
+    it('uses string and Stringable errors as they are', function (): void {
+        $stringable = new class () implements \Stringable {
+            public function __toString(): string
+            {
+                return 'stringable error';
+            }
+        };
+
+        expect(fn (): mixed => Result::err('plain error')->unwrap())
+            ->toThrow(\RuntimeException::class, 'Called unwrap on an Err value: plain error');
+        expect(fn (): mixed => Result::err($stringable)->unwrap())
+            ->toThrow(\RuntimeException::class, 'Called unwrap on an Err value: stringable error');
     });
 });

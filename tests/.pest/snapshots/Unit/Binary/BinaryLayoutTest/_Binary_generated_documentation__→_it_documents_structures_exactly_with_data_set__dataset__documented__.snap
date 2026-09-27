@@ -1,0 +1,13 @@
+# Binary Structure: Tests\Support\TestDocumentedPacket
+
+| Offset | Size | Field | Type | Endian | Constraints |
+|--------|------|-------|------|--------|-------------|
+| 0 | 2 | small | 16-bit | big |  |
+| 2 | 4 | wide | 32-bit | big | in=[1,2,3] |
+| 6 | 1 | high[4bits], low[4bits] | BitField | - |  |
+| 7 | 8 | huge | 64-bit | big |  |
+| 15 | 4 | tag | A4 | big |  |
+| 19 | (nested) | inner | Tests\Support\TestInnerPacket | - |  |
+| 19 | 1 | trailing[3bits] | BitField | - |  |
+
+**Total Size**: ~20 bytes (excluding variable-length fields)

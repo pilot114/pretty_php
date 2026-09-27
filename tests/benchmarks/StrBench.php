@@ -9,6 +9,10 @@ use PhpBench\Attributes\Iterations;
 use PhpBench\Attributes\Revs;
 use PrettyPhp\Base\Str;
 
+/**
+ * Str is UTF-8 aware, so length and case conversion are compared with the mb_* functions that give the same
+ * result, not with the byte-wise strlen()/strtoupper()/strtolower().
+ */
 #[BeforeMethods('setUp')]
 class StrBench
 {
@@ -33,91 +37,91 @@ class StrBench
     #[Iterations(10)]
     public function benchStrLengthShort(): void
     {
-        $this->shortStr->length();
+        (void) $this->shortStr->length();
     }
 
     #[Revs(10000)]
     #[Iterations(10)]
     public function benchNativeLengthShort(): void
     {
-        strlen($this->shortString);
+        mb_strlen($this->shortString);
     }
 
     #[Revs(10000)]
     #[Iterations(10)]
     public function benchStrLengthLong(): void
     {
-        $this->longStr->length();
+        (void) $this->longStr->length();
     }
 
     #[Revs(10000)]
     #[Iterations(10)]
     public function benchNativeLengthLong(): void
     {
-        strlen($this->longString);
+        mb_strlen($this->longString);
     }
 
     #[Revs(5000)]
     #[Iterations(10)]
     public function benchStrUpperShort(): void
     {
-        $this->shortStr->upper();
+        (void) $this->shortStr->upper();
     }
 
     #[Revs(5000)]
     #[Iterations(10)]
     public function benchNativeUpperShort(): void
     {
-        strtoupper($this->shortString);
+        mb_strtoupper($this->shortString);
     }
 
     #[Revs(1000)]
     #[Iterations(10)]
     public function benchStrUpperLong(): void
     {
-        $this->longStr->upper();
+        (void) $this->longStr->upper();
     }
 
     #[Revs(1000)]
     #[Iterations(10)]
     public function benchNativeUpperLong(): void
     {
-        strtoupper($this->longString);
+        mb_strtoupper($this->longString);
     }
 
     #[Revs(5000)]
     #[Iterations(10)]
     public function benchStrLowerShort(): void
     {
-        $this->shortStr->lower();
+        (void) $this->shortStr->lower();
     }
 
     #[Revs(5000)]
     #[Iterations(10)]
     public function benchNativeLowerShort(): void
     {
-        strtolower($this->shortString);
+        mb_strtolower($this->shortString);
     }
 
     #[Revs(1000)]
     #[Iterations(10)]
     public function benchStrLowerLong(): void
     {
-        $this->longStr->lower();
+        (void) $this->longStr->lower();
     }
 
     #[Revs(1000)]
     #[Iterations(10)]
     public function benchNativeLowerLong(): void
     {
-        strtolower($this->longString);
+        mb_strtolower($this->longString);
     }
 
     #[Revs(5000)]
     #[Iterations(10)]
     public function benchStrContainsShort(): void
     {
-        $this->shortStr->contains('World');
+        (void) $this->shortStr->contains('World');
     }
 
     #[Revs(5000)]
@@ -131,7 +135,7 @@ class StrBench
     #[Iterations(10)]
     public function benchStrContainsLong(): void
     {
-        $this->longStr->contains('ipsum');
+        (void) $this->longStr->contains('ipsum');
     }
 
     #[Revs(1000)]
@@ -145,7 +149,7 @@ class StrBench
     #[Iterations(10)]
     public function benchStrSplitShort(): void
     {
-        $this->shortStr->split(' ');
+        (void) $this->shortStr->split(' ');
     }
 
     #[Revs(5000)]
@@ -159,7 +163,7 @@ class StrBench
     #[Iterations(10)]
     public function benchStrSplitLong(): void
     {
-        $this->longStr->split(' ');
+        (void) $this->longStr->split(' ');
     }
 
     #[Revs(1000)]

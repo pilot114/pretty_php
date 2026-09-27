@@ -13,6 +13,8 @@ use PrettyPhp\System\ResourceLimit;
 use PrettyPhp\System\SystemInfo;
 use PrettyPhp\System\UserInfo;
 
+mutates(\PrettyPhp\System\Posix::class, \PrettyPhp\System\PosixFile::class, \PrettyPhp\System\PosixProcess::class, \PrettyPhp\System\PosixSystem::class, \PrettyPhp\System\PosixUser::class, \PrettyPhp\System\GroupInfo::class, \PrettyPhp\System\UserInfo::class, \PrettyPhp\System\SystemInfo::class, \PrettyPhp\System\ResourceLimit::class, \PrettyPhp\System\ProcessTimes::class);
+
 describe('Posix facade', function (): void {
     it('exposes module instances', function (): void {
         expect(Posix::process())->toBeInstanceOf(PosixProcess::class);

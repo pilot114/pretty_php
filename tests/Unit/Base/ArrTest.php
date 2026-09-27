@@ -4,6 +4,8 @@ use PrettyPhp\Base\Arr;
 use PrettyPhp\Base\Str;
 use PrettyPhp\Functional\Option;
 
+mutates(\PrettyPhp\Base\Arr::class);
+
 describe('Arr', function (): void {
     it('can be constructed and get value', function (): void {
         $arr = new Arr([1, 2, 3]);
@@ -28,12 +30,12 @@ describe('Arr', function (): void {
 
     it('can get first element', function (): void {
         expect(new Arr([1, 2, 3])->first())->toBe(1);
-        expect(new Arr([])->first())->toBeFalse();
+        expect(new Arr([])->first())->toBeNull();
     });
 
     it('can get last element', function (): void {
         expect(new Arr([1, 2, 3])->last())->toBe(3);
-        expect(new Arr([])->last())->toBeFalse();
+        expect(new Arr([])->last())->toBeNull();
     });
 
     it('can push element', function (): void {
@@ -442,5 +444,22 @@ describe('Arr edge cases', function (): void {
 
         $same = new Arr([['x' => 1], ['x' => 1]])->sortByKeys(['x' => 'desc'])->get();
         expect($same)->toBe([['x' => 1], ['x' => 1]]);
+    });
+});
+
+describe('Arr callbacks with keys', function (): void {
+    it('passes keys to map and filter callbacks that declare them', function (): void {
+        $arr = new Arr(['a' => 1, 'b' => 2, 'c' => 3]);
+        expect($arr->map(fn (int $value, string $key): string => $key . $value)->get())
+            ->toBe(['a' => 'a1', 'b' => 'b2', 'c' => 'c3']);
+        expect($arr->filter(fn (int $value, string $key): bool => $key !== 'b')->get())
+            ->toBe(['a' => 1, 'c' => 3]);
+        expect($arr->map(fn (mixed ...$args): int => count($args))->get())
+            ->toBe(['a' => 2, 'b' => 2, 'c' => 2]);
+    });
+
+    it('returns null for first and last of empty array', function (): void {
+        expect(new Arr([])->first())->toBeNull();
+        expect(new Arr([false])->first())->toBeFalse();
     });
 });

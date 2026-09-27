@@ -15,6 +15,8 @@ use PrettyPhp\Curl\CurlShareHandle;
  *
  * @return array{0: resource, 1: string}
  */
+mutates(\PrettyPhp\Curl\Curl::class, \PrettyPhp\Curl\CurlHandle::class, \PrettyPhp\Curl\CurlMultiHandle::class, \PrettyPhp\Curl\CurlShareHandle::class, \PrettyPhp\Curl\CurlMultiException::class, \PrettyPhp\Curl\CurlShareException::class);
+
 function startEchoServer(): array
 {
     $probe = stream_socket_server('tcp://127.0.0.1:0');

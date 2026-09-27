@@ -8,13 +8,13 @@ namespace PrettyPhp\Binary;
  */
 class ARPPacket
 {
-    public const HARDWARE_TYPE_ETHERNET = 1;
+    public const int HARDWARE_TYPE_ETHERNET = 1;
 
-    public const PROTOCOL_TYPE_IPV4 = 0x0800;
+    public const int PROTOCOL_TYPE_IPV4 = 0x0800;
 
-    public const OPERATION_REQUEST = 1;
+    public const int OPERATION_REQUEST = 1;
 
-    public const OPERATION_REPLY = 2;
+    public const int OPERATION_REPLY = 2;
 
     public function __construct(
         #[Binary('n')] // 2 bytes for hardware type (1 = Ethernet)

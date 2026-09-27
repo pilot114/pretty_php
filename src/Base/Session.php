@@ -637,13 +637,12 @@ class Session
 
         $storage = self::storage();
 
+        // Data flashed two requests ago expires; data flashed in the previous request becomes "old"
+        $storage->remove('_old_flash');
+
         if ($storage->has('_flash')) {
             $storage->set('_old_flash', $storage->get('_flash'));
             $storage->set('_flash', []);
-        }
-
-        if ($storage->has('_old_flash')) {
-            $storage->remove('_old_flash');
         }
     }
 

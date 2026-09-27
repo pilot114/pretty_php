@@ -25,23 +25,23 @@ class PacketPrinter
 
     public static function printICMPPacket(ICMPPacket $packet, string $label = 'ICMP Packet'): void
     {
-        echo "\n┌─ {$label} " . str_repeat('─', 80 - strlen($label) - 4) . "┐\n";
+        echo self::boxTop($label);
         echo sprintf('│ Type:       %d%s', $packet->type, PHP_EOL);
         echo sprintf('│ Code:       %d%s', $packet->code, PHP_EOL);
         echo "│ Checksum:   0x" . sprintf('%04x', $packet->checksum) . "\n";
         echo sprintf('│ Identifier: %d%s', $packet->identifier, PHP_EOL);
         echo sprintf('│ Sequence:   %d%s', $packet->sequenceNumber, PHP_EOL);
         echo "│ Data:       " . strlen($packet->data) . " bytes\n";
-        echo "└" . str_repeat('─', 79) . "┘\n";
+        echo self::boxBottom();
     }
 
     public static function printIPPacket(IPPacket $packet, string $label = 'IP Packet'): void
     {
-        $version = ($packet->versionAndHeaderLength >> 4) & 0x0F;
+        $version = $packet->versionAndHeaderLength >> 4;
         $ihl = $packet->versionAndHeaderLength & 0x0F;
         $headerLength = $ihl * 4;
 
-        echo "\n┌─ {$label} " . str_repeat('─', 80 - strlen($label) - 4) . "┐\n";
+        echo self::boxTop($label);
         echo sprintf('│ Version:        IPv%d%s', $version, PHP_EOL);
         echo "│ Header Length:  {$headerLength} bytes\n";
         echo sprintf('│ Type of Service: %d%s', $packet->typeOfService, PHP_EOL);
@@ -50,15 +50,15 @@ class PacketPrinter
         echo sprintf('│ TTL:            %d%s', $packet->ttl, PHP_EOL);
         echo "│ Protocol:       " . self::getProtocolName($packet->protocol) . " ({$packet->protocol})\n";
         echo "│ Checksum:       0x" . sprintf('%04x', $packet->checksum) . "\n";
-        echo "│ Source IP:      " . self::formatIP($packet->sourceIp) . "\n";
-        echo "│ Destination IP: " . self::formatIP($packet->destinationIp) . "\n";
+        echo "│ Source IP:      " . long2ip($packet->sourceIp) . "\n";
+        echo "│ Destination IP: " . long2ip($packet->destinationIp) . "\n";
         echo "│ Payload:        " . strlen($packet->data) . " bytes\n";
-        echo "└" . str_repeat('─', 79) . "┘\n";
+        echo self::boxBottom();
     }
 
     public static function printResponseStats(PacketResponse $response): void
     {
-        echo "\n┌─ Response Statistics " . str_repeat('─', 56) . "┐\n";
+        echo self::boxTop('Response Statistics');
 
         if ($response->responseTimeMs !== null) {
             echo sprintf("│ Response Time: %.2f ms\n", $response->responseTimeMs);
@@ -76,7 +76,7 @@ class PacketPrinter
         echo sprintf('│ Bytes Sent:    %d%s', $response->bytesSent, PHP_EOL);
         echo sprintf('│ Bytes Received: %d%s', $response->bytesReceived, PHP_EOL);
 
-        echo "└" . str_repeat('─', 79) . "┘\n";
+        echo self::boxBottom();
     }
 
     public static function printSection(string $title): void
@@ -84,15 +84,6 @@ class PacketPrinter
         echo "\n" . str_repeat('═', 80) . "\n";
         echo sprintf('  %s%s', $title, PHP_EOL);
         echo str_repeat('═', 80) . "\n";
-    }
-
-    private static function formatIP(int $ip): string
-    {
-        if ($ip === 0) {
-            return '0.0.0.0';
-        }
-
-        return long2ip($ip);
     }
 
     private static function getProtocolName(int $protocol): string
@@ -112,15 +103,28 @@ class PacketPrinter
 
     public static function printError(string $message): void
     {
-        echo "\n┌─ ERROR " . str_repeat('─', 71) . "┐\n";
+        echo self::boxTop('ERROR');
         echo sprintf('│ %s%s', $message, PHP_EOL);
-        echo "└" . str_repeat('─', 79) . "┘\n";
+        echo self::boxBottom();
     }
 
     public static function printSuccess(string $message): void
     {
-        echo "\n┌─ SUCCESS " . str_repeat('─', 68) . "┐\n";
+        echo self::boxTop('SUCCESS');
         echo sprintf('│ %s%s', $message, PHP_EOL);
-        echo "└" . str_repeat('─', 79) . "┘\n";
+        echo self::boxBottom();
+    }
+
+    /**
+     * Top border of a box, 81 characters wide: "┌─ Title ───…┐"
+     */
+    private static function boxTop(string $title): string
+    {
+        return "\n┌─ {$title} " . str_repeat('─', max(0, 76 - mb_strlen($title))) . "┐\n";
+    }
+
+    private static function boxBottom(): string
+    {
+        return "└" . str_repeat('─', 79) . "┘\n";
     }
 }

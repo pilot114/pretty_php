@@ -6,6 +6,8 @@ use PrettyPhp\Binary\CapturedPacket;
 use PrettyPhp\Binary\Socket;
 use Tests\Support\TestPacketCapture;
 
+mutates(\PrettyPhp\Binary\PacketCapture::class, \PrettyPhp\Binary\CapturedPacket::class);
+
 function sendDatagrams(int $port, string ...$messages): void
 {
     $client = Socket::udp();
@@ -88,3 +90,33 @@ describe('PacketCapture with local socket', function (): void {
         expect($capture->captureStream(fn (): bool => true, 0.05))->toBe(0);
     });
 });
+
+describe('PacketCapture limits', function (): void {
+    it('stops exactly at the requested count and captures without timeout', function (): void {
+        $capture = new TestPacketCapture();
+        $capture->start();
+        sendDatagrams($capture->port(), 'one', 'two');
+
+        $packets = $capture->capture(1);
+        expect($packets)->toHaveCount(1);
+        expect($packets[0]->data)->toBe('one');
+        expect($capture->capture(1)[0]->data)->toBe('two');
+        expect($capture->getStats())->toBe(['captured' => 2, 'dropped' => 0]);
+    });
+
+    it('counts streamed packets', function (): void {
+        $capture = new TestPacketCapture();
+        $capture->start();
+        sendDatagrams($capture->port(), 'a', 'b');
+
+        $count = $capture->captureStream(fn (): bool => false);
+        expect($count)->toBe(1);
+        expect($capture->getStats()['captured'])->toBe(1);
+    });
+
+    it('binds to the configured interface', function (): void {
+        $capture = new TestPacketCapture('no-such-interface-0');
+        expect(fn (): \PrettyPhp\Binary\PacketCapture => @$capture->start())->toThrow(\RuntimeException::class, 'Failed to set socket option');
+    });
+});
+

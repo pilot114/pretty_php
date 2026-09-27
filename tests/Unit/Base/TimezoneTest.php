@@ -4,6 +4,8 @@ use PrettyPhp\Base\Arr;
 use PrettyPhp\Base\Str;
 use PrettyPhp\Base\Timezone;
 
+mutates(\PrettyPhp\Base\Timezone::class, \PrettyPhp\Base\TimezoneCache::class);
+
 describe('Timezone', function (): void {
     it('can be constructed from string', function (): void {
         $tz = new Timezone('UTC');

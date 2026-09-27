@@ -16,7 +16,7 @@ use PrettyPhp\Binary\Security\RateLimiter;
  */
 class Socket
 {
-    private PhpSocket $socket;
+    private readonly PhpSocket $socket;
 
     private bool $closed = false;
 
@@ -31,14 +31,14 @@ class Socket
      * @throws RuntimeException
      */
     public function __construct(
-        private readonly int $domain,
-        private readonly int $type,
-        private readonly int $protocol
+        int $domain,
+        int $type,
+        int $protocol
     ) {
         $socket = socket_create($domain, $type, $protocol);
         if ($socket === false) {
             throw new RuntimeException(
-                'Failed to create socket: ' . socket_strerror(socket_last_error())
+                'Failed to create socket: ' . (socket_last_error() |> socket_strerror(...))
             );
         }
 
@@ -147,12 +147,8 @@ class Socket
             );
         }
 
-        // Create a new Socket instance wrapping the client socket
-        $socket = new self($this->domain, $this->type, $this->protocol);
-        socket_close($socket->socket);
-        $socket->socket = $clientSocket;
-
-        return $socket;
+        // Same domain/type/protocol, new native socket; no throwaway socket is created
+        return clone($this, ['socket' => $clientSocket, 'closed' => false, 'rateLimiter' => null]);
     }
 
     /**
@@ -459,7 +455,7 @@ class Socket
      */
     private function getLastError(): string
     {
-        return socket_strerror(socket_last_error($this->socket));
+        return socket_last_error($this->socket) |> socket_strerror(...);
     }
 
     /**

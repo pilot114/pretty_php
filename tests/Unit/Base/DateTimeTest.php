@@ -4,6 +4,8 @@ use PrettyPhp\Base\DateInterval;
 use PrettyPhp\Base\DateTime;
 use PrettyPhp\Base\Str;
 
+mutates(\PrettyPhp\Base\DateTime::class, \PrettyPhp\Base\TimezoneCache::class);
+
 describe('DateTime', function (): void {
     it('can be constructed with null (now)', function (): void {
         $dt = new DateTime();
@@ -67,7 +69,7 @@ describe('DateTime', function (): void {
         });
 
         it('throws exception for invalid format', function (): void {
-            DateTime::fromFormat('Y-m-d', 'invalid');
+            (void) DateTime::fromFormat('Y-m-d', 'invalid');
         })->throws(\InvalidArgumentException::class);
 
         it('can parse datetime string', function (): void {
@@ -326,7 +328,7 @@ describe('DateTime', function (): void {
 
         it('throws exception for invalid modifier', function (): void {
             $dt = new DateTime('2024-01-15 12:30:00');
-            $dt->modify('this is not a valid modifier string at all');
+            (void) $dt->modify('this is not a valid modifier string at all');
         })->throws(\InvalidArgumentException::class);
 
         it('is immutable', function (): void {

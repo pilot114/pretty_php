@@ -25,6 +25,7 @@ readonly class Option
      * @param U $value
      * @return self<U>
      */
+    #[\NoDiscard]
     public static function some(mixed $value): self
     {
         return new self($value, true);
@@ -35,6 +36,7 @@ readonly class Option
      *
      * @return self<never>
      */
+    #[\NoDiscard]
     public static function none(): self
     {
         /** @var self<never> */
@@ -49,6 +51,7 @@ readonly class Option
      * @param U|null $value
      * @return self<U>
      */
+    #[\NoDiscard]
     public static function from(mixed $value): self
     {
         return $value !== null ? self::some($value) : self::none();
@@ -77,6 +80,7 @@ readonly class Option
      * @param callable(T): U $fn
      * @return self<U>
      */
+    #[\NoDiscard]
     public function map(callable $fn): self
     {
         if ($this->isNone()) {
@@ -96,6 +100,7 @@ readonly class Option
      * @param callable(T): self<U> $fn
      * @return self<U>
      */
+    #[\NoDiscard]
     public function andThen(callable $fn): self
     {
         if ($this->isNone()) {
@@ -114,6 +119,7 @@ readonly class Option
      * @param callable(T): bool $predicate
      * @return self<T>
      */
+    #[\NoDiscard]
     public function filter(callable $predicate): self
     {
         if ($this->isNone()) {
@@ -131,6 +137,7 @@ readonly class Option
      * @param self<T> $alternative
      * @return self<T>
      */
+    #[\NoDiscard]
     public function orElse(self $alternative): self
     {
         return $this->isSome() ? $this : $alternative;
@@ -254,6 +261,7 @@ readonly class Option
      * @param self<T> $other
      * @return self<T>
      */
+    #[\NoDiscard]
     public function xor(self $other): self
     {
         if ($this->isSome() && $other->isNone()) {
@@ -292,6 +300,7 @@ readonly class Option
      * @param self<U> $other
      * @return self<array{T, U}>
      */
+    #[\NoDiscard]
     public function zip(self $other): self
     {
         if ($this->isSome() && $other->isSome()) {
@@ -314,6 +323,7 @@ readonly class Option
      *
      * @return ($this is self<self<mixed>> ? self<mixed> : self<T>)
      */
+    #[\NoDiscard]
     public function flatten(): self
     {
         if ($this->isNone()) {
@@ -335,6 +345,7 @@ readonly class Option
      * @param E $error
      * @return Result<T, E>
      */
+    #[\NoDiscard]
     public function toResult(mixed $error): Result
     {
         if ($this->isSome()) {

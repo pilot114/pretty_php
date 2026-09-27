@@ -4,6 +4,8 @@ use PrettyPhp\Base\Date;
 use PrettyPhp\Base\DateTime;
 use PrettyPhp\Base\Str;
 
+mutates(\PrettyPhp\Base\Date::class);
+
 describe('Date', function (): void {
     // ==================== Current Time ====================
 

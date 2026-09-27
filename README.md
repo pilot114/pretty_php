@@ -159,6 +159,7 @@ For security concerns, please see [SECURITY.md](SECURITY.md).
 
 - 📖 [Full Documentation](AGENTS.md)
 - 🗺️ [Roadmap](ROADMAP.md)
+- ⚡ [Performance Guide](docs/PERFORMANCE.md)
 - 🔐 [Security Policy](SECURITY.md)
 - 🤝 [Contributing](CONTRIBUTING.md)
 - 📜 [Code of Conduct](CODE_OF_CONDUCT.md)

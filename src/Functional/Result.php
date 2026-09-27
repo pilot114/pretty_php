@@ -12,11 +12,12 @@ namespace PrettyPhp\Functional;
  */
 readonly class Result
 {
+    /**
+     * One property holds either the Ok value or the Err error: a smaller object is cheaper to create.
+     */
     private function __construct(
-        /** @var T */
+        /** @var T|E */
         private mixed $value,
-        /** @var E */
-        private mixed $error,
         private bool $isOk
     ) {
     }
@@ -28,10 +29,11 @@ readonly class Result
      * @param U $value
      * @return self<U, never>
      */
+    #[\NoDiscard]
     public static function ok(mixed $value): self
     {
         /** @var self<U, never> */
-        return new self($value, null, true);
+        return new self($value, true);
     }
 
     /**
@@ -41,10 +43,11 @@ readonly class Result
      * @param F $error
      * @return self<never, F>
      */
+    #[\NoDiscard]
     public static function err(mixed $error): self
     {
         /** @var self<never, F> */
-        return new self(null, $error, false);
+        return new self($error, false);
     }
 
     /**
@@ -87,11 +90,12 @@ readonly class Result
      * @param callable(T): U $fn
      * @return self<U, E>
      */
+    #[\NoDiscard]
     public function map(callable $fn): self
     {
-        if ($this->isErr()) {
+        if (!$this->isOk) {
             /** @var E $error */
-            $error = $this->error;
+            $error = $this->value;
             return self::err($error);
         }
 
@@ -107,16 +111,17 @@ readonly class Result
      * @param callable(E): F $fn
      * @return self<T, F>
      */
+    #[\NoDiscard]
     public function mapErr(callable $fn): self
     {
-        if ($this->isOk()) {
+        if ($this->isOk) {
             /** @var T $value */
             $value = $this->value;
             return self::ok($value);
         }
 
         /** @var E $error */
-        $error = $this->error;
+        $error = $this->value;
         return self::err($fn($error));
     }
 
@@ -128,11 +133,12 @@ readonly class Result
      * @param callable(T): self<U, E> $fn
      * @return self<U, E>
      */
+    #[\NoDiscard]
     public function andThen(callable $fn): self
     {
-        if ($this->isErr()) {
+        if (!$this->isOk) {
             /** @var E $error */
-            $error = $this->error;
+            $error = $this->value;
             return self::err($error);
         }
 
@@ -147,9 +153,10 @@ readonly class Result
      * @param self<T, E> $alternative
      * @return self<T, E>
      */
+    #[\NoDiscard]
     public function orElse(self $alternative): self
     {
-        return $this->isOk() ? $this : $alternative;
+        return $this->isOk ? $this : $alternative;
     }
 
     /**
@@ -160,19 +167,21 @@ readonly class Result
      */
     public function unwrap(): mixed
     {
-        if ($this->isErr()) {
-            if ($this->error instanceof \Throwable) {
-                $errorMsg = $this->error->getMessage();
-            } elseif ($this->error instanceof \Stringable || is_string($this->error)) {
-                $errorMsg = (string) $this->error;
+        if (!$this->isOk) {
+            if ($this->value instanceof \Throwable) {
+                $errorMsg = $this->value->getMessage();
+            } elseif ($this->value instanceof \Stringable || is_string($this->value)) {
+                $errorMsg = (string) $this->value;
             } else {
-                $errorMsg = var_export($this->error, true);
+                $errorMsg = var_export($this->value, true);
             }
 
             throw new \RuntimeException('Called unwrap on an Err value: ' . $errorMsg);
         }
 
-        return $this->value;
+        /** @var T $value */
+        $value = $this->value;
+        return $value;
     }
 
     /**
@@ -183,11 +192,13 @@ readonly class Result
      */
     public function unwrapErr(): mixed
     {
-        if ($this->isOk()) {
+        if ($this->isOk) {
             throw new \RuntimeException('Called unwrapErr on an Ok value');
         }
 
-        return $this->error;
+        /** @var E $value */
+        $value = $this->value;
+        return $value;
     }
 
     /**
@@ -198,8 +209,10 @@ readonly class Result
      */
     public function unwrapOr(mixed $default): mixed
     {
-        if ($this->isOk()) {
-            return $this->value;
+        if ($this->isOk) {
+            /** @var T $value */
+            $value = $this->value;
+            return $value;
         }
 
         return $default;
@@ -213,12 +226,14 @@ readonly class Result
      */
     public function unwrapOrElse(callable $fn): mixed
     {
-        if ($this->isOk()) {
-            return $this->value;
+        if ($this->isOk) {
+            /** @var T $value */
+            $value = $this->value;
+            return $value;
         }
 
         /** @var E $error */
-        $error = $this->error;
+        $error = $this->value;
         return $fn($error);
     }
 
@@ -230,11 +245,13 @@ readonly class Result
      */
     public function expect(string $message): mixed
     {
-        if ($this->isErr()) {
+        if (!$this->isOk) {
             throw new \RuntimeException($message);
         }
 
-        return $this->value;
+        /** @var T $value */
+        $value = $this->value;
+        return $value;
     }
 
     /**
@@ -245,11 +262,13 @@ readonly class Result
      */
     public function expectErr(string $message): mixed
     {
-        if ($this->isOk()) {
+        if ($this->isOk) {
             throw new \RuntimeException($message);
         }
 
-        return $this->error;
+        /** @var E $value */
+        $value = $this->value;
+        return $value;
     }
 
     /**
@@ -258,9 +277,10 @@ readonly class Result
      *
      * @return Option<T>
      */
+    #[\NoDiscard]
     public function toOption(): Option
     {
-        if ($this->isOk()) {
+        if ($this->isOk) {
             /** @var T $value */
             $value = $this->value;
             return Option::some($value);
@@ -275,11 +295,12 @@ readonly class Result
      *
      * @return Option<E>
      */
+    #[\NoDiscard]
     public function toErrOption(): Option
     {
-        if ($this->isErr()) {
+        if (!$this->isOk) {
             /** @var E $error */
-            $error = $this->error;
+            $error = $this->value;
             return Option::some($error);
         }
 
@@ -296,7 +317,7 @@ readonly class Result
      */
     public function mapOr(mixed $default, callable $fn): mixed
     {
-        if ($this->isOk()) {
+        if ($this->isOk) {
             /** @var T $value */
             $value = $this->value;
             return $fn($value);
@@ -315,14 +336,14 @@ readonly class Result
      */
     public function mapOrElse(callable $default, callable $fn): mixed
     {
-        if ($this->isOk()) {
+        if ($this->isOk) {
             /** @var T $value */
             $value = $this->value;
             return $fn($value);
         }
 
         /** @var E $error */
-        $error = $this->error;
+        $error = $this->value;
         return $default($error);
     }
 
@@ -334,7 +355,7 @@ readonly class Result
      */
     public function inspect(callable $fn): self
     {
-        if ($this->isOk()) {
+        if ($this->isOk) {
             /** @var T $value */
             $value = $this->value;
             $fn($value);
@@ -351,9 +372,9 @@ readonly class Result
      */
     public function inspectErr(callable $fn): self
     {
-        if ($this->isErr()) {
+        if (!$this->isOk) {
             /** @var E $error */
-            $error = $this->error;
+            $error = $this->value;
             $fn($error);
         }
 
@@ -368,14 +389,15 @@ readonly class Result
      * @param self<U, E> $other
      * @return self<U, E>
      */
+    #[\NoDiscard]
     public function and(self $other): self
     {
-        if ($this->isOk()) {
+        if ($this->isOk) {
             return $other;
         }
 
         /** @var E $error */
-        $error = $this->error;
+        $error = $this->value;
         return self::err($error);
     }
 
@@ -386,9 +408,10 @@ readonly class Result
      * @param self<T, F> $other
      * @return self<T, F>
      */
+    #[\NoDiscard]
     public function or(self $other): self
     {
-        if ($this->isOk()) {
+        if ($this->isOk) {
             /** @var T $value */
             $value = $this->value;
             return self::ok($value);
@@ -403,15 +426,11 @@ readonly class Result
      *
      * @return ($this is self<self<mixed, mixed>, mixed> ? self<mixed, mixed> : self<T, E>)
      */
+    #[\NoDiscard]
     public function flatten(): self
     {
-        if ($this->isErr()) {
-            /** @var E $error */
-            $error = $this->error;
-            return self::err($error);
-        }
-
-        if ($this->value instanceof self) {
+        // An Err or a non-nested Ok is already flat
+        if ($this->isOk && $this->value instanceof self) {
             return $this->value;
         }
 
@@ -428,14 +447,14 @@ readonly class Result
      */
     public function fold(callable $onOk, callable $onErr): mixed
     {
-        if ($this->isOk()) {
+        if ($this->isOk) {
             /** @var T $value */
             $value = $this->value;
             return $onOk($value);
         }
 
         /** @var E $error */
-        $error = $this->error;
+        $error = $this->value;
         return $onErr($error);
     }
 }

@@ -39,9 +39,14 @@ class Conditional
             return false;
         }
 
-        $property = $reflectionClass->getProperty($this->field);
-        $fieldValue = $property->getValue($object);
+        return $this->matches($reflectionClass->getProperty($this->field)->getValue($object));
+    }
 
+    /**
+     * Check the condition against an already read field value
+     */
+    public function matches(mixed $fieldValue): bool
+    {
         return match ($this->operator) {
             '==' => $fieldValue === $this->value,
             '!=' => $fieldValue !== $this->value,

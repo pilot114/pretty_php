@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace PrettyPhp\Binary;
 
 trait Checksum
@@ -10,20 +12,16 @@ trait Checksum
             $object->checksum = 0;
         }
 
-        $headerWithoutChecksum = Binary::pack($object);
-
-        $checksum = 0;
-        $bitLength = strlen($headerWithoutChecksum);
-
-        for ($i = 0; $i < $bitLength; $i += 2) {
-            $byte1 = ord($headerWithoutChecksum[$i]);
-            $byte2 = isset($headerWithoutChecksum[$i + 1]) ? ord($headerWithoutChecksum[$i + 1]) : 0;
-            $word = $byte1 << 8 | $byte2;
-            $checksum += $word;
+        // RFC 1071: one's complement sum of 16-bit words, odd data padded with a zero byte
+        $data = Binary::pack($object);
+        if (strlen($data) % 2 === 1) {
+            $data .= "\0";
         }
 
-        $checksum = ($checksum >> 16) + ($checksum & 0xFFFF);
-        $checksum += ($checksum >> 16);
+        $checksum = array_sum((array) unpack('n*', $data));
+        while ($checksum > 0xFFFF) {
+            $checksum = ($checksum & 0xFFFF) + ($checksum >> 16);
+        }
 
         return ~$checksum & 0xFFFF;
     }

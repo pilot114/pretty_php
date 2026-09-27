@@ -14,6 +14,8 @@ use PrettyPhp\Exception\NumException;
 use PrettyPhp\Exception\PathException;
 use PrettyPhp\Exception\PrettyPhpException;
 
+mutates(\PrettyPhp\Exception\PrettyPhpException::class, \PrettyPhp\Binary\Security\SecurityException::class, \PrettyPhp\Binary\Security\BufferOverflowException::class, \PrettyPhp\Binary\Security\RateLimitException::class);
+
 describe('Exception Hierarchy', function (): void {
     describe('PrettyPhpException', function (): void {
         it('extends RuntimeException', function (): void {

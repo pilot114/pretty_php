@@ -3,6 +3,8 @@
 use PrettyPhp\Base\Arr;
 use PrettyPhp\Base\Str;
 
+mutates(\PrettyPhp\Base\Str::class);
+
 describe('Str', function (): void {
     it('can be constructed and get value', function (): void {
         $str = new Str('hello');
@@ -18,6 +20,15 @@ describe('Str', function (): void {
         expect(new Str('hello')->length())->toBe(5);
         expect(new Str('')->length())->toBe(0);
         expect(new Str('тест')->length())->toBe(4); // multibyte
+    });
+
+    it('counts characters of long strings around the ASCII check threshold', function (): void {
+        foreach ([255, 256, 257] as $bytes) {
+            expect(new Str(str_repeat('a', $bytes))->length())->toBe($bytes);
+            // One two-byte character: one character fewer than bytes
+            expect(new Str('é' . str_repeat('a', $bytes - 2))->length())->toBe($bytes - 1);
+            expect(new Str(str_repeat('a', $bytes - 2) . 'é')->length())->toBe($bytes - 1);
+        }
     });
 
     it('can check if empty', function (): void {
@@ -273,5 +284,19 @@ describe('Str edge cases', function (): void {
 
     it('returns empty PascalCase for empty string', function (): void {
         expect(new Str('')->toPascalCase()->get())->toBe('');
+    });
+});
+
+describe('Str case conversion of long strings', function (): void {
+    it('converts long ASCII strings', function (): void {
+        $text = str_repeat('Abc ', 20);
+        expect(new Str($text)->upper()->get())->toBe(str_repeat('ABC ', 20));
+        expect(new Str($text)->lower()->get())->toBe(str_repeat('abc ', 20));
+    });
+
+    it('converts long multibyte strings', function (): void {
+        $text = str_repeat('Привет ', 20);
+        expect(new Str($text)->upper()->get())->toBe(str_repeat('ПРИВЕТ ', 20));
+        expect(new Str($text)->lower()->get())->toBe(str_repeat('привет ', 20));
     });
 });

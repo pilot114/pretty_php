@@ -42,18 +42,10 @@ class Arr
      * @param iterable<int|string, U> $iterable
      * @return self<U>
      */
+    #[\NoDiscard]
     public static function from(iterable $iterable): self
     {
-        if (is_array($iterable)) {
-            return new self($iterable);
-        }
-
-        $array = [];
-        foreach ($iterable as $key => $value) {
-            $array[$key] = $value;
-        }
-
-        return new self($array);
+        return new self($iterable);
     }
 
     /**
@@ -81,17 +73,18 @@ class Arr
 
     public function first(): mixed
     {
-        return reset($this->value);
+        return array_first($this->value);
     }
 
     public function last(): mixed
     {
-        return end($this->value);
+        return array_last($this->value);
     }
 
     /**
      * @return Arr<T>
      */
+    #[\NoDiscard]
     public function push(mixed $value): self
     {
         $newArray = $this->value;
@@ -103,6 +96,7 @@ class Arr
     /**
      * @return Option<T>
      */
+    #[\NoDiscard]
     public function pop(): Option
     {
         if ($this->isEmpty()) {
@@ -118,6 +112,7 @@ class Arr
     /**
      * @return Option<T>
      */
+    #[\NoDiscard]
     public function shift(): Option
     {
         if ($this->isEmpty()) {
@@ -167,6 +162,7 @@ class Arr
     /**
      * @return Arr<T>
      */
+    #[\NoDiscard]
     public function unshift(mixed $value): self
     {
         $newArray = $this->value;
@@ -189,6 +185,7 @@ class Arr
     /**
      * @return Arr<T>
      */
+    #[\NoDiscard]
     public function slice(int $offset, ?int $length = null): self
     {
         return new self(array_slice($this->value, $offset, $length));
@@ -198,6 +195,7 @@ class Arr
      * @param array<int|string, T> $replacement
      * @return Arr<T>
      */
+    #[\NoDiscard]
     public function splice(int $offset, ?int $length = null, array $replacement = []): self
     {
         $newArray = $this->value;
@@ -209,6 +207,7 @@ class Arr
      * @param iterable<int|string, T> $iterable
      * @return Arr<T>
      */
+    #[\NoDiscard]
     public function merge(iterable $iterable): self
     {
         if (is_array($iterable)) {
@@ -230,6 +229,7 @@ class Arr
     /**
      * @return Arr<T>
      */
+    #[\NoDiscard]
     public function unique(): self
     {
         return new self(array_unique($this->value, SORT_REGULAR));
@@ -238,6 +238,7 @@ class Arr
     /**
      * @return Arr<T>
      */
+    #[\NoDiscard]
     public function reverse(): self
     {
         return new self(array_reverse($this->value));
@@ -247,6 +248,7 @@ class Arr
      * @param (Closure(T, T): int)|null $callback
      * @return Arr<T>
      */
+    #[\NoDiscard]
     public function sort(?Closure $callback = null): self
     {
         $newArray = $this->value;
@@ -260,36 +262,40 @@ class Arr
     }
 
     /**
-     * @param (Closure(T, int|string): bool)|null $callback
+     * @param (Closure(T): bool)|(Closure(T, int|string): bool)|null $callback
      * @return Arr<T>
      */
+    #[\NoDiscard]
     public function filter(?Closure $callback = null): self
     {
         if (!$callback instanceof \Closure) {
             return new self(array_filter(
                 $this->value,
-                fn($value): bool => !in_array($value, [null, false, '', 0, []], true),
-                ARRAY_FILTER_USE_BOTH
+                static fn(mixed $value): bool => !in_array($value, [null, false, '', 0, []], true)
             ));
         }
 
-        $result = [];
-        foreach ($this->value as $key => $value) {
-            if ($callback($value, $key)) {
-                $result[$key] = $value;
-            }
+        if ($this->acceptsKey($callback)) {
+            return new self(array_filter($this->value, $callback, ARRAY_FILTER_USE_BOTH));
         }
 
-        return new self($result);
+        // Plain mode is faster when the callback does not need the key
+        return new self(array_filter($this->value, $callback));
     }
 
     /**
      * @template U
-     * @param Closure(T, int|string): U $callback
+     * @param (Closure(T): U)|(Closure(T, int|string): U) $callback
      * @return Arr<U>
      */
+    #[\NoDiscard]
     public function map(Closure $callback): self
     {
+        // array_map() is faster and preserves keys, but cannot pass the key to the callback
+        if (!$this->acceptsKey($callback)) {
+            return new self(array_map($callback, $this->value));
+        }
+
         $result = [];
         foreach ($this->value as $key => $value) {
             $result[$key] = $callback($value, $key);
@@ -328,13 +334,7 @@ class Arr
      */
     public function find(Closure $callback): mixed
     {
-        foreach ($this->value as $key => $value) {
-            if ($callback($value, $key)) {
-                return $value;
-            }
-        }
-
-        return null;
+        return array_find($this->value, $callback);
     }
 
     /**
@@ -342,13 +342,9 @@ class Arr
      */
     public function findIndex(Closure $callback): int
     {
-        foreach ($this->value as $key => $value) {
-            if ($callback($value, $key)) {
-                return is_int($key) ? $key : -1;
-            }
-        }
+        $key = array_find_key($this->value, $callback);
 
-        return -1;
+        return is_int($key) ? $key : -1;
     }
 
     /**
@@ -356,7 +352,7 @@ class Arr
      */
     public function some(Closure $callback): bool
     {
-        return array_any($this->value, fn($value, $key) => $callback($value, $key));
+        return array_any($this->value, $callback);
     }
 
     /**
@@ -364,12 +360,13 @@ class Arr
      */
     public function every(Closure $callback): bool
     {
-        return array_all($this->value, fn($value, $key) => $callback($value, $key));
+        return array_all($this->value, $callback);
     }
 
     /**
      * @return Arr<int|string>
      */
+    #[\NoDiscard]
     public function keys(): self
     {
         return new self(array_keys($this->value));
@@ -378,6 +375,7 @@ class Arr
     /**
      * @return Arr<T>
      */
+    #[\NoDiscard]
     public function values(): self
     {
         return new self(array_values($this->value));
@@ -386,6 +384,7 @@ class Arr
     /**
      * @return Arr<int|string>
      */
+    #[\NoDiscard]
     public function flip(): self
     {
         $flippable = array_filter($this->value, fn($value): bool => is_int($value) || is_string($value));
@@ -397,6 +396,7 @@ class Arr
      * @return Arr<array<int, T>>
      * @throws ArrException
      */
+    #[\NoDiscard]
     public function chunk(int $size): self
     {
         if ($size < 1) {
@@ -411,6 +411,7 @@ class Arr
     /**
      * @throws ArrException If an element cannot be converted to string
      */
+    #[\NoDiscard]
     public function join(string $glue = ''): Str
     {
         $strings = array_map(static function (mixed $item): string {
@@ -428,6 +429,7 @@ class Arr
      * @param Closure(T, int|string): (int|string) $callback
      * @return Arr<array<int, T>>
      */
+    #[\NoDiscard]
     public function groupBy(Closure $callback): self
     {
         $groups = [];
@@ -445,6 +447,7 @@ class Arr
     /**
      * @return Arr<mixed>
      */
+    #[\NoDiscard]
     public function flatten(int $depth = 1): self
     {
         $result = [];
@@ -511,6 +514,7 @@ class Arr
      * @param Closure(T, int|string): bool $callback
      * @return Arr<array<int, T>>
      */
+    #[\NoDiscard]
     public function partition(Closure $callback): self
     {
         $pass = [];
@@ -534,6 +538,7 @@ class Arr
      * @param iterable<int|string, mixed> ...$arrays
      * @return Arr<array<int, mixed>>
      */
+    #[\NoDiscard]
     public function zip(iterable ...$arrays): self
     {
         $allArrays = [$this->value];
@@ -561,12 +566,9 @@ class Arr
      * Unzip an array of tuples into separate arrays
      * @return Arr<array<int, mixed>>
      */
+    #[\NoDiscard]
     public function unzip(): self
     {
-        if ($this->isEmpty()) {
-            return new self([]);
-        }
-
         $result = [];
         foreach ($this->value as $tuple) {
             if (!is_array($tuple)) {
@@ -589,6 +591,7 @@ class Arr
      * @param iterable<int|string, T> ...$arrays
      * @return Arr<T>
      */
+    #[\NoDiscard]
     public function difference(iterable ...$arrays): self
     {
         $phpArrays = [];
@@ -604,6 +607,7 @@ class Arr
      * @param iterable<int|string, T> ...$arrays
      * @return Arr<T>
      */
+    #[\NoDiscard]
     public function intersection(iterable ...$arrays): self
     {
         $phpArrays = [];
@@ -619,6 +623,7 @@ class Arr
      * @param iterable<int|string, T> ...$arrays
      * @return Arr<T>
      */
+    #[\NoDiscard]
     public function union(iterable ...$arrays): self
     {
         $result = $this->value;
@@ -636,6 +641,7 @@ class Arr
      * @param array<string, 'asc'|'desc'> $keys Array of key => direction pairs
      * @return Arr<T>
      */
+    #[\NoDiscard]
     public function sortByKeys(array $keys): self
     {
         $newArray = $this->value;
@@ -675,6 +681,7 @@ class Arr
      * Pluck values from array of arrays/objects by key
      * @return Arr<mixed>
      */
+    #[\NoDiscard]
     public function pluck(string|int $key): self
     {
         $result = [];
@@ -691,6 +698,22 @@ class Arr
 
         /** @var array<int|string, mixed> $result */
         return new self($result);
+    }
+
+    /**
+     * Whether a callback declares a second (key) parameter, so it has to be called with ($value, $key)
+     *
+     * @template V
+     * @template R
+     * @param (Closure(V): R)|(Closure(V, int|string): R) $callback
+     * @phpstan-assert-if-true Closure(V, int|string): R $callback
+     * @phpstan-assert-if-false Closure(V): R $callback
+     */
+    private function acceptsKey(Closure $callback): bool
+    {
+        $reflection = new \ReflectionFunction($callback);
+
+        return $reflection->getNumberOfParameters() >= 2 || $reflection->isVariadic();
     }
 
     private function compareValues(mixed $a, mixed $b): int

@@ -21,11 +21,13 @@ class RateLimiter
     /**
      * @param int $maxRequests Maximum number of requests allowed
      * @param int $windowSeconds Time window in seconds
+     * @param (\Closure(): float)|null $clock Current time in seconds; defaults to microtime(true)
      * @throws SecurityException
      */
     public function __construct(
         private readonly int $maxRequests,
-        private readonly int $windowSeconds
+        private readonly int $windowSeconds,
+        private readonly ?\Closure $clock = null
     ) {
         if ($maxRequests <= 0) {
             throw new SecurityException('Max requests must be positive');
@@ -36,7 +38,7 @@ class RateLimiter
         }
 
         $this->tokens = $maxRequests;
-        $this->lastRefill = microtime(true);
+        $this->lastRefill = $this->now();
     }
 
     /**
@@ -167,7 +169,7 @@ class RateLimiter
     public function reset(): void
     {
         $this->tokens = $this->maxRequests;
-        $this->lastRefill = microtime(true);
+        $this->lastRefill = $this->now();
     }
 
     /**
@@ -175,16 +177,22 @@ class RateLimiter
      */
     private function refillTokens(): void
     {
-        $now = microtime(true);
-        $elapsed = $now - $this->lastRefill;
-
-        // Calculate tokens to add based on elapsed time
+        $now = $this->now();
         $tokensPerSecond = $this->maxRequests / $this->windowSeconds;
-        $tokensToAdd = (int) floor($elapsed * $tokensPerSecond);
+        $tokensToAdd = (int) floor(($now - $this->lastRefill) * $tokensPerSecond);
 
         if ($tokensToAdd > 0) {
             $this->tokens = min($this->maxRequests, $this->tokens + $tokensToAdd);
-            $this->lastRefill = $now;
+            // Advance only by the time "paid" for the added tokens, so fractional progress is kept;
+            // a full bucket cannot accumulate credit, so it restarts from now
+            $this->lastRefill = $this->tokens === $this->maxRequests
+                ? $now
+                : $this->lastRefill + $tokensToAdd / $tokensPerSecond;
         }
+    }
+
+    private function now(): float
+    {
+        return $this->clock instanceof \Closure ? ($this->clock)() : microtime(true);
     }
 }

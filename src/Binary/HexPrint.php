@@ -61,25 +61,11 @@ class HexPrint
             // Offset
             $offset = sprintf('%08x', $i);
 
-            // Hex representation
-            $hex = [];
-            for ($j = 0; $j < $chunkLength; $j++) {
-                $hex[] = sprintf('%02x', ord($chunk[$j]));
-            }
+            // Hex representation, padded to the width of a full line
+            $hexString = implode(' ', str_split(bin2hex($chunk), 2));
+            $hexString .= str_repeat(' ', ($bytesPerLine - $chunkLength) * 3);
 
-            // Pad hex if needed
-            $hexString = implode(' ', $hex);
-            $padding = ($bytesPerLine - $chunkLength) * 3;
-            $hexString .= str_repeat(' ', $padding);
-
-            // ASCII representation
-            $ascii = '';
-            for ($j = 0; $j < $chunkLength; $j++) {
-                $byte = ord($chunk[$j]);
-                $ascii .= ($byte >= 32 && $byte <= 126) ? $chunk[$j] : '.';
-            }
-
-            $output[] = sprintf('%s  %s  |%s|', $offset, $hexString, $ascii);
+            $output[] = sprintf('%s  %s  |%s|', $offset, $hexString, self::asciiColumn($chunk));
         }
 
         return implode("\n", $output);
@@ -145,15 +131,7 @@ class HexPrint
             $padding = ($bytesPerLine - $chunkLength) * 3;
             $hexString .= str_repeat(' ', $padding);
 
-            // ASCII representation
-            $ascii = '';
-            for ($j = 0; $j < $chunkLength; $j++) {
-                $byte = ord($chunk[$j]);
-                $char = ($byte >= 32 && $byte <= 126) ? $chunk[$j] : '.';
-                $ascii .= $char;
-            }
-
-            $output[] = sprintf('%s  %s  |%s|', $offset, $hexString, $ascii);
+            $output[] = sprintf('%s  %s  |%s|', $offset, $hexString, self::asciiColumn($chunk));
         }
 
         return implode("\n", $output);
@@ -168,7 +146,7 @@ class HexPrint
             return "\033[90m"; // Dark gray for null bytes
         }
 
-        if ($byte >= 32 && $byte <= 126) {
+        if (self::isPrintable($byte)) {
             return "\033[92m"; // Green for printable ASCII
         }
 
@@ -177,5 +155,21 @@ class HexPrint
         }
 
         return "\033[91m"; // Red for control characters
+    }
+
+    /**
+     * Printable ASCII range (space through tilde)
+     */
+    private static function isPrintable(int $byte): bool
+    {
+        return $byte >= 0x20 && $byte <= 0x7E;
+    }
+
+    /**
+     * ASCII column of a hex dump: printable characters as is, everything else as "."
+     */
+    private static function asciiColumn(string $chunk): string
+    {
+        return (string) preg_replace('/[^\x20-\x7E]/', '.', $chunk);
     }
 }

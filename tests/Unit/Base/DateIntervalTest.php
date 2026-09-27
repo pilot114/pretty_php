@@ -3,6 +3,8 @@
 use PrettyPhp\Base\DateInterval;
 use PrettyPhp\Base\Str;
 
+mutates(\PrettyPhp\Base\DateInterval::class);
+
 describe('DateInterval', function (): void {
     it('can be constructed from spec', function (): void {
         $interval = new DateInterval('P1D');
@@ -46,7 +48,7 @@ describe('DateInterval', function (): void {
         });
 
         it('throws exception for invalid date string', function (): void {
-            DateInterval::fromDateString('invalid');
+            (void) DateInterval::fromDateString('invalid');
         })->throws(\DateMalformedIntervalStringException::class);
 
         it('can create from parts', function (): void {
@@ -225,6 +227,69 @@ describe('DateInterval edge cases', function (): void {
     });
 
     it('compares with native DateInterval', function (): void {
+        expect(DateInterval::fromSpec('P1D')->equals(new \DateInterval('P1D')))->toBeTrue();
+    });
+});
+
+describe('DateInterval exact values', function (): void {
+    it('creates intervals from individual parts', function (array $parts, string $expected): void {
+        expect(DateInterval::create(...$parts)->toIso8601()->get())->toBe($expected);
+    })->with([
+        'nothing' => [[], 'P0D'],
+        'years' => [['years' => 1], 'P1Y'],
+        'months' => [['months' => 1], 'P1M'],
+        'days' => [['days' => 1], 'P1D'],
+        'hours' => [['hours' => 1], 'PT1H'],
+        'minutes' => [['minutes' => 1], 'PT1M'],
+        'seconds' => [['seconds' => 1], 'PT1S'],
+        'everything' => [[2, 3, 4, 5, 6, 7], 'P2Y3M4DT5H6M7S'],
+        'date and seconds' => [['days' => 2, 'seconds' => 9], 'P2DT9S'],
+        'negative parts ignored' => [[-1, -1, -1, -1, -1, -1], 'P0D'],
+    ]);
+
+    it('converts to total seconds, minutes and hours', function (string $spec, int $seconds): void {
+        expect(DateInterval::fromSpec($spec)->toSeconds())->toBe($seconds);
+    })->with([
+        ['P1Y', 31_536_000],
+        ['P1M', 2_592_000],
+        ['P1D', 86_400],
+        ['PT1H', 3_600],
+        ['PT1M', 60],
+        ['PT1S', 1],
+        ['P1Y1M1DT1H1M1S', 31_536_000 + 2_592_000 + 86_400 + 3_600 + 60 + 1],
+    ]);
+
+    it('truncates minutes and hours towards zero', function (): void {
+        expect(DateInterval::fromSpec('PT119S')->toMinutes())->toBe(1);
+        expect(DateInterval::fromSpec('PT7199S')->toHours())->toBe(1);
+
+        $negative = new DateInterval(new \DateTimeImmutable('2024-01-01 00:01:59')->diff(new \DateTimeImmutable('2024-01-01')));
+        expect($negative->isInverted())->toBeTrue();
+        expect($negative->toSeconds())->toBe(-119);
+        expect($negative->toMinutes())->toBe(-1);
+        expect($negative->toArray())->toBe([
+            'years' => 0,
+            'months' => 0,
+            'days' => 0,
+            'hours' => 0,
+            'minutes' => 1,
+            'seconds' => 59,
+            'microseconds' => 0.0,
+            'total_days' => 0,
+            'inverted' => true,
+        ]);
+    });
+
+    it('compares every component', function (string $other): void {
+        expect(DateInterval::fromSpec('P1Y1M1DT1H1M1S')->equals($other))->toBeFalse();
+    })->with(['P2Y1M1DT1H1M1S', 'P1Y2M1DT1H1M1S', 'P1Y1M2DT1H1M1S', 'P1Y1M1DT2H1M1S', 'P1Y1M1DT1H2M1S', 'P1Y1M1DT1H1M2S']);
+
+    it('compares direction and accepts all interval types', function (): void {
+        $forward = new DateInterval(new \DateTimeImmutable('2024-01-01')->diff(new \DateTimeImmutable('2024-01-02')));
+        $backward = new DateInterval(new \DateTimeImmutable('2024-01-02')->diff(new \DateTimeImmutable('2024-01-01')));
+        expect($forward->equals($backward))->toBeFalse();
+        expect(DateInterval::fromSpec('P1D')->equals('P1D'))->toBeTrue();
+        expect(DateInterval::fromSpec('P1D')->equals(DateInterval::fromSpec('P1D')))->toBeTrue();
         expect(DateInterval::fromSpec('P1D')->equals(new \DateInterval('P1D')))->toBeTrue();
     });
 });

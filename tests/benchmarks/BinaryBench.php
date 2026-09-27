@@ -29,7 +29,7 @@ class BinaryBench
     #[Iterations(10)]
     public function benchPack(): void
     {
-        Binary::pack($this->packet);
+        (void) Binary::pack($this->packet);
     }
 
     #[Revs(2000)]
@@ -45,7 +45,7 @@ class BinaryBench
     #[Iterations(10)]
     public function benchUnpack(): void
     {
-        Binary::unpack($this->packed, TCPPacket::class);
+        (void) Binary::unpack($this->packed, TCPPacket::class);
     }
 
     #[Revs(2000)]

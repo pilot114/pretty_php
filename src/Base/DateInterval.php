@@ -22,6 +22,7 @@ readonly class DateInterval implements \Stringable
     /**
      * Create from DateInterval
      */
+    #[\NoDiscard]
     public static function fromInterval(\DateInterval $interval): self
     {
         return new self($interval);
@@ -30,6 +31,7 @@ readonly class DateInterval implements \Stringable
     /**
      * Create from interval specification (P1D, PT1H, etc.)
      */
+    #[\NoDiscard]
     public static function fromSpec(string $spec): self
     {
         return new self($spec);
@@ -38,6 +40,7 @@ readonly class DateInterval implements \Stringable
     /**
      * Create from date string (e.g., '1 day', '2 hours', '3 months')
      */
+    #[\NoDiscard]
     public static function fromDateString(string $dateString): self
     {
         return new self(\DateInterval::createFromDateString($dateString));
@@ -46,6 +49,7 @@ readonly class DateInterval implements \Stringable
     /**
      * Create interval from date parts
      */
+    #[\NoDiscard]
     public static function create(
         int $years = 0,
         int $months = 0,
@@ -54,35 +58,16 @@ readonly class DateInterval implements \Stringable
         int $minutes = 0,
         int $seconds = 0
     ): self {
-        $spec = 'P';
-        if ($years > 0) {
-            $spec .= $years . 'Y';
-        }
+        // Negative parts are ignored, as an ISO 8601 duration cannot express them
+        $interval = new \DateInterval('PT0S');
+        $interval->y = max(0, $years);
+        $interval->m = max(0, $months);
+        $interval->d = max(0, $days);
+        $interval->h = max(0, $hours);
+        $interval->i = max(0, $minutes);
+        $interval->s = max(0, $seconds);
 
-        if ($months > 0) {
-            $spec .= $months . 'M';
-        }
-
-        if ($days > 0) {
-            $spec .= $days . 'D';
-        }
-
-        if ($hours > 0 || $minutes > 0 || $seconds > 0) {
-            $spec .= 'T';
-            if ($hours > 0) {
-                $spec .= $hours . 'H';
-            }
-
-            if ($minutes > 0) {
-                $spec .= $minutes . 'M';
-            }
-
-            if ($seconds > 0) {
-                $spec .= $seconds . 'S';
-            }
-        }
-
-        return new self($spec === 'P' ? 'P0D' : $spec);
+        return new self($interval);
     }
 
     /**
@@ -124,6 +109,7 @@ readonly class DateInterval implements \Stringable
      * %r - Sign "-" when negative, empty when positive
      * %% - Literal %
      */
+    #[\NoDiscard]
     public function format(string $format): Str
     {
         return new Str($this->value->format($format));
@@ -132,43 +118,40 @@ readonly class DateInterval implements \Stringable
     /**
      * Format as ISO 8601 duration (P1Y2M3DT4H5M6S)
      */
+    #[\NoDiscard]
     public function toIso8601(): Str
     {
-        $spec = 'P';
-        if ($this->value->y > 0) {
-            $spec .= $this->value->y . 'Y';
+        $date = $this->durationParts(['Y' => $this->value->y, 'M' => $this->value->m, 'D' => $this->value->d]);
+        $time = $this->durationParts(['H' => $this->value->h, 'M' => $this->value->i, 'S' => $this->value->s]);
+
+        if ($date === '' && $time === '') {
+            return new Str('P0D');
         }
 
-        if ($this->value->m > 0) {
-            $spec .= $this->value->m . 'M';
-        }
+        return new Str('P' . $date . ($time === '' ? '' : 'T' . $time));
+    }
 
-        if ($this->value->d > 0) {
-            $spec .= $this->value->d . 'D';
-        }
-
-        $hasTime = $this->value->h > 0 || $this->value->i > 0 || $this->value->s > 0;
-        if ($hasTime) {
-            $spec .= 'T';
-            if ($this->value->h > 0) {
-                $spec .= $this->value->h . 'H';
-            }
-
-            if ($this->value->i > 0) {
-                $spec .= $this->value->i . 'M';
-            }
-
-            if ($this->value->s > 0) {
-                $spec .= $this->value->s . 'S';
+    /**
+     * Render non-zero duration parts, e.g. ['Y' => 1, 'M' => 0, 'D' => 3] => "1Y3D"
+     *
+     * @param array<string, int> $parts Unit designator => amount
+     */
+    private function durationParts(array $parts): string
+    {
+        $result = '';
+        foreach ($parts as $unit => $amount) {
+            if ($amount !== 0) {
+                $result .= $amount . $unit;
             }
         }
 
-        return new Str($spec === 'P' ? 'P0D' : $spec);
+        return $result;
     }
 
     /**
      * Format as human-readable string (1 year, 2 months, 3 days)
      */
+    #[\NoDiscard]
     public function toHumanReadable(): Str
     {
         $parts = [];
@@ -315,19 +298,19 @@ readonly class DateInterval implements \Stringable
     }
 
     /**
-     * Convert to total minutes (approximate)
+     * Convert to total whole minutes (approximate, truncated towards zero)
      */
     public function toMinutes(): int
     {
-        return (int) floor($this->toSeconds() / 60);
+        return intdiv($this->toSeconds(), 60);
     }
 
     /**
-     * Convert to total hours (approximate)
+     * Convert to total whole hours (approximate, truncated towards zero)
      */
     public function toHours(): int
     {
-        return (int) floor($this->toSeconds() / 3600);
+        return intdiv($this->toSeconds(), 3600);
     }
 
     /**

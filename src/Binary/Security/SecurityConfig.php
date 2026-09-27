@@ -16,20 +16,20 @@ class SecurityConfig
      * Maximum buffer size for unpacking operations (in bytes)
      * Default: 10MB
      */
-    public const DEFAULT_MAX_BUFFER_SIZE = 10 * 1024 * 1024;
+    public const int DEFAULT_MAX_BUFFER_SIZE = 10 * 1024 * 1024;
 
     /**
      * Maximum allowed nesting depth for binary structures
      * Prevents stack overflow attacks
      */
-    public const DEFAULT_MAX_NESTING_DEPTH = 100;
+    public const int DEFAULT_MAX_NESTING_DEPTH = 100;
 
     /**
      * Rate limiting defaults
      */
-    public const DEFAULT_RATE_LIMIT_REQUESTS = 1000;
+    public const int DEFAULT_RATE_LIMIT_REQUESTS = 1000;
 
-    public const DEFAULT_RATE_LIMIT_WINDOW = 60; // seconds
+    public const int DEFAULT_RATE_LIMIT_WINDOW = 60; // seconds
 
     private static int $maxBufferSize = self::DEFAULT_MAX_BUFFER_SIZE;
 

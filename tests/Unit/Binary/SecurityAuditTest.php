@@ -5,6 +5,8 @@ declare(strict_types=1);
 use PrettyPhp\Binary\Security\SecurityAudit;
 use PrettyPhp\Binary\Security\SecurityConfig;
 
+mutates(\PrettyPhp\Binary\Security\SecurityAudit::class, \PrettyPhp\Binary\Security\SecurityConfig::class);
+
 describe('SecurityAudit findings', function (): void {
     afterEach(function (): void {
         \PrettyPhp\Binary\Security\SecurityConfig::reset();

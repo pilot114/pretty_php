@@ -4,6 +4,8 @@ use PrettyPhp\Base\ArraySessionStorage;
 use PrettyPhp\Base\Session;
 use PrettyPhp\Base\Arr;
 
+mutates(\PrettyPhp\Base\Session::class, \PrettyPhp\Base\ArraySessionStorage::class, \PrettyPhp\Base\NativeSessionStorage::class);
+
 describe('Session', function (): void {
     beforeEach(function (): void {
         // Clean up any existing session

@@ -12,31 +12,31 @@ use PrettyPhp\Base\Str;
 readonly class PosixFile
 {
     // Access modes
-    public const F_OK = 0;
+    public const int F_OK = 0;
 
       // File exists
-    public const R_OK = 4;
+    public const int R_OK = 4;
 
       // Read permission
-    public const W_OK = 2;
+    public const int W_OK = 2;
 
       // Write permission
-    public const X_OK = 1;  // Execute permission
+    public const int X_OK = 1;  // Execute permission
 
     // File types for mknod
-    public const S_IFREG = 0100000;
+    public const int S_IFREG = 0100000;
 
       // Regular file
-    public const S_IFCHR = 0020000;
+    public const int S_IFCHR = 0020000;
 
       // Character device
-    public const S_IFBLK = 0060000;
+    public const int S_IFBLK = 0060000;
 
       // Block device
-    public const S_IFIFO = 0010000;
+    public const int S_IFIFO = 0010000;
 
       // FIFO (named pipe)
-    public const S_IFSOCK = 0140000; // Socket
+    public const int S_IFSOCK = 0140000; // Socket
 
     /**
      * Check file accessibility

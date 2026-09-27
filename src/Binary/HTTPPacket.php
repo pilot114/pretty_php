@@ -11,23 +11,23 @@ namespace PrettyPhp\Binary;
  */
 class HTTPPacket
 {
-    public const METHOD_GET = 'GET';
+    public const string METHOD_GET = 'GET';
 
-    public const METHOD_POST = 'POST';
+    public const string METHOD_POST = 'POST';
 
-    public const METHOD_PUT = 'PUT';
+    public const string METHOD_PUT = 'PUT';
 
-    public const METHOD_DELETE = 'DELETE';
+    public const string METHOD_DELETE = 'DELETE';
 
-    public const METHOD_HEAD = 'HEAD';
+    public const string METHOD_HEAD = 'HEAD';
 
-    public const METHOD_OPTIONS = 'OPTIONS';
+    public const string METHOD_OPTIONS = 'OPTIONS';
 
-    public const METHOD_PATCH = 'PATCH';
+    public const string METHOD_PATCH = 'PATCH';
 
-    public const HTTP_VERSION_10 = 'HTTP/1.0';
+    public const string HTTP_VERSION_10 = 'HTTP/1.0';
 
-    public const HTTP_VERSION_11 = 'HTTP/1.1';
+    public const string HTTP_VERSION_11 = 'HTTP/1.1';
 
     /**
      * @param array<string, string> $headers
@@ -112,15 +112,8 @@ class HTTPPacket
             $lines[] = sprintf('%s: %s', $name, $value);
         }
 
-        // Empty line separating headers from body
-        $lines[] = '';
-
-        // Body
-        if ($this->body !== '') {
-            $lines[] = $this->body;
-        }
-
-        return implode("\r\n", $lines);
+        // An empty line always terminates the header section, even without a body
+        return implode("\r\n", $lines) . "\r\n\r\n" . $this->body;
     }
 
     /**

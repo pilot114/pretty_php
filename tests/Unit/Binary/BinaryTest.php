@@ -11,6 +11,8 @@ use PrettyPhp\Binary\HTTPPacket;
 use Tests\Support\TestNestedPacket;
 use Tests\Support\TestInnerPacket;
 
+mutates(\PrettyPhp\Binary\Binary::class, \PrettyPhp\Binary\BinaryField::class, \PrettyPhp\Binary\Checksum::class, \PrettyPhp\Binary\ICMPPacket::class, \PrettyPhp\Binary\IPPacket::class, \PrettyPhp\Binary\TCPPacket::class, \PrettyPhp\Binary\UDPPacket::class, \PrettyPhp\Binary\ARPPacket::class, \PrettyPhp\Binary\DNSPacket::class, \PrettyPhp\Binary\HTTPPacket::class);
+
 describe('Binary', function (): void {
     it('can pack simple 8-bit values', function (): void {
         $packet = new class {

@@ -5,6 +5,8 @@ use PrettyPhp\Curl\CurlHandle;
 use PrettyPhp\Curl\CurlMultiHandle;
 use PrettyPhp\Curl\CurlShareHandle;
 
+mutates(\PrettyPhp\Curl\Curl::class);
+
 describe('Curl', function (): void {
     describe('init', function (): void {
         it('creates a CurlHandle without url', function (): void {

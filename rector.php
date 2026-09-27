@@ -33,6 +33,8 @@ return RectorConfig::configure()
         \Rector\DeadCode\Rector\Node\RemoveNonExistingVarAnnotationRector::class,
         // Buggy with promoted properties: removes constructors that declare public readonly props
         \Rector\DeadCode\Rector\ClassMethod\RemoveParentDelegatingConstructorRector::class,
+        // Rector does not know about #[\NoDiscard]: it treats (void) casts in benchmarks as dead code
+        \Rector\DeadCode\Rector\Expression\RemoveDeadStmtRector::class => [__DIR__ . '/tests/benchmarks'],
     ])
     ->withComposerBased(phpunit: true)
     ->withPhpSets(

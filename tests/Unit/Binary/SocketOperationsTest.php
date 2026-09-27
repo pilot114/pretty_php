@@ -12,6 +12,8 @@ use PrettyPhp\Binary\Socket;
 /**
  * @return array{0: Socket, 1: Socket, 2: Socket} Listening server, connected client and accepted connection
  */
+mutates(\PrettyPhp\Binary\Socket::class, \PrettyPhp\Binary\RawSocket::class, \PrettyPhp\Binary\Security\SecurityAudit::class);
+
 function tcpPair(): array
 {
     $server = Socket::tcp()->bind('127.0.0.1')->listen();

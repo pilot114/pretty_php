@@ -35,7 +35,7 @@ class ArrBench
     #[Iterations(10)]
     public function benchArrMapSmall(): void
     {
-        $this->smallArr->map(fn($x): int|float => $x * 2);
+        (void) $this->smallArr->map(fn($x): int|float => $x * 2);
     }
 
     #[Revs(1000)]
@@ -49,7 +49,7 @@ class ArrBench
     #[Iterations(10)]
     public function benchArrMapLarge(): void
     {
-        $this->largeArr->map(fn($x): int|float => $x * 2);
+        (void) $this->largeArr->map(fn($x): int|float => $x * 2);
     }
 
     #[Revs(100)]
@@ -63,7 +63,7 @@ class ArrBench
     #[Iterations(10)]
     public function benchArrFilterSmall(): void
     {
-        $this->smallArr->filter(fn($x): bool => $x % 2 === 0);
+        (void) $this->smallArr->filter(fn($x): bool => $x % 2 === 0);
     }
 
     #[Revs(1000)]
@@ -77,7 +77,7 @@ class ArrBench
     #[Iterations(10)]
     public function benchArrFilterLarge(): void
     {
-        $this->largeArr->filter(fn($x): bool => $x % 2 === 0);
+        (void) $this->largeArr->filter(fn($x): bool => $x % 2 === 0);
     }
 
     #[Revs(100)]
@@ -91,7 +91,7 @@ class ArrBench
     #[Iterations(10)]
     public function benchArrReduceSmall(): void
     {
-        $this->smallArr->reduce(fn($carry, $item): float|int|array => $carry + $item, 0);
+        (void) $this->smallArr->reduce(fn($carry, $item): float|int|array => $carry + $item, 0);
     }
 
     #[Revs(1000)]
@@ -105,7 +105,7 @@ class ArrBench
     #[Iterations(10)]
     public function benchArrReduceLarge(): void
     {
-        $this->largeArr->reduce(fn($carry, $item): float|int|array => $carry + $item, 0);
+        (void) $this->largeArr->reduce(fn($carry, $item): float|int|array => $carry + $item, 0);
     }
 
     #[Revs(100)]

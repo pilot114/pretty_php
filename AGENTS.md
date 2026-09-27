@@ -37,7 +37,7 @@ composer test      # Run tests (Pest 4)
 composer coverage  # Run tests with coverage (requires Xdebug)
 composer check     # PHPStan + Rector dry-run + PHPCS
 composer fix       # Auto-fix code style (Rector + PHPCBF)
-composer bench     # Run PHPBench benchmarks (tests/benchmarks)
+composer bench     # Run PHPBench benchmarks (tests/benchmarks), report: Pretty PHP vs native
 
 vendor/bin/pest tests/Unit/Base/StrTest.php  # Run a single test file
 vendor/bin/pest --filter="test name"         # Run a specific test by name
@@ -69,6 +69,26 @@ vendor/bin/pest --filter="test name"         # Run a specific test by name
 - **Static factory methods**: `Result::ok()`, `Result::err()`, `Result::from()`, `Option::some()`,
   `Option::none()`, `Option::from()`.
 
+### Modern PHP (8.5) Conventions
+
+- **`#[\NoDiscard]`** on every pure method of immutable classes that returns a new value (`Str`, `Arr`, `Num`,
+  `DateTime`, `Path`, `Json`, `Option`, `Result`, ...). Not on methods with side effects (`Arr::each()`,
+  `Path::mkdir()`, `inspect()`). When a result is intentionally ignored (e.g. a call expected to throw),
+  cast it: `(void) $dt->modify('invalid')`.
+- **Typed class constants** (`public const int X = 1;`).
+- Prefer PHP 8.4/8.5 array functions: `array_first()`, `array_last()`, `array_find()`, `array_find_key()`,
+  `array_any()`, `array_all()`.
+- Pipe operator `|>` only with first-class callables of single-argument functions (see performance rules).
+
+### Performance
+
+Performance-sensitive changes must be measured with `XDEBUG_MODE=off composer bench` against a saved
+baseline (`--tag` / `--ref`). Rules derived from measurements are in [docs/PERFORMANCE.md](docs/PERFORMANCE.md):
+cache reflection per class, batch native calls, let native array functions loop, never wrap callbacks,
+gate fast paths by measured thresholds, reuse immutable internals, pipe only with first-class callables,
+compile flat binary structures into one `pack()`/`unpack()`, import opcode-compiled functions
+(`use function strlen;`, `count`, `is_*`, `array_key_exists`) in hot namespaced files.
+
 ### Quality Standards
 
 - **PHPStan**: level `max` with strict rules, checked exception tracking (`RuntimeException` is checked, so
@@ -90,6 +110,32 @@ vendor/bin/pest --filter="test name"         # Run a specific test by name
 - Code that cannot run in the test process (root-only syscalls, failure branches the OS never triggers)
   is marked with `// @codeCoverageIgnore` (exact comment text, nothing after it) or
   `// @codeCoverageIgnoreStart` / `// @codeCoverageIgnoreEnd`, with a comment explaining why.
+
+### Mutation Testing
+
+`composer mutate` runs Pest mutation testing (`--mutate --parallel --min=85`, ~6 min on 16 cores; CI runs it
+weekly, manually and on PRs touching `src/` or `tests/`). Current score: **87.6%**. To inspect one class quickly:
+`XDEBUG_MODE=coverage php -d memory_limit=1G vendor/bin/pest --mutate --parallel --class='PrettyPhp\Base\Str'`.
+
+- Every test file declares the classes it verifies: `mutates(Str::class);` right after the `use` block.
+  Only declared classes are mutated, and only the declaring files run for their mutants.
+- Rules that came out of killing surviving mutants:
+  - **Assert exact values, not fragments.** Compare whole strings/arrays (`toBe`), full exception messages
+    including the dynamic part (the path, the value), exact bytes (`bin2hex(...)`) for binary data.
+  - **Use snapshots for formatted output** (`expect($output)->toMatchSnapshot()`, stored in `tests/.pest/snapshots`):
+    tables, diagrams, dumps, reports. Normalize volatile parts (dates) before snapshotting.
+  - **Test both sides of every boundary**: `n - 1`, `n`, `n + 1` for thresholds; 1 vs 2 for singular/plural;
+    a value just below two units for divisions (`intdiv`/`floor`); partial bytes and groups crossing byte
+    boundaries for bit fields.
+  - **Expected values must differ from defaults.** An assertion that matches the property default (or `0`/`''`)
+    cannot detect a skipped assignment.
+  - **Vary one input at a time** (each flag bit alone, each component of an equality alone), otherwise swapped
+    or missing terms cancel out.
+  - **Inject time** instead of sleeping (`RateLimiter` accepts `Closure(): float $clock`).
+- Remaining survivors are mostly equivalent mutants: default parameter values, casts PHP applies anyway,
+  performance-only early returns and caches, root-only code. Constants and property defaults are always
+  reported as UNCOVERED because declarations are not executable lines. If a mutant can only survive because
+  code is redundant, remove the redundant code instead of adding a test.
 
 ---
 

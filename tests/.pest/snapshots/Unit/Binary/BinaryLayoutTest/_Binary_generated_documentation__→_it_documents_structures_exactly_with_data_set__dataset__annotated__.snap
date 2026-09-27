@@ -1,0 +1,13 @@
+# Binary Structure: Tests\Support\TestAnnotatedPacket
+
+| Offset | Size | Field | Type | Endian | Constraints |
+|--------|------|-------|------|--------|-------------|
+| 0 | 1 | type | 8-bit | big | min=1, max=9, in=[1,2] |
+| 1 | 2 | extra (if type >= 2) | 16-bit | little |  |
+| 3 | 1 | guarded (if type != [3]) | 8-bit | big |  |
+| 4 | 2 | mode[3bits], level[7bits] | BitField | - |  |
+| 6 | 0 | payload | A* | big |  |
+| 6 | 1 | afterPayload | 8-bit | big |  |
+| 7 | 1 | tailBits[2bits] | BitField | - |  |
+
+**Total Size**: ~8 bytes (excluding variable-length fields)

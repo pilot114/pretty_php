@@ -4,6 +4,8 @@ use PrettyPhp\Base\Json;
 use PrettyPhp\Base\Str;
 use PrettyPhp\Base\Arr;
 
+mutates(\PrettyPhp\Base\Json::class);
+
 describe('Json', function (): void {
     it('can be constructed from string', function (): void {
         $json = Json::fromString('{"name":"John","age":30}');
@@ -543,6 +545,38 @@ describe('Json error handling', function (): void {
         expect(Json::fromData(5)->set('a', 1)->unwrapErr())->toBe('Cannot set path on non-array/object');
         expect(Json::fromData(5)->remove('a')->unwrapErr())->toBe('Cannot remove path from non-array/object');
         expect(Json::fromData(5)->size())->toBe(0);
+    });
+
+    it('checks paths and emptiness of invalid and scalar JSON', function (): void {
+        $invalid = Json::fromString('{bad');
+
+        expect($invalid->hasPath('a'))->toBeFalse();
+        expect($invalid->isEmpty())->toBeTrue();
+        expect(Json::fromData(5)->isEmpty())->toBeTrue();
+        expect(Json::fromString('[]')->isEmpty())->toBeTrue();
+        expect(Json::fromString('[0]')->isEmpty())->toBeFalse();
+    });
+
+    it('checks object properties by path', function (): void {
+        $data = new \stdClass();
+        $data->user = new \stdClass();
+        $data->user->name = null;
+
+        expect(Json::fromData($data)->hasPath('user.name'))->toBeTrue();
+        expect(Json::fromData($data)->hasPath('user.age'))->toBeFalse();
+        expect(Json::fromData(['user' => 'John'])->hasPath('user.name'))->toBeFalse();
+    });
+
+    it('reuses the decoded string across calls', function (): void {
+        $json = Json::fromString('{"user":{"name":"John","tags":["a","b"]},"empty":null}');
+
+        expect($json->path('user.name')->unwrap())->toBe('John');
+        expect($json->path('user.tags.1')->unwrap())->toBe('b');
+        expect($json->hasPath('empty'))->toBeTrue();
+        expect($json->size())->toBe(2);
+        expect($json->set('user.name', 'Jane')->unwrap()->path('user.name')->unwrap())->toBe('Jane');
+        expect($json->path('user.name')->unwrap())->toBe('John');
+        expect(Json::fromString('null')->path('a')->unwrapErr())->toBe('Path not found: a');
     });
 
     it('reports missing intermediate path on remove', function (): void {

@@ -43,6 +43,7 @@ readonly class TryResult
      * @param U $value
      * @return self<U>
      */
+    #[\NoDiscard]
     public static function success(mixed $value): self
     {
         return new self($value, null, true);
@@ -53,6 +54,7 @@ readonly class TryResult
      *
      * @return self<never>
      */
+    #[\NoDiscard]
     public static function failure(\Throwable $error): self
     {
         /** @var self<never> */
@@ -83,6 +85,7 @@ readonly class TryResult
      * @param callable(T): U $fn
      * @return self<U>
      */
+    #[\NoDiscard]
     public function map(callable $fn): self
     {
         if ($this->isFailure()) {
@@ -107,6 +110,7 @@ readonly class TryResult
      * @param callable(T): self<U> $fn
      * @return self<U>
      */
+    #[\NoDiscard]
     public function flatMap(callable $fn): self
     {
         if ($this->isFailure()) {
@@ -131,6 +135,7 @@ readonly class TryResult
      * @param callable(\Throwable): T $fn
      * @return self<T>
      */
+    #[\NoDiscard]
     public function recover(callable $fn): self
     {
         if ($this->isSuccess()) {
@@ -153,6 +158,7 @@ readonly class TryResult
      * @param callable(\Throwable): self<T> $fn
      * @return self<T>
      */
+    #[\NoDiscard]
     public function recoverWith(callable $fn): self
     {
         if ($this->isSuccess()) {
@@ -233,6 +239,7 @@ readonly class TryResult
      *
      * @return Result<T, \Throwable>
      */
+    #[\NoDiscard]
     public function toResult(): Result
     {
         if ($this->isSuccess()) {
@@ -252,6 +259,7 @@ readonly class TryResult
      *
      * @return Option<T>
      */
+    #[\NoDiscard]
     public function toOption(): Option
     {
         if ($this->isSuccess()) {

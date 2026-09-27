@@ -10,6 +10,8 @@ class_exists(NetworkInterface::class);
 /**
  * @param array<string, mixed> $info
  */
+mutates(\PrettyPhp\Binary\NetworkInterface::class);
+
 function makeInterface(string $name, array $info): NetworkInterface
 {
     $factory = \Closure::bind(

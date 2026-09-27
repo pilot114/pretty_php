@@ -4,6 +4,8 @@ use PrettyPhp\Functional\Option;
 use PrettyPhp\Functional\Result;
 use PrettyPhp\Functional\TryResult;
 
+mutates(\PrettyPhp\Functional\TryResult::class);
+
 describe('TryResult', function (): void {
     describe('construction', function (): void {
         it('can create a success', function (): void {

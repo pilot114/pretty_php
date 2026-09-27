@@ -7,6 +7,8 @@ use PrettyPhp\Curl\CurlMultiHandle;
 use PrettyPhp\Curl\CurlShareException;
 use PrettyPhp\Curl\CurlShareHandle;
 
+mutates(\PrettyPhp\Curl\CurlException::class, \PrettyPhp\Curl\CurlMultiException::class, \PrettyPhp\Curl\CurlShareException::class);
+
 describe('CurlException', function (): void {
     it('can be constructed with message only', function (): void {
         $e = new CurlException('test error');

@@ -27,13 +27,13 @@ class CurlBench
     public function benchHandleRequest(): void
     {
         $handle = new CurlHandle($this->url);
-        $handle->setOption(CURLOPT_RETURNTRANSFER, true);
-        $handle->execute();
+        (void) $handle->setOption(CURLOPT_RETURNTRANSFER, true);
+        (void) $handle->execute();
     }
 
     #[Revs(500)]
     #[Iterations(10)]
-    public function benchNativeRequest(): void
+    public function benchNativeHandleRequest(): void
     {
         $handle = curl_init($this->url);
         curl_setopt($handle, CURLOPT_RETURNTRANSFER, true);

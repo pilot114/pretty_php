@@ -32,6 +32,7 @@ composer coverage  # Tests with coverage (requires Xdebug)
 composer check     # PHPStan (level max) + Rector dry-run + PHPCS
 composer fix       # Apply Rector and PHPCBF fixes
 composer bench     # PHPBench benchmarks
+composer mutate    # Mutation testing (requires Xdebug, minimum score 85%)
 ```
 
 ## Coding Guidelines
@@ -49,6 +50,8 @@ composer bench     # PHPBench benchmarks
 - Tests use [Pest](https://pestphp.com) functional syntax (`describe()`, `it()`, `expect()`).
 - Test files mirror the source layout under `tests/Unit/`; helper classes live in `tests/Support/`.
 - Line coverage is kept at **100%** and enforced in CI.
+- Mutation testing (`composer mutate`) must stay above 85%. Declare tested classes with `mutates(...)` at the top
+  of each test file and prefer exact assertions (see "Mutation Testing" in [AGENTS.md](AGENTS.md)).
 - Tests must not require network access or root privileges. Use local resources instead
   (`file://` URLs, the built-in PHP server, UDP sockets on `127.0.0.1`).
 - Code that genuinely cannot run in the test process (root-only syscalls, failure branches that

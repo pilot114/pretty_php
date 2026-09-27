@@ -29,6 +29,7 @@ readonly class Num implements \Stringable
     /**
      * Format number with thousands separator and decimal places
      */
+    #[\NoDiscard]
     public function format(
         int $decimals = 0,
         string $decimalSeparator = '.',
@@ -40,6 +41,7 @@ readonly class Num implements \Stringable
     /**
      * Format as currency
      */
+    #[\NoDiscard]
     public function currency(
         string $currencySymbol = '$',
         int $decimals = 2,
@@ -60,6 +62,7 @@ readonly class Num implements \Stringable
     /**
      * Round to specified precision
      */
+    #[\NoDiscard]
     public function round(int $precision = 0): self
     {
         return new self(round($this->value, $precision));
@@ -68,6 +71,7 @@ readonly class Num implements \Stringable
     /**
      * Round down to nearest integer
      */
+    #[\NoDiscard]
     public function floor(): self
     {
         return new self((int) floor($this->value));
@@ -76,6 +80,7 @@ readonly class Num implements \Stringable
     /**
      * Round up to nearest integer
      */
+    #[\NoDiscard]
     public function ceil(): self
     {
         return new self((int) ceil($this->value));
@@ -84,6 +89,7 @@ readonly class Num implements \Stringable
     /**
      * Get absolute value
      */
+    #[\NoDiscard]
     public function abs(): self
     {
         return new self(abs($this->value));
@@ -94,6 +100,7 @@ readonly class Num implements \Stringable
      *
      * @throws NumException
      */
+    #[\NoDiscard]
     public function clamp(int|float $min, int|float $max): self
     {
         if ($min > $max) {
@@ -107,6 +114,7 @@ readonly class Num implements \Stringable
     /**
      * Add a number
      */
+    #[\NoDiscard]
     public function add(int|float $number): self
     {
         return new self($this->value + $number);
@@ -115,6 +123,7 @@ readonly class Num implements \Stringable
     /**
      * Subtract a number
      */
+    #[\NoDiscard]
     public function subtract(int|float $number): self
     {
         return new self($this->value - $number);
@@ -123,6 +132,7 @@ readonly class Num implements \Stringable
     /**
      * Multiply by a number
      */
+    #[\NoDiscard]
     public function multiply(int|float $number): self
     {
         return new self($this->value * $number);
@@ -131,6 +141,7 @@ readonly class Num implements \Stringable
     /**
      * Divide by a number
      */
+    #[\NoDiscard]
     public function divide(int|float $number): self
     {
         if ($number === 0 || $number === 0.0) {
@@ -143,6 +154,7 @@ readonly class Num implements \Stringable
     /**
      * Modulo operation
      */
+    #[\NoDiscard]
     public function mod(int|float $number): self
     {
         if ($number === 0 || $number === 0.0) {
@@ -155,6 +167,7 @@ readonly class Num implements \Stringable
     /**
      * Power operation
      */
+    #[\NoDiscard]
     public function pow(int|float $exponent): self
     {
         return new self($this->value ** $exponent);
@@ -165,6 +178,7 @@ readonly class Num implements \Stringable
      *
      * @throws NumException
      */
+    #[\NoDiscard]
     public function sqrt(): self
     {
         if ($this->value < 0) {
@@ -274,6 +288,7 @@ readonly class Num implements \Stringable
      *
      * @throws NumException
      */
+    #[\NoDiscard]
     public function toHex(bool $prefix = false): Str
     {
         if (!is_int($this->value)) {
@@ -289,6 +304,7 @@ readonly class Num implements \Stringable
      *
      * @throws NumException
      */
+    #[\NoDiscard]
     public function toBinary(bool $prefix = false): Str
     {
         if (!is_int($this->value)) {
@@ -304,6 +320,7 @@ readonly class Num implements \Stringable
      *
      * @throws NumException
      */
+    #[\NoDiscard]
     public function toOctal(bool $prefix = false): Str
     {
         if (!is_int($this->value)) {
@@ -317,6 +334,7 @@ readonly class Num implements \Stringable
     /**
      * Convert from hexadecimal string
      */
+    #[\NoDiscard]
     public static function fromHex(string $hex): self
     {
         $hex = str_replace(['0x', '0X'], '', $hex);
@@ -327,6 +345,7 @@ readonly class Num implements \Stringable
     /**
      * Convert from binary string
      */
+    #[\NoDiscard]
     public static function fromBinary(string $binary): self
     {
         $binary = str_replace(['0b', '0B'], '', $binary);
@@ -337,6 +356,7 @@ readonly class Num implements \Stringable
     /**
      * Convert from octal string
      */
+    #[\NoDiscard]
     public static function fromOctal(string $octal): self
     {
         $octal = str_replace(['0o', '0O'], '', $octal);
@@ -389,6 +409,7 @@ readonly class Num implements \Stringable
     /**
      * Get the minimum of this and another number
      */
+    #[\NoDiscard]
     public function min(int|float $other): self
     {
         return new self(min($this->value, $other));
@@ -397,6 +418,7 @@ readonly class Num implements \Stringable
     /**
      * Get the maximum of this and another number
      */
+    #[\NoDiscard]
     public function max(int|float $other): self
     {
         return new self(max($this->value, $other));

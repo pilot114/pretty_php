@@ -35,7 +35,7 @@ class NumBench
     #[Iterations(10)]
     public function benchNumFormat(): void
     {
-        $this->floatNum->format(2);
+        (void) $this->floatNum->format(2);
     }
 
     #[Revs(5000)]
@@ -49,7 +49,7 @@ class NumBench
     #[Iterations(10)]
     public function benchNumCurrency(): void
     {
-        $this->floatNum->currency();
+        (void) $this->floatNum->currency();
     }
 
     #[Revs(5000)]
@@ -65,7 +65,7 @@ class NumBench
     #[Iterations(10)]
     public function benchNumRound(): void
     {
-        $this->floatNum->round(2);
+        (void) $this->floatNum->round(2);
     }
 
     #[Revs(10000)]
@@ -79,7 +79,7 @@ class NumBench
     #[Iterations(10)]
     public function benchNumFloor(): void
     {
-        $this->floatNum->floor();
+        (void) $this->floatNum->floor();
     }
 
     #[Revs(10000)]
@@ -93,7 +93,7 @@ class NumBench
     #[Iterations(10)]
     public function benchNumCeil(): void
     {
-        $this->floatNum->ceil();
+        (void) $this->floatNum->ceil();
     }
 
     #[Revs(10000)]
@@ -107,7 +107,7 @@ class NumBench
     #[Iterations(10)]
     public function benchNumAbs(): void
     {
-        $this->intNum->abs();
+        (void) $this->intNum->abs();
     }
 
     #[Revs(10000)]
@@ -121,7 +121,7 @@ class NumBench
     #[Iterations(10)]
     public function benchNumClamp(): void
     {
-        $this->intNum->clamp(0, 100);
+        (void) $this->intNum->clamp(0, 100);
     }
 
     #[Revs(10000)]
@@ -137,7 +137,7 @@ class NumBench
     #[Iterations(10)]
     public function benchNumAdd(): void
     {
-        $this->intNum->add(10);
+        (void) $this->intNum->add(10);
     }
 
     #[Revs(10000)]
@@ -150,7 +150,7 @@ class NumBench
     #[Iterations(10)]
     public function benchNumMultiply(): void
     {
-        $this->intNum->multiply(2);
+        (void) $this->intNum->multiply(2);
     }
 
     #[Revs(10000)]
@@ -163,7 +163,7 @@ class NumBench
     #[Iterations(10)]
     public function benchNumDivide(): void
     {
-        $this->intNum->divide(2);
+        (void) $this->intNum->divide(2);
     }
 
     #[Revs(10000)]
@@ -178,7 +178,7 @@ class NumBench
     #[Iterations(10)]
     public function benchNumIsEven(): void
     {
-        $this->intNum->isEven();
+        (void) $this->intNum->isEven();
     }
 
     #[Revs(10000)]
@@ -191,7 +191,7 @@ class NumBench
     #[Iterations(10)]
     public function benchNumIsPrime(): void
     {
-        $this->intNum->isPrime();
+        (void) $this->intNum->isPrime();
     }
 
     #[Revs(5000)]
@@ -221,7 +221,7 @@ class NumBench
     #[Iterations(10)]
     public function benchNumInRange(): void
     {
-        $this->intNum->inRange(0, 100);
+        (void) $this->intNum->inRange(0, 100);
     }
 
     #[Revs(10000)]
@@ -236,7 +236,7 @@ class NumBench
     #[Iterations(10)]
     public function benchNumToHex(): void
     {
-        $this->intNum->toHex();
+        (void) $this->intNum->toHex();
     }
 
     #[Revs(10000)]
@@ -250,7 +250,7 @@ class NumBench
     #[Iterations(10)]
     public function benchNumToBinary(): void
     {
-        $this->intNum->toBinary();
+        (void) $this->intNum->toBinary();
     }
 
     #[Revs(10000)]
@@ -264,7 +264,7 @@ class NumBench
     #[Iterations(10)]
     public function benchNumFromHex(): void
     {
-        Num::fromHex('2a');
+        (void) Num::fromHex('2a');
     }
 
     #[Revs(10000)]
@@ -280,7 +280,7 @@ class NumBench
     #[Iterations(10)]
     public function benchNumGreaterThan(): void
     {
-        $this->intNum->greaterThan(10);
+        (void) $this->intNum->greaterThan(10);
     }
 
     #[Revs(10000)]
@@ -293,7 +293,7 @@ class NumBench
     #[Iterations(10)]
     public function benchNumMax(): void
     {
-        $this->intNum->max(100);
+        (void) $this->intNum->max(100);
     }
 
     #[Revs(10000)]

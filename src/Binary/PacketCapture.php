@@ -337,11 +337,7 @@ class PacketCapture
      */
     private function matchesFilters(string $data): bool
     {
-        if ($this->filters === []) {
-            return true;
-        }
-
-        return array_all($this->filters, fn($filter): bool => str_contains($data, $filter));
+        return array_all($this->filters, fn(string $filter): bool => str_contains($data, $filter));
     }
 
     /**
