@@ -143,7 +143,7 @@ try {
     PacketPrinter::printICMPPacket($request, 'Request Packet');
     PacketPrinter::printTransmission('send', Binary::pack($request), 'ICMP Request');
 
-    $response = sendICMPRequest('142.251.39.78', $request);
+    $response = sendICMPRequest('192.178.24.46', $request);
 
     PacketPrinter::printTransmission('receive', $response->responseData, 'ICMP Response');
     PacketPrinter::printResponseStats($response);

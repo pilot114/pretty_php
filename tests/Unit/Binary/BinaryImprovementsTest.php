@@ -426,7 +426,11 @@ describe('Binary Improvements', function (): void {
             expect($diagram)->toContain('Binary Structure');
             expect($diagram)->toContain('0                   1                   2                   3');
             expect($diagram)->toContain('0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1');
-            expect($diagram)->toContain('+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+');
+            expect($diagram)->toContain(
+                "┌───────────────┬───────────────┬───────────────────────────────┐\n"
+                . "│     type      │     code      │           checksum            │\n"
+                . "└───────────────┴───────────────┴───────────────────────────────┘\n"
+            );
             expect($diagram)->toContain('type');
             expect($diagram)->toContain('code');
             expect($diagram)->toContain('checksum');
@@ -468,7 +472,7 @@ describe('Binary Improvements', function (): void {
             $diagram = Binary::generateAsciiDiagram($className::class);
 
             expect($diagram)->toContain('version');
-            expect($diagram)->toContain('|header |'); // Name is truncated due to 4-bit width
+            expect($diagram)->toContain('│header │'); // Name is truncated due to 4-bit width
             expect($diagram)->toContain('totalLength');
         });
 
@@ -637,20 +641,32 @@ describe('Binary edge cases', function (): void {
         $diagram = Binary::generateAsciiDiagram(\Tests\Support\TestDocumentedPacket::class);
         expect($diagram)
             ->toContain('inner (nested structure)')
-            ->toContain('|trai |')
+            ->toContain('│trai │')
             ->toContain('huge')
             ->toContain('huge (cont.)')
             ->not->toContain('ignored');
 
+        // Every row and border is 32 bits × 2 characters + the closing border
         $rowWidths = array_values(array_unique(array_map(
-            strlen(...),
-            array_filter(explode("\n", $diagram), fn (string $line): bool => str_starts_with($line, '|')))
+            mb_strlen(...),
+            array_filter(explode("\n", $diagram), fn (string $line): bool => preg_match('/^[│┌├└]/u', $line) === 1))
         ));
-        expect($rowWidths)->toBe([strlen('+' . str_repeat('-+', 32))]);
+        expect($rowWidths)->toBe([65]);
     });
 });
 
 describe('Binary ASCII diagram row flushing', function (): void {
+    it('draws only the ruler for a structure without fields', function (): void {
+        $packet = new class () {
+        };
+
+        expect(Binary::generateAsciiDiagram($packet::class))->toBe(
+            'Binary Structure: ' . $packet::class . "\n\n"
+            . " 0                   1                   2                   3\n"
+            . " 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1\n"
+        );
+    });
+
     it('flushes partial row before nested structure', function (): void {
         $packet = new class () {
             #[Binary('8')]

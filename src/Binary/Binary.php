@@ -619,125 +619,139 @@ class Binary
             }
         }
 
-        // Generate diagram
+        // Lay fields out in rows of 32 bits
+        $rows = [];
         $currentRow = [];
         $currentBits = 0;
 
         foreach ($fields as $field) {
-            if ($field['type'] === 'nested') {
-                // Flush current row
+            if ($field['type'] === 'nested' || $field['type'] === 'variable') {
                 if ($currentRow !== []) {
-                    $doc .= self::renderAsciiRow($currentRow, $currentBits);
+                    $rows[] = $currentRow;
                     $currentRow = [];
                     $currentBits = 0;
                 }
 
-                $doc .= "+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+\n";
-                $doc .= "|" . str_pad($field['name'] . " (nested structure)", 63, " ", STR_PAD_BOTH) . "|\n";
+                $suffix = $field['type'] === 'nested' ? ' (nested structure)' : ' (variable length)';
+                $rows[] = [['name' => $field['name'] . $suffix, 'bits' => 32]];
                 continue;
             }
 
-            if ($field['type'] === 'variable') {
-                // Flush current row
-                if ($currentRow !== []) {
-                    $doc .= self::renderAsciiRow($currentRow, $currentBits);
-                    $currentRow = [];
-                    $currentBits = 0;
-                }
-
-                $doc .= "+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+\n";
-                $doc .= "|" . str_pad($field['name'] . " (variable length)", 63, " ", STR_PAD_BOTH) . "|\n";
-                continue;
-            }
-
+            $name = $field['name'];
             $fieldBits = (int) $field['bits'];
 
             // Fields wider than a row (e.g. 64-bit integers, long fixed strings) span several full rows
             if ($fieldBits > 32) {
                 if ($currentRow !== []) {
-                    $doc .= self::renderAsciiRow($currentRow, $currentBits);
+                    $rows[] = $currentRow;
                     $currentRow = [];
                     $currentBits = 0;
                 }
 
-                $name = $field['name'];
                 while ($fieldBits > 32) {
-                    $doc .= self::renderAsciiRow([['name' => $name, 'bits' => 32, 'type' => $field['type']]], 32);
+                    $rows[] = [['name' => $name, 'bits' => 32]];
                     $name = $field['name'] . ' (cont.)';
                     $fieldBits -= 32;
                 }
-
-                $field = ['name' => $name, 'bits' => $fieldBits, 'type' => $field['type']];
             }
 
-            // Check if field fits in current row
+            // Start a new row when the field does not fit into the current one
             if ($currentBits + $fieldBits > 32) {
-                // Render current row and start new one
-                if ($currentRow !== []) {
-                    $doc .= self::renderAsciiRow($currentRow, $currentBits);
-                }
-
-                $currentRow = [$field];
-                $currentBits = $fieldBits;
-            } else {
-                $currentRow[] = $field;
-                $currentBits += $fieldBits;
+                $rows[] = $currentRow;
+                $currentRow = [];
+                $currentBits = 0;
             }
 
-            // If current row is exactly 32 bits, render it
+            $currentRow[] = ['name' => $name, 'bits' => $fieldBits];
+            $currentBits += $fieldBits;
+
             if ($currentBits === 32) {
-                $doc .= self::renderAsciiRow($currentRow, $currentBits);
+                $rows[] = $currentRow;
                 $currentRow = [];
                 $currentBits = 0;
             }
         }
 
-        // Render any remaining fields
         if ($currentRow !== []) {
-            $doc .= self::renderAsciiRow($currentRow, $currentBits);
+            $rows[] = $currentRow;
         }
 
-        return $doc . "+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+\n";
+        return $doc . self::renderBoxRows($rows);
     }
 
     /**
-     * Render a single row of ASCII diagram
+     * Render rows of fields as a box-drawing table, one bit per two characters
      *
-     * @param array<array{name: string, bits: int|string, type: string}> $fields
+     * @param list<list<array{name: string, bits: int}>> $rows
      */
-    private static function renderAsciiRow(array $fields, int $totalBits): string
+    private static function renderBoxRows(array $rows): string
     {
-        $row = '';
+        if ($rows === []) {
+            return '';
+        }
 
-        $row .= "+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+\n";
+        $diagram = '';
+        $above = [];
 
-        // Calculate padding
-        $padding = 32 - $totalBits;
-
-        $row .= "|";
-        foreach ($fields as $field) {
-            $fieldBits = (int) $field['bits'];
-            // Each bit takes 2 characters ("+-"), one of them is used by the field separator
-            $width = $fieldBits * 2 - 1;
-
-            $name = $field['name'];
-            // Only truncate if name is significantly longer than width
-            if (strlen($name) > $width) {
-                $name = substr($name, 0, max(1, $width - 1));
+        foreach ($rows as $cells) {
+            // Unused rest of a row is an empty cell
+            $usedBits = array_sum(array_column($cells, 'bits'));
+            if ($usedBits < 32) {
+                $cells[] = ['name' => '', 'bits' => 32 - $usedBits];
             }
 
-            $row .= str_pad($name, $width, " ", STR_PAD_BOTH);
-            $row .= "|";
+            $below = [0 => true];
+            $line = '│';
+            $offset = 0;
+            foreach ($cells as $cell) {
+                // Each bit takes 2 characters, one of them is used by the cell border
+                $width = $cell['bits'] * 2 - 1;
+                $name = strlen($cell['name']) > $width
+                    ? substr($cell['name'], 0, max(1, $width - 1))
+                    : $cell['name'];
+                $line .= str_pad($name, $width, ' ', STR_PAD_BOTH) . '│';
+
+                $offset += $cell['bits'];
+                $below[$offset] = true;
+            }
+
+            $diagram .= self::renderBoxBorder($above, $below) . "\n" . $line . "\n";
+            $above = $below;
         }
 
-        // Add padding if needed
-        if ($padding > 0) {
-            $paddingWidth = $padding * 2 - 1;
-            $row .= str_pad("", $paddingWidth, " ");
-            $row .= "|";
+        return $diagram . self::renderBoxBorder($above, []) . "\n";
+    }
+
+    /**
+     * Horizontal border between two rows, joining the cell borders above and below it
+     *
+     * @param array<int, true> $above Bit offsets of cell borders in the row above
+     * @param array<int, true> $below Bit offsets of cell borders in the row below
+     */
+    private static function renderBoxBorder(array $above, array $below): string
+    {
+        $border = '';
+        for ($bit = 0; $bit <= 32; $bit++) {
+            [$both, $downOnly, $upOnly] = match ($bit) {
+                0 => ['├', '┌', '└'],
+                32 => ['┤', '┐', '┘'],
+                default => ['┼', '┬', '┴'],
+            };
+            $up = isset($above[$bit]);
+            $down = isset($below[$bit]);
+            $border .= match (true) {
+                $up && $down => $both,
+                $down => $downOnly,
+                $up => $upOnly,
+                default => '─',
+            };
+
+            if ($bit < 32) {
+                $border .= '─';
+            }
         }
 
-        return $row . "\n";
+        return $border;
     }
 
     /**

@@ -62,7 +62,7 @@ readonly class PosixSystem
      */
     public static function errno(): int
     {
-        return posix_get_last_error();
+        return posix_errno();
     }
 
     /**

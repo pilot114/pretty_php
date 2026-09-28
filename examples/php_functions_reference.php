@@ -223,6 +223,58 @@ function exportToJson(array $functionsByExtension, array $internalFunctions, str
 }
 
 /**
+ * Prints functions matching a keyword
+ */
+function runSearch(string $keyword, array $functionsByExtension, array $internalFunctions): void
+{
+    if ($keyword === '') {
+        echo "Usage: php php_functions_reference.php search <keyword>\n";
+        return;
+    }
+
+    searchFunctions($keyword, $functionsByExtension, $internalFunctions);
+}
+
+/**
+ * Prints the functions of one extension, or the list of extensions when it is unknown
+ */
+function runExtension(string $extension, array $functionsByExtension): void
+{
+    if (!isset($functionsByExtension[$extension])) {
+        echo "Available extensions:\n";
+        foreach (array_keys($functionsByExtension) as $ext) {
+            echo "  - {$ext}\n";
+        }
+        return;
+    }
+
+    $functions = $functionsByExtension[$extension];
+    printHeader("{$extension} Extension (" . formatCount(count($functions)) . ")");
+    printFunctionList($functions, 4);
+}
+
+/**
+ * Prints usage information
+ */
+function printHelp(): void
+{
+    printHeader('PHP Functions Reference - Usage');
+    echo "\nCommands:\n";
+    echo "  all                             Show all functions (default)\n";
+    echo "  stats                           Show statistics and top extensions\n";
+    echo "  search <keyword>                Search functions by keyword\n";
+    echo "  extension <name>                Show functions for specific extension\n";
+    echo "  export [filename]               Export to JSON (default: php_functions.json)\n";
+    echo "  help                            Show this help message\n";
+    echo "\nExamples:\n";
+    echo "  php php_functions_reference.php\n";
+    echo "  php php_functions_reference.php stats\n";
+    echo "  php php_functions_reference.php search array\n";
+    echo "  php php_functions_reference.php extension json\n";
+    echo "  php php_functions_reference.php export my_functions.json\n";
+}
+
+/**
  * Main function
  */
 function main(array $argv): void
@@ -232,71 +284,29 @@ function main(array $argv): void
 
     // Parse command line arguments
     $mode = $argv[1] ?? 'all';
+    $argument = $argv[2] ?? '';
 
-    switch ($mode) {
-        case 'stats':
+    match ($mode) {
+        'stats' => (static function () use ($functionsByExtension, $internalFunctions): void {
             printStatistics($functionsByExtension, $internalFunctions);
             printTopExtensions($functionsByExtension, 15);
-            break;
-
-        case 'search':
-            $keyword = $argv[2] ?? '';
-            if (empty($keyword)) {
-                echo "Usage: php php_functions_reference.php search <keyword>\n";
-                break;
-            }
-            searchFunctions($keyword, $functionsByExtension, $internalFunctions);
-            break;
-
-        case 'export':
-            $filename = $argv[2] ?? 'php_functions.json';
-            exportToJson($functionsByExtension, $internalFunctions, $filename);
-            break;
-
-        case 'extension':
-            $extension = $argv[2] ?? '';
-            if (empty($extension) || !isset($functionsByExtension[$extension])) {
-                echo "Available extensions:\n";
-                foreach (array_keys($functionsByExtension) as $ext) {
-                    echo "  - {$ext}\n";
-                }
-                break;
-            }
-            $functions = $functionsByExtension[$extension];
-            printHeader("{$extension} Extension (" . formatCount(count($functions)) . ")");
-            printFunctionList($functions, 4);
-            break;
-
-        case 'all':
+        })(),
+        'search' => runSearch($argument, $functionsByExtension, $internalFunctions),
+        'export' => exportToJson(
+            $functionsByExtension,
+            $internalFunctions,
+            $argument !== '' ? $argument : 'php_functions.json'
+        ),
+        'extension' => runExtension($argument, $functionsByExtension),
+        'all' => (static function () use ($functionsByExtension, $internalFunctions): void {
             printStatistics($functionsByExtension, $internalFunctions);
             printTopExtensions($functionsByExtension);
             printAllFunctions($functionsByExtension, $internalFunctions);
-            break;
-
-        case 'help':
-        case '--help':
-        case '-h':
-            printHeader('PHP Functions Reference - Usage');
-            echo "\nCommands:\n";
-            echo "  all                             Show all functions (default)\n";
-            echo "  stats                           Show statistics and top extensions\n";
-            echo "  search <keyword>                Search functions by keyword\n";
-            echo "  extension <name>                Show functions for specific extension\n";
-            echo "  export [filename]               Export to JSON (default: php_functions.json)\n";
-            echo "  help                            Show this help message\n";
-            echo "\nExamples:\n";
-            echo "  php php_functions_reference.php\n";
-            echo "  php php_functions_reference.php stats\n";
-            echo "  php php_functions_reference.php search array\n";
-            echo "  php php_functions_reference.php extension json\n";
-            echo "  php php_functions_reference.php export my_functions.json\n";
-            break;
-
-        default:
-            echo "Unknown command: {$mode}\n";
-            echo "Run 'php php_functions_reference.php help' for usage information.\n";
-            break;
-    }
+        })(),
+        'help', '--help', '-h' => printHelp(),
+        default => print "Unknown command: {$mode}\n"
+            . "Run 'php php_functions_reference.php help' for usage information.\n",
+    };
 }
 
 // Run the script

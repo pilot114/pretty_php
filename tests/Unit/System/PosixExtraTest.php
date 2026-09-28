@@ -146,7 +146,8 @@ describe('Posix files', function (): void {
 
     it('resolves terminal names', function (): void {
         $pty = fopen('/dev/ptmx', 'r+');
-        expect(PosixFile::ttyname($pty)->get())->toBe('/dev/ptmx');
+        // In containers /dev/ptmx is a symbolic link to /dev/pts/ptmx
+        expect(PosixFile::ttyname($pty)->get())->toBe(realpath('/dev/ptmx'));
         fclose($pty);
 
         $file = fopen(__FILE__, 'r');
@@ -161,6 +162,13 @@ describe('Posix system', function (): void {
         expect(PosixSystem::sysconf(POSIX_SC_PAGESIZE))->toBeGreaterThan(0);
         expect(PosixSystem::ctermid()->get())->toBe('/dev/tty');
         expect(PosixSystem::errno())->toBeInt();
+    });
+
+    it('reports the error of the last failed call', function (): void {
+        expect(PosixFile::access('/nonexistent/pretty_php'))->toBeFalse();
+        expect(PosixSystem::errno())->toBe(2)
+            ->and(PosixSystem::getLastError())->toBe(2)
+            ->and(PosixSystem::getLastErrorMessage()->get())->toBe('No such file or directory');
     });
 
     it('throws when working directory was removed', function (): void {

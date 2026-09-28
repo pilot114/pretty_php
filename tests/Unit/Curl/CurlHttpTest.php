@@ -130,12 +130,20 @@ describe('Curl failure handling', function (): void {
         $multi->addHandle($handle);
         expect(fn (): CurlMultiHandle => $multi->addHandle($handle))
             ->toThrow(CurlMultiException::class, 'Failed to add handle');
-        expect(fn (): CurlMultiHandle => @$multi->setOption(CURLMOPT_MAX_HOST_CONNECTIONS, -5))
-            ->toThrow(CurlMultiException::class, 'Failed to set multi option');
 
         $exception = CurlMultiException::fromHandle($multi->getHandle());
         expect($exception->curlMultiCode)->toBeGreaterThan(0);
     });
+
+    it('reports multi option failures', function (): void {
+        $multi = new CurlMultiHandle();
+        expect(fn (): CurlMultiHandle => @$multi->setOption(CURLMOPT_MAX_HOST_CONNECTIONS, -5))
+            ->toThrow(CurlMultiException::class, 'Failed to set multi option');
+    })->skip(
+        // Older libcurl (e.g. 8.14 in the official PHP image) accepts any value for this option
+        fn (): bool => @curl_multi_setopt(curl_multi_init(), CURLMOPT_MAX_HOST_CONNECTIONS, -5),
+        'this libcurl accepts a negative CURLMOPT_MAX_HOST_CONNECTIONS'
+    );
 
     it('suppresses errors when destroying multi handle with closed handles', function (): void {
         $multi = new CurlMultiHandle();
